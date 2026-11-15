@@ -1,6 +1,7 @@
 // Balance simulation for tầng Intern. Run: node mo-phong.mjs   (from this folder; Node 22+)
 // Env: N (runs per style, default 2000), SLACK=4 NOISE=0.65 (the calibrated hard-working bot), CARDS (path to another cards.json),
-//      TEA (off|self|colleague|smart, default smart), MG (mini-game grade rates %, default 25,50,25), TASKXP (override lam_task XP), PF / XF (scale Pin cost / XP of the new night cards N*, V*). See README.md.
+//      TEA (off|self|colleague|smart, default smart), MG (mini-game grade rates %, default 25,50,25), TASKXP (override lam_task XP), PF / XF (scale Pin cost / XP of the new night cards N*, V*),
+//      KPI (smart|nhan|lo, default smart: how the bot answers anh Tuấn's weekly KPI note). See README.md.
 import * as G from '../../visual-design/engine.js';
 import fs from 'fs';
 const DATA = JSON.parse(fs.readFileSync(new URL(process.env.CARDS || '../cards.json', import.meta.url))); const CARDS = DATA.cards;
@@ -18,6 +19,10 @@ const W = {chamchi:{xp:3, ut:1.6, qh:.6, pin:.25}, xahoi:{xp:1, ut:1, qh:3, pin:
 const TEA = process.env.TEA || 'smart'; // quán trà sữa: off | self | colleague | smart (the bot's own weights)
 let NOISE = +(process.env.NOISE ?? 0.65); let RNG = Math.random;
 function pick(s, c, w){ if (RNG() < NOISE) return Math.floor(RNG()*c.choices.length); let b=0,bv=-1e9; c.choices.forEach((ch,i)=>{ const e=ch.effects||{}; const v=(e.xp||0)*w.xp+(e.ut||0)*w.ut+(e.qh||0)*w.qh+(e.pin||0)*w.pin*(s.stats.pin<35?4:1)+((ch.addFlags||[]).includes('ghi_diem_voi_sep')?4:0); if(v>bv){bv=v;b=i;} }); return b; }
+// Weekly KPI note: Nhận or Làm lơ (Lily 15/11). Nhận never costs anything (a missed KPI is not punished) while Làm lơ costs 2-5 of a stat,
+// so the bot's best answer is always Nhận; like card choices, with probability NOISE it answers at random instead (a real player's whim).
+const KPI_MODE = process.env.KPI || 'smart';
+function answerKpi(s){ const lo = KPI_MODE === 'lo' || (KPI_MODE === 'smart' && RNG() < NOISE && RNG() < 0.5); if (lo) G.kpiIgnore(s, RNG); else G.kpiSeen(s); }
 function afternoon(s, kind, sitting){
   const A = s.counters.actions, can = G.roomOpen(s,'canteen');
   if (s.stats.pin < 30 && can) return 'an_trua_co_ba';
@@ -45,7 +50,7 @@ export function run(kind, seed){
       for (const r of s.rooms) G.recordRoom(s, r); if (s.day <= 12) for (const n of G.NPC_IDS) if (n!=='coba'||G.roomOpen(s,'canteen')) G.recordTalk(s,n);
       const u = G.todaysUnlock(s, CARDS); if (u) { G.chooseOption(s, u, pick(s,u,w)); mis(); }
       const sp = G.todaysSpecial(s, CARDS); if (sp) { G.chooseOption(s, sp, pick(s,sp,w)); mis(); specials++; }
-      if (G.kpiToAnnounce(s)) G.kpiSeen(s);
+      if (G.kpiToAnnounce(s)) answerKpi(s);
       if (s.part !== 'morning') continue;                               // a special day can skip the morning (mưa ngập)
       if (s.today.minigame){ const r = rng(); G.playMinigame(s, r<MGR[0]?'xuat_sac':r<MGR[0]+MGR[1]?'dat':'truot'); mis(); continue; }
       const c = G.todaysCard(s, CARDS); if (!c){ s.part='afternoon'; continue; }
@@ -75,8 +80,8 @@ export function run(kind, seed){
 const N = +(process.env.N ?? 2000);
 if (N > 0)
 for (const kind of ['chamchi','xahoi']) {
-  let td=[], jr=0, xp=0, end={}, v=0, vr=0, ni=0, fails={xp:0,ut:0,qh:0,mis:0}, minPin=0, qh70=0, ev=0, sd=0, kpiOk=0, kpiN=0, kpiBadge=0;
-  for (let i=1;i<=N;i++){ const r = run(kind, i*2654435761 + (+process.env.SEED || 0)); const s=r.s; jr+=r.junior; xp+=s.stats.xp; end[s.ending]=(end[s.ending]||0)+1; v+=r.visits; vr+=r.visits>0; ni+=r.nights; qh70+=s.stats.qh>=70; ev+=r.events; sd+=r.specials; kpiN+=(s.kpiLog||[]).length; kpiOk+=(s.kpiLog||[]).filter(k=>k.ok).length; kpiBadge+=s.flags.includes('nhan_vien_kpi'); td.push(r.teaDay ?? 99);
+  let td=[], jr=0, xp=0, end={}, v=0, vr=0, ni=0, fails={xp:0,ut:0,qh:0,mis:0}, minPin=0, qh70=0, ev=0, sd=0, kpiOk=0, kpiN=0, kpiBadge=0, kpiIg=0;
+  for (let i=1;i<=N;i++){ const r = run(kind, i*2654435761 + (+process.env.SEED || 0)); const s=r.s; jr+=r.junior; xp+=s.stats.xp; end[s.ending]=(end[s.ending]||0)+1; v+=r.visits; vr+=r.visits>0; ni+=r.nights; qh70+=s.stats.qh>=70; ev+=r.events; sd+=r.specials; kpiN+=(s.kpiLog||[]).filter(k=>!k.ignored).length; kpiIg+=(s.kpiLog||[]).filter(k=>k.ignored).length; kpiOk+=(s.kpiLog||[]).filter(k=>k.ok).length; kpiBadge+=s.flags.includes('nhan_vien_kpi'); td.push(r.teaDay ?? 99);
     if (s.stats.xp<100) fails.xp++; if (s.stats.ut+(s.stats.qh>=70?5:0)<60) fails.ut++; if (s.stats.qh<50) fails.qh++; if (s.missionsDone.length<10) fails.mis++; }
-  console.log(kind.padEnd(8), 'Junior', (100*jr/N).toFixed(1)+'%', 'XP', (xp/N).toFixed(1), JSON.stringify(end), 'thiếu', JSON.stringify(fails), 'qh70', (100*qh70/N).toFixed(0)+'%', 'visit/ván', (v/N).toFixed(2), 'có visit', (100*vr/N).toFixed(0)+'%', 'lá tối/ván', (ni/N).toFixed(1), 'mở quán: trung vị ngày', td.sort((a,b)=>a-b)[N>>1], 'chưa mở', (100*td.filter(x=>x===99).length/N).toFixed(0)+'%', 'sự kiện giữa buổi/ván', (ev/N).toFixed(1), 'ngày đặc biệt/ván', (sd/N).toFixed(1), 'KPI đạt', kpiN ? (100*kpiOk/kpiN).toFixed(0)+'%' : '-', 'huy hiệu KPI', (100*kpiBadge/N).toFixed(0)+'%');
+  console.log(kind.padEnd(8), 'Junior', (100*jr/N).toFixed(1)+'%', 'XP', (xp/N).toFixed(1), JSON.stringify(end), 'thiếu', JSON.stringify(fails), 'qh70', (100*qh70/N).toFixed(0)+'%', 'visit/ván', (v/N).toFixed(2), 'có visit', (100*vr/N).toFixed(0)+'%', 'lá tối/ván', (ni/N).toFixed(1), 'mở quán: trung vị ngày', td.sort((a,b)=>a-b)[N>>1], 'chưa mở', (100*td.filter(x=>x===99).length/N).toFixed(0)+'%', 'sự kiện giữa buổi/ván', (ev/N).toFixed(1), 'ngày đặc biệt/ván', (sd/N).toFixed(1), 'KPI đạt', kpiN ? (100*kpiOk/kpiN).toFixed(0)+'%' : '-', 'huy hiệu KPI', (100*kpiBadge/N).toFixed(0)+'%', 'KPI làm lơ/ván', (kpiIg/N).toFixed(2));
 }

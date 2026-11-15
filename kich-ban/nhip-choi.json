@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "Nhịp chơi (Lily duyệt 15/11/2026): tỉ lệ sự kiện, ngày đặc biệt, KPI tuần. Nội dung sự kiện và ngày đặc biệt nằm trong cards.json (when \"midday\" / type \"special_day\"); file này chỉ giữ tỉ lệ, lịch và KPI. Tuần 1 = ngày 1-5, tuần 6 = ngày 36-40. Trượt KPI không bị phạt.",
+  "note": "Nhịp chơi (Lily duyệt 15/11/2026): tỉ lệ sự kiện, ngày đặc biệt, KPI tuần. Nội dung sự kiện và ngày đặc biệt nằm trong cards.json (when \"midday\" / type \"special_day\"); file này chỉ giữ tỉ lệ, lịch và KPI. Tuần 1 = ngày 1-5, tuần 6 = ngày 36-40. Trượt KPI không bị phạt. Làm lơ KPI (Lily 15/11): tuần đó không có KPI, trừ ngẫu nhiên 2-5 XP, Pin, Uy tín hoặc Quan hệ (ngoại lệ duy nhất của luật XP không bị trừ) (luật trong engine.js kpiIgnore).",
   "events": {
     "midday": 0.25,
     "night": 0.5
@@ -27,6 +27,7 @@
       "min": 3
     },
     "intro": "Anh Tuấn dán một tờ giấy nhớ lên màn hình của bạn:",
+    "ignoreLine": "Bạn gỡ tờ giấy nhớ, gấp làm tư và nhét vào ngăn kéo. Anh Tuấn nhìn thấy. Anh không nói gì, và đó mới là điều đáng lo.",
     "pool": [
       {
         "id": "kpi_bao_cao",

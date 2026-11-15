@@ -961,12 +961,22 @@ function showSpecial(c){
     modal({eyebrow, title:c.title, nodes:[...resultNodes(res), ...note], actions:[{label:'Vào làm', onClick:() => { closeModal(); setupMorning(); }}]});
   })]});
 }
-// Monday of a KPI week (nhip-choi.json): anh Tuấn's sticky note. Missing it costs nothing (Lily 15/11).
+// Monday of a KPI week (nhip-choi.json): anh Tuấn's sticky note. Nhận: missing it costs nothing. Làm lơ: no KPI this week,
+// and a random 2-5 off Pin, Uy tín or Quan hệ right away (Lily 15/11)
 function showKpi(k){
-  const reward = effectText(k.reward);
-  modal({eyebrow:`Ngày ${S.day} · KPI tuần ${S.week.n}`, title:k.title, nodes:[el('p', null, RHYTHM.kpi.intro), el('p', 'quote', `"${k.title}. Hạn: 17:55 thứ Sáu."`),
-      el('p', 'note', `Đạt: ${reward}. Chưa đạt: không sao, tuần sau làm tiếp.`)],
-    actions:[{label:'Nhận việc', onClick:() => { G.kpiSeen(S); save(); closeModal(); setupMorning(); }}]});
+  const reward = effectText(k.reward), [lo, hi] = G.KPI_IGNORE_COST, eyebrow = `Ngày ${S.day} · KPI tuần ${S.week.n}`;
+  modal({eyebrow, title:k.title, nodes:[el('p', null, RHYTHM.kpi.intro), el('p', 'quote', `"${k.title}. Hạn: 17:55 thứ Sáu."`),
+      el('p', 'note', `Nhận việc · Đạt: ${reward}. Chưa đạt: không sao, tuần sau làm tiếp.`),
+      el('p', 'note', `Làm lơ · Tuần này không có KPI, nhưng mất ngay ${lo}–${hi} điểm của một chỉ số ngẫu nhiên (${G.KPI_IGNORE_STATS.map(x => G.STAT_NAME[x]).join(', ')}).`)],
+    actions:[{label:'Nhận việc', onClick:() => { G.kpiSeen(S); save(); closeModal(); setupMorning(); }},
+             {label:'Làm lơ', ghost:true, onClick:() => {
+               const r = G.kpiIgnore(S); afterChange(); if (!r) { closeModal(); return setupMorning(); }
+               const lost = -(r.got[r.stat] || 0);
+               modal({eyebrow, title:'Bạn làm lơ KPI tuần', nodes:[el('p', 'comment', RHYTHM.kpi.ignoreLine || ''),
+                   el('p', 'note', `Bị trừ: ${G.STAT_NAME[r.stat]} −${lost}${lost < r.amount ? ` (mức trừ ${r.amount}, nhưng chỉ số đã chạm đáy)` : ''}. Tuần này không có KPI, tối thứ Sáu anh Tuấn không chấm.`),
+                   deltaChips(r.got)],
+                 actions:[{label:'Vào làm', onClick:() => { closeModal(); setupMorning(); }}]});
+             }}]});
 }
 // "Thứ Sáu áo cam": colleagues (and you, if you said yes) wear the day's shirt colour; any other day, back to their own
 function dressForToday(){
