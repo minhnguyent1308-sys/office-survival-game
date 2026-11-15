@@ -110,6 +110,9 @@ body{background:var(--ground);color:var(--ink);font-family:var(--font-body);over
 .friend .bar{height:10px;border-radius:99px;background:var(--rule);border:1.5px solid var(--ink);overflow:hidden;position:relative}
 .friend .bar i{display:block;height:100%;background:var(--qh)}
 .friend .bar s{position:absolute;left:40%;top:-2px;bottom:-2px;width:2px;background:var(--ink)}
+.modal .perk{font-size:12.5px;color:var(--muted);margin:0 0 3px 84px;line-height:1.35}
+.modal .perk b{font-weight:600}
+.modal .perk.on{color:var(--ink)}
 .friend .val{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
 .chip.quest{background:transparent;border:0;padding:0;opacity:1;transform:translate(-22%,-94%);transform-origin:22% 94%;animation:quest-bob 1.1s ease-in-out infinite} /* same bubble as gossip, tail on the head */
 .chip.quest::after{display:none}
@@ -166,6 +169,7 @@ import * as T from 'three';
 import * as G from './engine.js'; // rules of the 40-day loop (no 3D inside)
 import * as Wd from './world.js';
 import * as Op from './mo-dau.js';      // opening screens, Day-1 tutorial, first-time tips (text: mo-dau.json)
+import * as Card from './the-ket-cuc.js'; // the shareable end card (canvas picture)
 import * as Ho from './ho-so.js';      // player profile across runs: collection, gifts, share card, counters
 import * as Pl from './placements.js'; // partner slots (affiliate): declared, empty for now
 import {runMinigame, validateMinigames} from './minigames.js'; // mini-game screens; content in minigames.json  // palette, builders, characters, walk grid shared with the rented room
@@ -818,9 +822,9 @@ function updateSeniors(dt){
 }
 
 /* ---------- Game: the 40-day loop. Rules live in engine.js, content in cards.json + handbook.json ---------- */
-const [CARD_DATA, HANDBOOK, MINIGAMES, REVIEW, RHYTHM, PLACEMENTS, OPENING] = await Promise.all(['cards.json', 'handbook.json', 'minigames.json', 'danh-gia.json', 'nhip-choi.json', 'placements.json', 'mo-dau.json'].map(u => fetch(u).then(r => r.json())));
+const [CARD_DATA, HANDBOOK, MINIGAMES, REVIEW, RHYTHM, PLACEMENTS, OPENING, PERKS] = await Promise.all(['cards.json', 'handbook.json', 'minigames.json', 'danh-gia.json', 'nhip-choi.json', 'placements.json', 'mo-dau.json', 'than-thiet.json'].map(u => fetch(u).then(r => r.json())));
 const CARDS = CARD_DATA.cards;
-G.useMinigames(MINIGAMES); G.useRhythm(RHYTHM); Pl.usePlacements(PLACEMENTS);
+G.useMinigames(MINIGAMES); G.useRhythm(RHYTHM); G.usePerks(PERKS); Pl.usePlacements(PLACEMENTS);
 { const bad = [...G.validateCards(CARD_DATA), ...validateMinigames(MINIGAMES), ...G.validateRhythm(RHYTHM, CARD_DATA)]; if (bad.length) console.warn('cards.json / minigames.json / nhip-choi.json:', bad); }
 // cards.json names people by their story id; the 3D scene uses its own ids for three of them
 const TO_3D = {tuan:'boss', mai:'letan', coba:'chef'}, FROM_3D = {boss:'tuan', letan:'mai', chef:'coba'};
@@ -918,7 +922,7 @@ const effectText = e => G.STATS.filter(k => e[k]).map(k => `${G.STAT_NAME[k]} ${
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = G.fillName(text, S); return e; };
 let toastQueue = [];
 const notify = msg => { toastQueue.push(msg); };
-function afterChange(){ for (const f of G.checkMissions(S, HANDBOOK)) notify(`Xong nhiệm vụ: ${f.mission.title}`); renderHUD(); save(); if (!standIn) PROFILE.sync(S); }
+function afterChange(){ for (const f of G.checkMissions(S, HANDBOOK)) notify(`Xong nhiệm vụ: ${f.mission.title}`); renderHUD(); if (!standIn) for (const m of G.perkNews(S, CARDS)) notify(m); save(); if (!standIn) PROFILE.sync(S); }
 
 /* -- modal (17:55, weekend, mini-game, handbook, closeness, end) -- */
 const modalWrap = document.getElementById('modal-wrap'), modalEl = document.getElementById('modal');
@@ -1061,9 +1065,9 @@ async function showMinigame(){
   const game = G.todaysMinigame(S); if (!game || mgRunning) return;
   mgRunning = true; closeSheet();
   const eyebrow = `Ngày ${S.day} · Mini-game`;
-  const res = await runMinigame(game, {eyebrow, hasFlag: f => G.hasFlag(S, f), badgeName});
+  const res = await runMinigame(G.perkGame(S, game), {eyebrow, hasFlag: f => G.hasFlag(S, f), badgeName});   // anh Tuấn's perk: more time
   mgRunning = false;
-  const grade = G.gradeOf(game, res.score), gradeName = Object.fromEntries(G.minigameGrades())[grade];
+  const {grade} = G.gradeFor(S, game, res.score), gradeName = Object.fromEntries(G.minigameGrades())[grade];
   const got = G.playMinigame(S, grade, res.extras || []); afterChange();
   modal({eyebrow, title:`${game.name}: ${gradeName}`, nodes:[el('p', null, res.detail), el('p', 'comment', game.lines?.[grade] || ''), deltaChips(got),
       el('p', 'note', S.part === 'evening' ? 'Tiếp theo: phán quyết của anh Tuấn.' : afternoonPlaces() + '.')],
@@ -1351,19 +1355,30 @@ function showEnd(){
   nodes.push(stats,
     el('p', 'note', `Huy hiệu (${badges.length}): ${badges.join(', ') || 'chưa có'}`),
     el('p', 'note', `Sổ tay: ${S.missionsDone.length}/${HANDBOOK.missions.length} nhiệm vụ · Mini-game: ${mg.join(' · ') || 'chưa chơi'}`),
-    el('p', 'note', Ho.summaryLine(PROFILE.p, REVIEW, CARDS, S)),
+    el('p', 'note', Ho.summaryLine(PROFILE.p, REVIEW, CARDS, S) + (S.gift ? ` Quà mang theo: ${G.giftById(S.gift.id)?.name}${S.gift.npc ? ' (' + G.NPC_NAME[S.gift.npc] + ')' : ''}.` : '')),
     el('p', 'note', `${S.counters.actions.an_trua_co_ba || 0} bữa cơm cô Ba · ${S.counters.gossipWith.length} người cùng tám chuyện · thân nhất: ${G.NPC_NAME[closest]} (${S.close[closest]})` + (early ? ` · dừng ở ngày ${S.day}` : '')));
-  const share = async e => { const text = `${G.playerName(S)} vừa chơi "Sống sót nơi công sở": ${end.title}. ${early ? end.verdict : r.verdict}`;
-    try { if (navigator.share) await navigator.share({text}); else { await navigator.clipboard.writeText(text); e.target.textContent = 'Đã chép, dán cho bạn bè nhé'; } } catch { e.target.textContent = 'Không chia sẻ được'; } };
+  const cardData = () => { const cat = Ho.catalogue(REVIEW, CARDS), [e, bd] = Ho.counts(PROFILE.p, cat);
+    return {name: S.name, title: end.title, verdict: early ? end.verdict : r.verdict, scene: end.scene, secret: !!end.secret, early: !!early, endDay: S.day, totalDays: G.TOTAL_DAYS, stats: S.stats, dayLog: S.dayLog,
+      closest: {name: G.NPC_NAME[closest], value: S.close[closest]}, got: {badges: bd[0], badgesTotal: bd[1], endings: e[0], endingsTotal: e[1]},
+      gift: S.gift ? G.giftById(S.gift.id)?.name : null, url: REVIEW.share?.url || ''}; };
+  const text = `${G.playerName(S)} vừa chơi "Sống sót nơi công sở": ${end.title}. ${early ? end.verdict : r.verdict}` + (REVIEW.share?.url ? ' ' + REVIEW.share.url : '');
+  let cardBlob = null;
+  const preview = el('div'); Card.drawCard(cardData()).then(async cv => { cv.style.cssText = 'width:100%;border-radius:12px;border:2px solid var(--ink)'; preview.replaceChildren(cv); cardBlob = await Card.toBlob(cv); }).catch(() => {});
+  const file = () => cardBlob && new File([cardBlob], 'ket-cuc-song-sot-noi-cong-so.png', {type: 'image/png'});
+  const download = () => { const u = URL.createObjectURL(cardBlob), a = document.createElement('a'); a.href = u; a.download = 'ket-cuc-song-sot-noi-cong-so.png'; a.click(); setTimeout(() => URL.revokeObjectURL(u), 4000); };
+  const saveImg = e => { if (!cardBlob) return; download(); PROFILE.track('share'); e.target.textContent = 'Đã lưu ảnh'; };
+  const share = async e => { if (!cardBlob) return; PROFILE.track('share');
+    try { const f = file(); if (navigator.canShare?.({files: [f]})) await navigator.share({files: [f], text}); else { download(); await navigator.clipboard?.writeText(text); e.target.textContent = 'Đã lưu ảnh và chép lời, dán cho bạn bè nhé'; } } catch { /* the player closed the share sheet */ } };
+  nodes.push(preview);
   modal({eyebrow: early ? 'Kết thúc sớm' : `Ngày ${G.TOTAL_DAYS} · Phán quyết` + (end.secret ? ' · Kết cục bí mật' : ''), title:end.title, nodes,
-    actions:[{label:'Chia sẻ kết cục', ghost:true, onClick:share}, {label:'Chơi lại', onClick:restart}]});
+    actions:[{label:'Lưu ảnh', ghost:true, onClick:saveImg}, {label:'Chia sẻ', ghost:true, onClick:share}, {label:'Chơi lại', onClick:restart}]});
 }
 // "Chơi lại" (end screen, Sổ tay): Ảnh thẻ and Phiếu keep the last choices, then the story (Bỏ qua on every card)
 const restart = () => { closeModal(); closeSheet(); return runOpening(); };
-async function newRun({look, name}){
+async function newRun({look, name, gift = null}){
   cutscene = false; camFocus = null; fainted = false; sceneSit = null; pendingHot = null; focusHalf = [6, 5.6]; document.getElementById('sheet-close').hidden = false;
   arriveByElevator();                          // the old run may have ended in a room the new run starts with closed (the meeting room)
-  standIn = false; PROFILE.count('runsStarted'); if (PROFILE.p.counters.runsStarted > 1) PROFILE.count('secondRuns'); await store.clear(); S = G.newGame({look, name, startRooms: CARD_DATA.rooms?.start}); G.startMorning(S, CARDS); applyRooms(); wearLook(look);
+  standIn = false; PROFILE.track('run_start'); await store.clear(); S = G.newGame({look, name, startRooms: CARD_DATA.rooms?.start}); if (gift) G.applyGift(S, gift.id, gift.npc); G.startMorning(S, CARDS); applyRooms(); wearLook(look);
   for (const id of Object.keys(NPCS)) if (NPCS[id].quest) release(id);
   if (questId === 'client') release('client');
   met.clear(); elapsed = 0; tut.reset();       // everyone introduces themselves again; the desk label bounces again
@@ -1420,8 +1435,9 @@ async function runOpening(){
   openingMode('look');
   const {look, photo} = await Op.lookPicker(OPENING, G.lookOf(S), makeMirror);
   const name = await Op.nameForm(OPENING, {name: S.name || '', photo});
+  const have = Ho.unlockedGifts(PROFILE.p, PERKS.gifts.list), gift = have.length ? await Ho.giftScreen(PERKS.gifts.screen, have, G.NPC_NAME) : null;   // from the second run on: one gift to carry
   const close = await Op.prologue(OPENING, name);
-  await newRun({look, name}); openingMode(null);
+  await newRun({look, name, gift}); openingMode(null);
   await close();
 }
 // a fresh page (not back from the rented room or the shop): the welcome screen first
@@ -1498,10 +1514,13 @@ hbBtn.onclick = () => {
     {label:'Đóng', onClick:closeModal}]});
 };
 document.getElementById('open-friends').onclick = () => {
-  const list = el('div');
+  const list = el('div'), tiers = G.perkData().tiers;
   for (const n of G.NPC_IDS) { const v = S.close[n], row = el('div', 'friend');
-    row.innerHTML = `<span></span><span class="bar"><i style="width:${v}%"></i><s></s></span><span class="val">${v}</span>`; row.querySelector('span').textContent = G.NPC_NAME[n]; list.appendChild(row); }
-  modal({eyebrow:'Đạt 40 điểm thì mở chuyện riêng của người đó', title:'Thân thiết', nodes:[list], actions:[{label:'Đóng', onClick:closeModal}]});
+    row.innerHTML = `<span></span><span class="bar"><i style="width:${v}%"></i>${tiers.map(x => `<s style="left:${x}%"></s>`).join('')}</span><span class="val">${v}</span>`; row.querySelector('span').textContent = G.NPC_NAME[n]; list.appendChild(row);
+    for (const p of G.perksFor(n)) { const on = v >= p.at, line = el('div', 'perk' + (on ? ' on' : ''));   // two perks per person: faint until closeness reaches it
+      line.append(el('b', null, `${p.at} · ${p.name}`), el('span', null, on ? (p.effect.once && G.perkUsed(S, p.id) ? ' Đã dùng trong ván này.' : ' ' + p.line) : ' Mở ở ' + p.at + ' điểm.')); list.appendChild(line); }
+    if (v >= tiers.at(-1)) list.appendChild(el('div', 'perk on', `${tiers.at(-1)} · ${G.perkData().title80}`)); }
+  modal({eyebrow:'Thân 40 mở chuyện riêng, 40 và 60 mở đặc quyền', title:'Thân thiết', nodes:[list], actions:[{label:'Đóng', onClick:closeModal}]});
 };
 document.getElementById('open-collection').onclick = () => modal({eyebrow:'Mở thêm qua mỗi ván chơi', title:'Bộ sưu tập', nodes:[Ho.collectionNode(PROFILE.p, REVIEW, CARDS, S.runId)], actions:[{label:'Đóng', onClick:closeModal}]});
 modalWrap.addEventListener('keydown', e => { if (e.key === 'Escape' && modalEl.querySelector('.row .btn:last-child')?.textContent === 'Đóng') closeModal(); });

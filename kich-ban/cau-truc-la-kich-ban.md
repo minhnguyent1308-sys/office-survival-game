@@ -124,3 +124,7 @@ Mỗi lá là một object trong file `cards.json` (mảng). Thêm lá mới = t
 - `danh-gia.json` → `collection.hints`: câu gợi ý cho mục chưa mở trong Bộ sưu tập, khóa theo id kết cục / cờ huy hiệu / id lá. Thêm kết cục, huy hiệu hay sự kiện mới thì thêm một dòng gợi ý ở đây.
 - `danh-gia.json` → `share.url`: địa chỉ in ở chân thẻ chia sẻ (để trống đến khi deploy).
 - Hồ sơ người chơi nằm ở `ho-so.js`, lưu ở khóa riêng `ssns-profile` (ván mới không xóa nó). Save một ván thêm `played` (các lá đã trả lời) và `dayLog` (mỗi ngày: có tăng không, Pin cuối ngày dưới 20 không).
+- `than-thiet.json`: đặc quyền thân thiết. Mỗi đặc quyền: `id`, `npc`, `at` (40 hoặc 60), `name`, `line` (câu hiển thị trong màn Thân thiết), `effect.kind` (action_add, no_extra, heads_up, forgive_loss, minigame_upgrade, kpi_head, kpi_rescue, wake_bonus; `once: true` = một lần trong ván). `headsUp` là câu tin nhắn báo trước, `eventHints` là gợi ý của chị Mai cho 6 sự kiện giữa buổi (thêm sự kiện giữa buổi mới thì thêm một dòng). Ngưỡng 80 chỉ đổi danh hiệu (`title80`).
+- `than-thiet.json` → `gifts`: quà mang sang ván sau (`needs`: best / ending / ever; `effect`: close_start, stat_start, wake_days). Màn chọn quà hiện sau bước Ký tên, từ ván thứ hai nếu hồ sơ đã mở khóa ít nhất một quà. Mỗi ván một quà, không cho XP, không tick sẵn nhiệm vụ.
+- `do-luong.json`: bộ đếm ẩn danh. `endpoint` để trống = chỉ đếm trong trình duyệt, không gửi đi đâu.
+- `the-ket-cuc.js`: vẽ thẻ chia sẻ 1080×1350 bằng canvas. Chân thẻ lấy `share.url` trong `danh-gia.json` (đang trống, hỏi Lily khi deploy).

@@ -47,3 +47,10 @@ Khi chưa tính XP (chỉ trừ Pin/Uy tín/Quan hệ) `smart` là 43,0% / 43,2%
 Script gọi `G.review` ở ngày 40 và in phân bố kết cục theo id (`junior`, `van_nghe`, `khach_hang`, `phu_bep`, `ca_phong`, `gia_han`, `cam_on`, `burnout`, `fired`). Hai kết cục mới: `ca_phong` (Quan hệ ≥ 80 và ít nhất 2 người thân ≥ 60) và `phu_bep` (bí mật: cô Ba thân ≥ 60 và ≥ 12 bữa trưa với cô).
 2×2500 ván: chăm chỉ Junior 40,6% / 39,7%; lối quan hệ: Được cả phòng giữ lại 54% / 54%, Thêm 30 ngày từ 62,5% còn 8% / 9%.
 Dùng `KINDS=coba N=500 node mo-phong.mjs` (bot chiều nào cũng ăn với cô Ba) để kiểm tra kết cục bí mật có đạt được: Phụ bếp danh dự 86%.
+
+## Đặc quyền thân thiết (16/11, bước 3 của plan đợt 1)
+Script nạp `../than-thiet.json` (14 đặc quyền: mỗi người hai cái, mở ở độ thân 40 và 60). `PERKS=off` chạy không có; `PERKS=tuan40,hang40` chạy riêng từng đặc quyền. Mẹo anh Minh (nâng hạng mini-game sát nút) được mô phỏng bằng giả định 30% lần trượt/đạt là sát nút; gợi ý chị Mai được mô phỏng bằng việc chọn lựa chọn tốt nhất ở sự kiện giữa buổi.
+Kết quả 2×2500 ván: chăm chỉ lên Junior 40,6% / 39,7%, y hệt khi tắt đặc quyền (không đặc quyền nào cho XP, và XP vẫn là chỗ nghẽn của lối chơi này); lối quan hệ: XP trung bình 74,9 so với 73,6, kết cục gần như giữ nguyên. Từng đặc quyền chạy riêng đều không đổi Junior quá 0,1 điểm. Với bot chăm chỉ thì đặc quyền chủ yếu giúp sống sót (Pin), không phải lên Junior.
+
+## Quà ván sau (16/11, bước 4)
+`GIFT=thu_gioi_thieu|kinh_nghiem|tieng_lanh|goi_quen` (và `GIFT_NPC=hang` cho thư giới thiệu) áp quà lúc bắt đầu ván. Chăm chỉ lên Junior (N=2500, SEED=0): không quà 40,6%; Kinh nghiệm 40,8%; Tiếng lành 41,0%; Gối quen 39,5%; Thư giới thiệu 40,6% (anh Tuấn) đến 51,0% (chị Hằng). Mọi quà đều dưới trần 55%.

@@ -55,14 +55,31 @@ export class BrowserProfileStore {
   async clear() { try { localStorage.removeItem(this.key); } catch { /* nothing saved */ } }
 }
 
+// Anonymous counter: events are counted in the profile always; they are sent only when do-luong.json names an endpoint (empty = nothing leaves the browser).
+// The payload has a random browser id and the event, never a name.
+let cfg;
+async function send(p, e, data) {
+  try {
+    cfg ??= await fetch('do-luong.json').then(r => r.json()).catch(() => ({}));
+    if (!cfg.endpoint) return;
+    p.anon ||= Math.random().toString(36).slice(2) + Date.now().toString(36);
+    navigator.sendBeacon(cfg.endpoint, JSON.stringify({v: 1, id: p.anon, e, ...data}));
+  } catch { /* counting must never break the game */ }
+}
+
 // One handle per page: loads the profile, fills it from the save in hand, keeps it saved when it changes.
 export async function open({badges = [], store = new BrowserProfileStore()} = {}) {
   const p = (await store.load()) || emptyProfile();
   return {
     p, store,
     sync(s) { if (sync(p, s, {badges})) store.save(p); },
-    finish(s, endingId) { sync(p, s, {badges}); finish(p, s, endingId); store.save(p); },
-    count(key, n = 1) { p.counters[key] = (p.counters[key] || 0) + n; store.save(p); },
+    finish(s, endingId) { const first = !p.runs.some(r => r.id === s.runId); sync(p, s, {badges}); finish(p, s, endingId); store.save(p); if (first) send(p, 'run_end', {day: s.day, ending: endingId}); },
+    // run_start | share: counted locally, sent if an endpoint is set
+    track(e) {
+      if (e === 'run_start') { p.counters.runsStarted++; if (p.counters.runsStarted > 1) { p.counters.secondRuns++; send(p, 'second_run', {}); } }
+      if (e === 'share') p.counters.shares++;
+      store.save(p); send(p, e, {});
+    },
   };
 }
 
@@ -93,7 +110,16 @@ function css() {
 .coll .it small{grid-column:1/-1;color:var(--muted);font-size:12.5px;line-height:1.35}
 .coll .it.off b{color:var(--muted);letter-spacing:.12em}
 .coll .tag{font:700 10px var(--font-body);background:var(--yellow);border:1.5px solid var(--ink);border-radius:999px;padding:1px 7px;align-self:start;text-transform:uppercase;letter-spacing:.06em}
-.coll .foot{font-size:12px;color:var(--muted);margin-top:12px}`;
+.coll .foot{font-size:12px;color:var(--muted);margin-top:12px}
+.gift{background:#fce6b6;display:grid;place-items:center;padding:24px 16px}
+.gift .box{width:min(520px,100%);display:grid;gap:14px;justify-items:start}
+.gift h1{font-size:clamp(30px,6vw,44px)}
+.gift .lead{font-size:16px;line-height:1.5}
+.gift .g-card{width:100%;box-sizing:border-box;background:var(--paper);border:2px solid var(--ink);border-radius:16px;box-shadow:0 3px 0 var(--ink);padding:12px 14px;display:grid;gap:8px;justify-items:start}
+.gift .g-card b{font:800 20px var(--font-display)}
+.gift .g-card span{font-size:14px;line-height:1.45}
+.gift .g-card select{font:600 14px var(--font-body);padding:3px 6px;border:2px solid var(--ink);border-radius:8px;background:var(--paper)}
+.gift .g-card .op-big{min-height:44px;font-size:16px;padding:2px 20px}`;
   document.head.appendChild(st);
 }
 const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
@@ -122,4 +148,36 @@ export function summaryLine(p, rv, cards, s) {
   const listed = new Set(cat.filter(x => x.kind === 'p').flatMap(x => x.items.map(i => i.id))); n.played = n.played.filter(id => listed.has(id));   // only events, special days, character events count
   const bits = [n.endings.length && `${n.endings.length} kết cục`, n.badges.length && `${n.badges.length} huy hiệu`, n.played.length && `${n.played.length} chuyện`].filter(Boolean);
   return (bits.length ? `Ván này bạn mở thêm ${bits.join(', ')}. ` : 'Ván này không mở thêm gì mới. ') + `Tổng: ${e[0]}/${e[1]} kết cục, ${b[0]}/${b[1]} huy hiệu.`;
+}
+
+/* ---------- Gifts for the next run (than-thiet.json gifts): which ones this profile has earned, and the screen to pick one ---------- */
+// needs: {best: n} someone you were once this close to | {ending: id} reached that ending | {ever: [facts]} any of these happened (burnout, lowPin)
+export function unlockedGifts(p, gifts) {
+  const out = [];
+  for (const g of gifts) {
+    const n = g.needs || {}; let npcs = null, ok = true;
+    if (n.best != null) { npcs = Object.keys(p.best).filter(k => p.best[k] >= n.best); ok = npcs.length > 0; }
+    else if (n.ending) ok = (p.endings[n.ending] || 0) > 0;
+    else if (n.ever) ok = n.ever.some(k => p.ever[k]);
+    if (ok) out.push({...g, npcs});
+  }
+  return out;
+}
+// full-screen choice before the prologue; resolves {id, npc} or null (no gift)
+export function giftScreen(texts, gifts, npcName) {
+  css();
+  return new Promise(done => {
+    const root = mk('div', 'op-screen gift'), box = mk('div', 'box');
+    box.append(mk('div', 'op-tag', texts.eyebrow), mk('h1', null, texts.title), mk('p', 'lead', texts.lead));
+    const none = () => { root.remove(); done(null); };
+    for (const g of gifts) {
+      const card = mk('div', 'g-card'); card.append(mk('b', null, g.name), mk('span', null, g.line));
+      let sel = null;
+      if (g.npcs) { sel = mk('select'); for (const n of g.npcs) sel.appendChild(Object.assign(mk('option', null, npcName[n] || n), {value: n})); const row = mk('label', null, texts.pickNpc + ' '); row.appendChild(sel); card.appendChild(row); }
+      const take = mk('button', 'op-big', 'Mang theo'); take.onclick = () => { root.remove(); done({id: g.id, npc: sel ? sel.value : null}); };
+      card.appendChild(take); box.appendChild(card);
+    }
+    const skip = mk('button', 'op-soft', texts.none); skip.onclick = none; box.appendChild(skip);
+    root.appendChild(box); document.body.appendChild(root); root.querySelector('button')?.focus();
+  });
 }

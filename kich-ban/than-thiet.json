@@ -1,0 +1,268 @@
+{
+  "version": 1,
+  "note": "Đặc quyền theo độ thân (plan đợt 1, bước 3). Mỗi người có 2 đặc quyền: mở ở độ thân 40 và 60; 80 chỉ đổi danh hiệu (title80). Đặc quyền bật khi độ thân >= `at`, tắt nếu tụt xuống dưới. Không có đặc quyền nào cho XP trực tiếp. effect.kind: action_add (cộng chỉ số cho một việc chiều), no_extra (bỏ lần bị giao thêm việc), heads_up (tin báo trước: minigame | special_day | midday_event), forgive_loss, minigame_upgrade, kpi_head, kpi_rescue, wake_bonus. once: true = một lần trong cả ván. Thêm đặc quyền mới = thêm một object vào perks (và nếu cần một kind mới thì thêm vào engine.js).",
+  "tiers": [
+    40,
+    60,
+    80
+  ],
+  "title80": "Tri kỷ",
+  "perks": [
+    {
+      "id": "tuan40",
+      "npc": "tuan",
+      "at": 40,
+      "name": "Sếp nhớ tên",
+      "line": "Báo cáo anh Tuấn không còn bị giao thêm việc (mất Pin) nữa.",
+      "effect": {
+        "kind": "no_extra",
+        "action": "bao_cao_sep"
+      }
+    },
+    {
+      "id": "tuan60",
+      "npc": "tuan",
+      "at": 60,
+      "name": "Sếp nhắc khéo",
+      "line": "Tối trước ngày mini-game, anh Tuấn nhắn báo trước, và bạn có thêm 20% thời gian chơi.",
+      "effect": {
+        "kind": "heads_up",
+        "what": "minigame",
+        "timeMult": 1.2
+      }
+    },
+    {
+      "id": "hang40",
+      "npc": "hang",
+      "at": 40,
+      "name": "Hỏi là chỉ",
+      "line": "Hỏi senior học việc chỉ tốn 3 Pin thay vì 5.",
+      "effect": {
+        "kind": "action_add",
+        "action": "hoi_senior",
+        "effects": {
+          "pin": 2
+        }
+      }
+    },
+    {
+      "id": "hang60",
+      "npc": "hang",
+      "at": 60,
+      "name": "Nói đỡ",
+      "line": "Một lần trong ván, chị Hằng nói đỡ: bị trừ từ 3 Uy tín trở lên thì không mất điểm nào.",
+      "effect": {
+        "kind": "forgive_loss",
+        "stat": "ut",
+        "min": 3,
+        "once": true,
+        "line": "Chị Hằng nói đỡ cho bạn trước sếp. Lần này bạn không mất Uy tín."
+      }
+    },
+    {
+      "id": "linh40",
+      "npc": "linh",
+      "at": 40,
+      "name": "Vào hội",
+      "line": "Ngồi tám chuyện được thêm 1 Quan hệ.",
+      "effect": {
+        "kind": "action_add",
+        "action": "tam_chuyen",
+        "effects": {
+          "qh": 1
+        }
+      }
+    },
+    {
+      "id": "linh60",
+      "npc": "linh",
+      "at": 60,
+      "name": "Tin nội bộ",
+      "line": "Tối trước một ngày đặc biệt, chị Linh nhắn cho bạn biết ngày mai là ngày gì.",
+      "effect": {
+        "kind": "heads_up",
+        "what": "special_day"
+      }
+    },
+    {
+      "id": "minh40",
+      "npc": "minh",
+      "at": 40,
+      "name": "Macro",
+      "line": "Làm task chỉ tốn 8 Pin thay vì 10.",
+      "effect": {
+        "kind": "action_add",
+        "action": "lam_task",
+        "effects": {
+          "pin": 2
+        }
+      }
+    },
+    {
+      "id": "minh60",
+      "npc": "minh",
+      "at": 60,
+      "name": "Mẹo của anh Minh",
+      "line": "Một lần trong ván, nếu mini-game trượt sát nút (thiếu tối đa 2 điểm), anh Minh gỡ giúp để bạn lên một hạng.",
+      "effect": {
+        "kind": "minigame_upgrade",
+        "within": 2,
+        "once": true,
+        "line": "Anh Minh nhắn cách gỡ nốt chỗ cuối cùng. Kết quả mini-game của bạn lên một hạng."
+      }
+    },
+    {
+      "id": "tung40",
+      "npc": "tung",
+      "at": 40,
+      "name": "Ngồi cạnh nhau",
+      "line": "KPI đếm số lần làm việc luôn bắt đầu với 1 lần đã xong.",
+      "effect": {
+        "kind": "kpi_head",
+        "count": 1
+      }
+    },
+    {
+      "id": "tung60",
+      "npc": "tung",
+      "at": 60,
+      "name": "Gánh hộ",
+      "line": "Một lần trong ván, KPI tuần không kịp thì anh Tùng làm hộ nốt, vẫn tính là đạt.",
+      "effect": {
+        "kind": "kpi_rescue",
+        "once": true,
+        "line": "Anh Tùng làm hộ nốt phần còn thiếu. KPI tuần này vẫn tính là đạt."
+      }
+    },
+    {
+      "id": "mai40",
+      "npc": "mai",
+      "at": 40,
+      "name": "Tin hành lang",
+      "line": "Giúp chị Mai được thêm 1 Uy tín.",
+      "effect": {
+        "kind": "action_add",
+        "action": "giup_chi_mai",
+        "effects": {
+          "ut": 1
+        }
+      }
+    },
+    {
+      "id": "mai60",
+      "npc": "mai",
+      "at": 60,
+      "name": "Báo trước",
+      "line": "Sáng hôm có chuyện giữa buổi, chị Mai nhắn trước và mách cách xử lý được điểm cao.",
+      "effect": {
+        "kind": "heads_up",
+        "what": "midday_event"
+      }
+    },
+    {
+      "id": "coba40",
+      "npc": "coba",
+      "at": 40,
+      "name": "Thêm muôi cơm",
+      "line": "Ăn trưa với cô Ba hồi 18 Pin thay vì 15.",
+      "effect": {
+        "kind": "action_add",
+        "action": "an_trua_co_ba",
+        "effects": {
+          "pin": 3
+        }
+      }
+    },
+    {
+      "id": "coba60",
+      "npc": "coba",
+      "at": 60,
+      "name": "Hộp cơm mang về",
+      "line": "Sau mỗi bữa trưa với cô Ba, sáng hôm sau bạn thức dậy thêm 3 Pin.",
+      "effect": {
+        "kind": "wake_bonus",
+        "after": "an_trua_co_ba",
+        "pin": 3
+      }
+    }
+  ],
+  "headsUp": {
+    "minigame": "Anh Tuấn nhắn: sáng mai có bài kiểm tra. Ngủ sớm nhé, em sẽ có thêm 20% thời gian.",
+    "special_day": "Chị Linh nhắn: mai là \"{title}\". Chuẩn bị tinh thần nhé em.",
+    "midday_event": "Chị Mai nhắn: trưa nay có chuyện \"{title}\". {hint}"
+  },
+  "eventHints": {
+    "EO_THANG_MAY": "Sếp tổng thích người làm không khí nhẹ đi, kể chuyện cười là ăn điểm.",
+    "EO_MAY_IN": "Anh Minh quý người biết nhờ đúng người.",
+    "EO_BAO_CHAY": "Cứ xếp hàng đúng quy trình, sếp để ý lắm.",
+    "EO_SINH_NHAT": "Hôm nay cả phòng nhớ ai góp quà.",
+    "EO_KHACH_LAC": "Khách được tiếp chu đáo thì sếp nghe tin ngay.",
+    "EO_MON_MOI": "Cô Ba chỉ cần một lời khen thật lòng."
+  },
+  "gifts": {
+    "screen": {
+      "eyebrow": "Ván mới",
+      "title": "Mang theo một món quà",
+      "lead": "Bạn đã từng đi qua nơi này. Chọn một món để mang theo, hoặc đi tay không.",
+      "none": "Đi tay không",
+      "pickNpc": "Người giới thiệu:"
+    },
+    "list": [
+      {
+        "id": "thu_gioi_thieu",
+        "name": "Thư giới thiệu",
+        "needs": {
+          "best": 60
+        },
+        "pick": "npc",
+        "line": "Một người từng thân với bạn từ 60 viết thư giới thiệu: độ thân với người đó bắt đầu từ 30 thay vì 20.",
+        "effect": {
+          "kind": "close_start",
+          "value": 30
+        }
+      },
+      {
+        "id": "kinh_nghiem",
+        "name": "Kinh nghiệm đi làm",
+        "needs": {
+          "ending": "junior"
+        },
+        "line": "Bạn từng lên Junior: Uy tín bắt đầu từ 35 thay vì 30.",
+        "effect": {
+          "kind": "stat_start",
+          "stat": "ut",
+          "value": 35
+        }
+      },
+      {
+        "id": "tieng_lanh",
+        "name": "Tiếng lành đồn xa",
+        "needs": {
+          "ending": "ca_phong"
+        },
+        "line": "Cả phòng từng giữ bạn lại: Quan hệ bắt đầu từ 35 thay vì 30.",
+        "effect": {
+          "kind": "stat_start",
+          "stat": "qh",
+          "value": 35
+        }
+      },
+      {
+        "id": "goi_quen",
+        "name": "Gối quen",
+        "needs": {
+          "ever": [
+            "burnout",
+            "lowPin"
+          ]
+        },
+        "line": "Bạn từng kiệt sức, nên mang theo cái gối quen: hai tuần đầu ngủ dậy hồi 7 Pin thay vì 5.",
+        "effect": {
+          "kind": "wake_days",
+          "days": 14,
+          "pin": 7
+        }
+      }
+    ]
+  }
+}

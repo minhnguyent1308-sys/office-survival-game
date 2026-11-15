@@ -465,9 +465,10 @@ const toastEl = document.getElementById('toast'); let toastT = 0;
 const toast = msg => { toastEl.textContent = msg; toastEl.hidden = false; toastT = 3.5; };
 
 /* ---------- Game: the evening at home. Rules live in engine.js, content in cards.json ---------- */
-const [CARD_DATA, HANDBOOK, MINIGAMES, RHYTHM, PLACEMENTS, OPENING, REVIEW] = await Promise.all(['cards.json', 'handbook.json', 'minigames.json', 'nhip-choi.json', 'placements.json', 'mo-dau.json', 'danh-gia.json'].map(u => fetch(u).then(r => r.json())));
+const [CARD_DATA, HANDBOOK, MINIGAMES, RHYTHM, PLACEMENTS, OPENING, REVIEW, PERKS] = await Promise.all(['cards.json', 'handbook.json', 'minigames.json', 'nhip-choi.json', 'placements.json', 'mo-dau.json', 'danh-gia.json', 'than-thiet.json'].map(u => fetch(u).then(r => r.json())));
 const CARDS = CARD_DATA.cards;
 G.useMinigames(MINIGAMES); // the next morning may be a mini-game day (nextDay/endWeekend draw it)
+G.usePerks(PERKS);        // closeness perks (than-thiet.json): the evening cards and the next wake-up use them too
 G.useRhythm(RHYTHM);       // tonight's odds, and the next morning's special day / KPI / midday event (nhip-choi.json)
 Pl.usePlacements(PLACEMENTS);
 { const bad = G.validateCards(CARD_DATA); if (bad.length) console.warn('cards.json:', bad); }
@@ -578,7 +579,7 @@ function arriveHome(){ player.g.position.set(DOOR_IN[0], 0, DOOR_IN[1]); player.
 function lightsFor(){ laptopScreen.material[4] = laptopCard() ? mat(P.screen, {emissive:P.screen, emissiveIntensity:.9}) : screenMat; }
 
 const laptopToast = () => { const c = laptopCard(); if (c) toast(c.npc === 'tuan' ? 'Laptop sáng lên: sếp vừa nhắn' : 'Laptop sáng lên: có tin nhắn mới'); };
-function afterChange(){ for (const f of G.checkMissions(S, HANDBOOK)) toast(`Xong nhiệm vụ: ${f.mission.title}`); renderHUD(); save(); PROFILE.sync(S); }
+function afterChange(){ for (const f of G.checkMissions(S, HANDBOOK)) toast(`Xong nhiệm vụ: ${f.mission.title}`); renderHUD(); const news = G.perkNews(S, CARDS); if (news.length) toast(news.join(' · ')); save(); PROFILE.sync(S); }
 // bed: a weekday night goes back to the office in the morning; Friday night becomes the weekend here; the weekend ends on Monday morning at the office
 async function sleep(){
   closeSheet();

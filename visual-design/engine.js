@@ -60,6 +60,65 @@ export function gradeOf(game, score) {
 let RH = {events: {midday: 0}, specialDays: {weeks: [], chance: 0}, kpi: {weeks: [], pool: []}};
 export function useRhythm(data) { if (!data) return; RH = {...RH, ...data}; if (data.events?.night != null) NIGHT_CARD_CHANCE = data.events.night; }
 export const rhythm = () => RH;
+
+/* ---------- Closeness perks (than-thiet.json): two per person, on at closeness 40 and 60; data-driven ---------- */
+// effect.kind decides what the engine does with it (see the note in than-thiet.json). A perk is on while closeness >= at.
+let PK = {perks: [], headsUp: {}, eventHints: {}, tiers: [40, 60, 80], title80: ''};
+export function usePerks(data) { if (data) PK = {...PK, ...data}; }
+export const perkData = () => PK;
+// gift carried from an earlier run (than-thiet.json gifts): one per run, picked on the opening; never XP, never a ticked mission
+export const giftById = id => PK.gifts?.list.find(g => g.id === id) || null;
+export function applyGift(s, id, npc = null) {
+  const g = giftById(id); if (!g) return false;
+  const e = g.effect; s.gift = {id, npc: g.pick === 'npc' ? npc : null};
+  if (e.kind === 'stat_start') s.stats[e.stat] = Math.max(s.stats[e.stat], e.value);
+  if (e.kind === 'close_start' && NPC_IDS.includes(npc)) s.close[npc] = Math.max(s.close[npc], e.value);
+  return true;
+}
+const giftWake = s => { const g = s.gift && giftById(s.gift.id); return g?.effect.kind === 'wake_days' && s.day <= g.effect.days ? g.effect.pin : WAKE_PIN; };
+export const perksOf = (s, kind) => PK.perks.filter(p => p.effect.kind === kind && (s.close[p.npc] ?? 0) >= p.at);
+export const perkOn = (s, id) => { const p = PK.perks.find(x => x.id === id); return !!p && (s.close[p.npc] ?? 0) >= p.at; };
+export const perksFor = npc => PK.perks.filter(p => p.npc === npc);
+export const perkUsed = (s, id) => (s.perksUsed || []).includes(id);
+const perkSpend = (s, p) => { (s.perksUsed ||= []).push(p.id); say(s, p.effect.line); };      // a once-per-run perk is used up
+// news for the page to show as toasts (a perk used, a perk unlocked)
+const say = (s, text) => { if (text) (s.news ||= []).push(text); };
+export const takeNews = s => { const n = s.news || []; s.news = []; return n; };
+// perks that just turned on (closeness crossed 40 or 60): announced once each
+export function newPerks(s) {
+  const seen = (s.perksSeen ||= []), out = PK.perks.filter(p => (s.close[p.npc] ?? 0) >= p.at && !seen.includes(p.id));
+  for (const p of out) seen.push(p.id);
+  return out;
+}
+// a mini-game close to the next grade (within effect.within points) goes one grade up, once per run
+export function gradeFor(s, game, score) {
+  const grade = gradeOf(game, score), order = MG.grades.map(g => g[0]), i = order.indexOf(grade);
+  const p = perksOf(s, 'minigame_upgrade').find(x => !perkUsed(s, x.id));
+  if (p && i > 0) { const up = order[i - 1], need = game.thresholds?.[up]; if (need != null && score >= need - p.effect.within) { perkSpend(s, p); return {grade: up, upgraded: true}; } }
+  return {grade, upgraded: false};
+}
+// more time on a timed mini-game (anh Tuấn's heads-up): returns a copy of the game with longer clocks
+export function perkGame(s, game) {
+  const m = perksOf(s, 'heads_up').find(p => p.effect.what === 'minigame')?.effect.timeMult; if (!m) return game;
+  const g = {...game}; for (const k of ['seconds', 'secondsPerQuestion']) if (g[k]) g[k] = Math.round(g[k] * m); return g;
+}
+// everything a page should say after a change: perks just unlocked, once-per-run perks used, and the heads-up messages (one list, same on every map)
+export function perkNews(s, cards) {
+  return [...newPerks(s).map(p => `Thân với ${NPC_NAME[p.npc]}: ${p.name}`), ...takeNews(s), ...headsUp(s, cards)];
+}
+// messages that arrive before a day: tomorrow's mini-game (evening), tomorrow's special day (evening), today's midday event (morning). Once each per day.
+export function headsUp(s, cards) {
+  const out = [], tips = (s.today.tips ||= []), tell = (id, text) => { if (!tips.includes(id)) { tips.push(id); out.push(text); } };
+  for (const p of perksOf(s, 'heads_up')) {
+    const w = p.effect.what, line = PK.headsUp[w] || '';
+    if (w === 'minigame' && s.part === 'evening' && isMinigameDay(s.day + 1)) tell(w, line);
+    if (w === 'special_day' && s.part === 'evening' && s.week?.specialDay === s.day + 1) tell(w, line.replace('{title}', cardById(cards, s.week.specialId)?.title || ''));
+    if (w === 'midday_event' && s.part !== 'evening' && s.today.eventId && !s.today.eventDone) {
+      const c = cardById(cards, s.today.eventId); tell(w, line.replace('{title}', c?.title || '').replace('{hint}', PK.eventHints[s.today.eventId] || ''));
+    }
+  }
+  return out;
+}
 export const weekOf = day => Math.floor((day - 1) / 7) + 1;   // week 1 = days 1-5, week 6 = days 36-40
 // stage: an event happens somewhere: "!" over the player, a scene change to stage.spot on stage.map, then the story (pages own the spots)
 export const STAGE_MAPS = ['office', 'home'];
@@ -137,6 +196,7 @@ export function applyEffects(s, effects = {}, closenessOf = null, {xpLoss = fals
   for (const k of STATS) {
     let d = effects[k] || 0;
     if (k === 'xp' && d < 0 && !xpLoss) d = 0;          // XP is never lost (except Làm lơ KPI)
+    if (d < 0 && !xpLoss) { const f = perksOf(s, 'forgive_loss').find(p => p.effect.stat === k && d <= -p.effect.min && !perkUsed(s, p.id)); if (f) { perkSpend(s, f); d = 0; } }  // chị Hằng nói đỡ
     const before = s.stats[k], after = clamp(before + d, 0, CAP[k]);
     s.stats[k] = after; if (after !== before) got[k] = after - before; s.today.delta[k] += after - before;
   }
@@ -245,6 +305,8 @@ function startWeek(s, cards, rng) {
   if (RH.kpi.weeks.includes(n)) {
     const used = (s.kpiLog || []).map(k => k.id), fresh = RH.kpi.pool.filter(k => !used.includes(k.id));
     const k = weighted(fresh.length ? fresh : RH.kpi.pool, rng); if (k) s.week.kpi = k.id;
+    const head = k?.goal.type === 'action_count' && perksOf(s, 'kpi_head')[0];            // anh Tùng sits next to you: one done already
+    if (head) s.week.base.actions[k.goal.action] = (s.week.base.actions[k.goal.action] || 0) - head.effect.count;
   }
   if (RH.specialDays.weeks.includes(n) && rng() < RH.specialDays.chance) {
     const phase = phaseOf(s.day), days = [0, 1, 2, 3, 4].map(w => (n - 1) * 7 + 1 + w).filter(d => d >= s.day && ordinaryDay(s, cards, d));
@@ -299,11 +361,13 @@ export function kpiLine(s) {
 function scoreWeek(s) {
   const st = kpiStatus(s); if (!st || s.week.scored) return null;
   s.week.scored = true;
-  const ok = st.done, got = ok ? applyEffects(s, st.kpi.reward) : {};
+  let ok = st.done, rescued = false;
+  if (!ok) { const p = perksOf(s, 'kpi_rescue').find(x => !perkUsed(s, x.id)); if (p) { perkSpend(s, p); ok = rescued = true; } }   // anh Tùng finishes it for you, once
+  const got = ok ? applyEffects(s, st.kpi.reward) : {};
   (s.kpiLog ||= []).push({week: s.week.n, id: st.kpi.id, ok});
   const badge = RH.kpi.badge;
   if (badge && s.kpiLog.filter(k => k.ok).length >= badge.min) addFlag(s, badge.flag);
-  return {kpi: st.kpi, ok, got, line: ok ? st.kpi.lineOk : st.kpi.lineFail};
+  return {kpi: st.kpi, ok, got, rescued, line: ok ? st.kpi.lineOk : st.kpi.lineFail};
 }
 export const cardById = (cards, id) => (id === DAY_ONE.id ? DAY_ONE : cards.find(c => c.id === id) || null);
 export const todaysCard = (s, cards) => (s.today.cardId ? cardById(cards, s.today.cardId) : null);
@@ -369,13 +433,15 @@ export function doAction(s, id, ctx = {}, rng = Math.random) {
   let effects = {...a.effects}, extraNote = null;
   for (const [k, m] of Object.entries(r.mult || {})) if (k in effects) effects[k] *= m;
   for (const [k, v] of Object.entries(r.add || {})) effects[k] = (effects[k] || 0) + v;
+  for (const p of perksOf(s, 'action_add')) if (p.effect.action === id) for (const [k, v] of Object.entries(p.effect.effects)) effects[k] = (effects[k] || 0) + v;   // closeness perks
   const closeMult = r.mult?.close || 1;
-  if (a.extraChance && rng() < a.extraChance) { for (const [k, v] of Object.entries(a.extra)) effects[k] = (effects[k] || 0) + v; extraNote = 'Bạn bị giao thêm việc.'; }
+  if (a.extraChance && !perksOf(s, 'no_extra').some(p => p.effect.action === id) && rng() < a.extraChance) { for (const [k, v] of Object.entries(a.extra)) effects[k] = (effects[k] || 0) + v; extraNote = 'Bạn bị giao thêm việc.'; }
   const target = a.closeness === 'senior' ? ctx.senior : null;
   const got = applyEffects(s, effects, target);
   if (a.closeness && a.closeness !== 'senior') changeCloseness(s, a.closeness, a.closenessGain * closeMult, got);
   if (id === 'tam_chuyen') { const n = ctx.partner || ctx.sitting[0]; changeCloseness(s, n, 5 * closeMult, got); addUnique(s.counters.gossipWith, n); } // only the one you sit next to
   s.counters.actions[id] = (s.counters.actions[id] || 0) + 1;
+  for (const p of perksOf(s, 'wake_bonus')) if (p.effect.after === id) s.bonusWake = (s.bonusWake || 0) + p.effect.pin;   // cô Ba's lunchbox: tomorrow's wake-up
   s.today.action = id; s.part = 'evening';
   const line = a.lines[Math.floor(rng() * a.lines.length)].replace('{senior}', NPC_NAME[ctx.senior] || 'Senior');
   s.today.notes.push(line); if (extraNote) s.today.notes.push(extraNote);
@@ -441,7 +507,7 @@ export function nextDay(s, cards, rng = Math.random) {
 }
 export function endWeekend(s, cards, rng = Math.random) { s.day += 3; wakeUp(s, cards, rng); }
 // waking up: Pin +5, then the morning starts; the gain is kept on today.wake (not in the day's summary) so the page can announce it once
-function wakeUp(s, cards, rng) { const got = applyEffects(s, {pin: WAKE_PIN}); startMorning(s, cards, rng); s.today.wake = got; }
+function wakeUp(s, cards, rng) { const got = applyEffects(s, {pin: giftWake(s) + (s.bonusWake || 0)}); s.bonusWake = 0; startMorning(s, cards, rng); s.today.wake = got; }
 
 /* ---------- Handbook missions ---------- */
 export function recordTalk(s, npc) { if (NPC_IDS.includes(npc)) addUnique(s.counters.talked, npc); }

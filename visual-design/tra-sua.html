@@ -352,9 +352,9 @@ const toastEl = document.getElementById('toast'); let toastT = 0;
 const toast = msg => { toastEl.textContent = msg; toastEl.hidden = false; toastT = 3.5; };
 
 /* ---------- Game: rules in engine.js, the event cards in cards.json ---------- */
-const [CARD_DATA, HANDBOOK, MINIGAMES] = await Promise.all(['cards.json', 'handbook.json', 'minigames.json'].map(u => fetch(u).then(r => r.json())));
+const [CARD_DATA, HANDBOOK, MINIGAMES, PERKS] = await Promise.all(['cards.json', 'handbook.json', 'minigames.json', 'than-thiet.json'].map(u => fetch(u).then(r => r.json())));
 const CARDS = CARD_DATA.cards;
-G.useMinigames(MINIGAMES);
+G.useMinigames(MINIGAMES); G.usePerks(PERKS);
 { const bad = G.validateCards(CARD_DATA); if (bad.length) console.warn('cards.json:', bad); }
 const store = new G.BrowserSaveStore();
 const PROFILE = await Ho.open({badges: CARD_DATA.flagsBadges});
@@ -385,7 +385,7 @@ const deltaChips = got => { const d = document.createElement('div'); d.className
   for (const [n, v] of Object.entries(got.close || {})) d.insertAdjacentHTML('beforeend', `<span class="delta ${v < 0 ? 'down' : ''}">Thân với ${G.NPC_NAME[n]} ${v > 0 ? '+' : '−'}${Math.abs(v)}</span>`);
   return d; };
 const effectText = e => G.STATS.filter(k => e[k]).map(k => `${G.STAT_NAME[k]} ${e[k] > 0 ? '+' : '−'}${Math.abs(e[k])}`).join(' · ');
-function afterChange(){ for (const f of G.checkMissions(S, HANDBOOK)) toast(`Xong nhiệm vụ: ${f.mission.title}`); renderHUD(); save(); PROFILE.sync(S); }
+function afterChange(){ for (const f of G.checkMissions(S, HANDBOOK)) toast(`Xong nhiệm vụ: ${f.mission.title}`); renderHUD(); const news = G.perkNews(S, CARDS); if (news.length) toast(news.join(' · ')); save(); PROFILE.sync(S); }
 const modalWrap = document.getElementById('modal-wrap');
 function choiceList(c, onPick){
   const box = el('div', 'choices');

@@ -1,0 +1,4 @@
+{
+  "note": "Bộ đếm ẩn danh. endpoint để trống = chỉ đếm trong trình duyệt của người chơi, không gửi đi đâu. Khi có địa chỉ nhận (lúc deploy), điền URL vào đây: game gửi bằng sendBeacon một JSON nhỏ {v, id, e, day, ending}; id là mã ngẫu nhiên của trình duyệt, không có tên hay thông tin cá nhân. e: run_start | run_end | second_run | share.",
+  "endpoint": ""
+}

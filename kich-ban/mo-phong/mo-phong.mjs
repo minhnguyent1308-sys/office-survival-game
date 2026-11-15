@@ -14,6 +14,9 @@ const HB = JSON.parse(fs.readFileSync(new URL('../handbook.json', import.meta.ur
 G.useMinigames(JSON.parse(fs.readFileSync(new URL('../minigames.json', import.meta.url))));
 // play rhythm (Lily 15/11): midday office events, special days, weekly KPI. RHYTHM=0 runs without it
 if (process.env.RHYTHM !== '0') G.useRhythm(JSON.parse(fs.readFileSync(new URL('../nhip-choi.json', import.meta.url))));
+// closeness perks (than-thiet.json). PERKS=off runs without them; PERKS=tuan40,hang40 runs only those (to measure each one alone)
+if (process.env.PERKS !== 'off') { const PD = JSON.parse(fs.readFileSync(new URL('../than-thiet.json', import.meta.url)));
+  if (process.env.PERKS) PD.perks = PD.perks.filter(p => process.env.PERKS.split(',').includes(p.id)); G.usePerks(PD); }
 const MGR = (process.env.MG || '25,50,25').split(',').map(x => +x / 100);
 function rngOf(seed){ let x = seed >>> 0 || 1; return () => { x ^= x << 13; x >>>= 0; x ^= x >>> 17; x ^= x << 5; x >>>= 0; return x / 2**32; }; }
 const W = {chamchi:{xp:3, ut:1.6, qh:.6, pin:.25}, xahoi:{xp:1, ut:1, qh:3, pin:.3}, coba:{xp:1, ut:1, qh:3, pin:.3}}; // coba: the same, but every afternoon is lunch with cô Ba (to check the secret ending is reachable)
@@ -44,7 +47,7 @@ function afternoon(s, kind, sitting){
   return s.stats.ut < 62 && s.day % 2 ? 'bao_cao_sep' : 'lam_task';
 }
 export function run(kind, seed){
-  const rng = rngOf(seed), w = W[kind]; RNG = rngOf(seed ^ 0x9e3779b9); const s = G.newGame({rng, startRooms: DATA.rooms?.start});
+  const rng = rngOf(seed), w = W[kind]; RNG = rngOf(seed ^ 0x9e3779b9); const s = G.newGame({rng, startRooms: DATA.rooms?.start}); if (process.env.GIFT) G.applyGift(s, process.env.GIFT, process.env.GIFT_NPC || 'tung');   // GIFT=thu_gioi_thieu|kinh_nghiem|tieng_lanh|goi_quen (GIFT_NPC for the letter)
   G.startMorning(s, CARDS, rng); let visits = 0, nights = 0, firstVisit = null, teaDay = null, events = 0, specials = 0;
   const mis = () => G.checkMissions(s, HB);
   for (let guard=0; guard<300 && s.part!=='over'; guard++){
@@ -54,12 +57,16 @@ export function run(kind, seed){
       const sp = G.todaysSpecial(s, CARDS); if (sp) { G.chooseOption(s, sp, pick(s,sp,w)); mis(); specials++; }
       if (G.kpiToAnnounce(s)) answerKpi(s);
       if (s.part !== 'morning') continue;                               // a special day can skip the morning (mưa ngập)
-      if (s.today.minigame){ const r = rng(); G.playMinigame(s, r<MGR[0]?'xuat_sac':r<MGR[0]+MGR[1]?'dat':'truot'); mis(); continue; }
+      if (s.today.minigame){ const r = rng(); let g = r<MGR[0]?'xuat_sac':r<MGR[0]+MGR[1]?'dat':'truot';
+        const up = g !== 'xuat_sac' && G.perksOf(s,'minigame_upgrade').find(x => !G.perkUsed(s, x.id));   // anh Minh's tip: a near miss (assumed 30% of misses) goes up one grade, once
+        if (up && rng() < .3) { (s.perksUsed ||= []).push(up.id); g = g === 'truot' ? 'dat' : 'xuat_sac'; }
+        G.playMinigame(s, g); mis(); continue; }
       const c = G.todaysCard(s, CARDS); if (!c){ s.part='afternoon'; continue; }
       G.chooseOption(s, c, G.autoResolves(s,c)?0:pick(s,c,w)); mis(); if (c.sceneAt==='trasua') teaDay ??= s.day; continue;
     }
     if (s.part==='afternoon'){
-      const ev = G.todaysEvent(s, CARDS); if (ev) { G.chooseOption(s, ev, pick(s,ev,w)); mis(); events++; continue; }
+      const ev = G.todaysEvent(s, CARDS); if (ev) { const keep = NOISE; if (G.perkOn(s, 'mai60')) NOISE = 0;   // chị Mai's hint: the player picks the best choice
+        G.chooseOption(s, ev, pick(s,ev,w)); NOISE = keep; mis(); events++; continue; }
       const sitting = s.today.canteen; let a = afternoon(s, kind, sitting);
       let partner = sitting[0]; if (a==='tam_chuyen'){ const fresh = sitting.find(n=>!s.counters.gossipWith.includes(n)); const best = [...sitting].sort((x,y)=>s.close[y]-s.close[x])[0]; partner = s.counters.gossipWith.length<3 && fresh ? fresh : best; }
       if (!G.actionAvailable(s,a,{sitting}).ok) a = ['lam_task','bao_cao_sep','giup_chi_mai','hoi_senior'].find(x => G.actionAvailable(s,x,{sitting}).ok);
