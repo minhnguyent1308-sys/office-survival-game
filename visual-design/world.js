@@ -194,7 +194,7 @@ export const NPC_LOOKS = {
 export const LOOKS = {
   hair:  [{id:'short', label:'Ngắn'}, {id:'long', label:'Dài'}],
   color: [{id:'den', label:'Đen', hex:'#2b1d16'}, {id:'hatde', label:'Nâu hạt dẻ', hex:'#6b3a22'}, {id:'nausang', label:'Nâu sáng', hex:'#a8703f'}],
-  extra: [{id:'none', label:'Không'}, {id:'glasses', label:'Kính gọng vàng', set:{glasses:'#c9a227'}}, {id:'bag', label:'Cặp tài liệu', set:{bag:true}}, {id:'clip', label:'Kẹp tóc', set:{clip:'#f7d046'}}],
+  extra: [{id:'none', label:'Không'}, {id:'glasses', label:'Kính gọng vàng', short:'Kính', set:{glasses:'#c9a227'}}, {id:'bag', label:'Cặp tài liệu', short:'Cặp', set:{bag:true}}, {id:'clip', label:'Kẹp tóc', short:'Kẹp', set:{clip:'#f7d046'}}],
 };
 const pick = (list, id) => list.find(o => o.id === id) || list[0];
 // makeChar options for a look; base = what the page dresses you in (pyjamas at home)

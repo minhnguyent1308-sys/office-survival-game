@@ -1,9 +1,11 @@
 {
   "version": 1,
-  "note": "Phần mở đầu game (Lily duyệt 15/11/2026, doc 'Kịch bản mở đầu game Tầng Intern'). Welcome, Ảnh thẻ (chọn ngoại hình, không đổi chỉ số), Phiếu nhân viên mới (đặt tên), 4 thẻ dẫn truyện, tutorial Ngày 1 và mẹo lần đầu. {ten} = tên người chơi, {TEN} = tên viết hoa. Lựa chọn ngoại hình (màu, phụ kiện) nằm ở world.js LOOKS vì ba trang đều cần để dựng nhân vật. Code: visual-design/mo-dau.js.",
+  "note": "Phần mở đầu game (Lily duyệt 15/11/2026, doc 'Kịch bản mở đầu game Tầng Intern'). Giao diện theo hướng B 'Tòa nhà bảy tầng' (Lily chọn 15/11): màn chào là tòa nhà, ảnh thẻ soi gương thang máy, phiếu tên ở quầy lễ tân chị Mai. Welcome, Ảnh thẻ (chọn ngoại hình, không đổi chỉ số), Phiếu nhân viên mới (đặt tên), 4 thẻ dẫn truyện, tutorial Ngày 1 và mẹo lần đầu. {ten} = tên người chơi, {TEN} = tên viết hoa. Lựa chọn ngoại hình (màu, phụ kiện) nằm ở world.js LOOKS vì ba trang đều cần để dựng nhân vật. Code: visual-design/mo-dau.js.",
   "welcome": {
     "title": "Sống sót nơi công sở",
+    "tag": "Tầng 1 · Intern",
     "sub": "40 ngày thử việc. Một suất Junior.",
+    "floors": {"7": "Sếp", "2": "Junior", "1": "Intern"},
     "quotes": [
       "\"Phòng mình có ba loại deadline: gấp, rất gấp, và hôm qua.\" (chị Hằng)",
       "\"Thử việc có 40 ngày thôi mà. Chị thử việc ở đây tám năm rồi đây.\" (chị Hằng)",
@@ -19,7 +21,8 @@
   "look": {
     "eyebrow": "Phòng Nhân sự",
     "title": "Ảnh thẻ hồ sơ",
-    "lead": "Phòng Nhân sự cần một tấm ảnh thẻ. Tấm ảnh này sẽ đi theo bạn suốt 40 ngày, và có thể lâu hơn nếu bạn được ký hợp đồng.",
+    "floor": "1",
+    "lead": "Soi gương lần cuối trước khi lên hồ sơ. Ảnh này đi theo bạn suốt 40 ngày.",
     "rows": {"hair": "Kiểu tóc", "color": "Màu tóc", "extra": "Phụ kiện"},
     "hint": "Kéo nhân vật để xoay",
     "random": "Ngẫu nhiên",
@@ -39,10 +42,14 @@
     ],
     "max": 12,
     "suggest": "Gợi ý tên",
+    "suggestMore": "Gợi ý tên khác",
     "suggestions": ["An", "Bình", "Chi", "Dũng", "Giang", "Hà", "Khánh", "Lam", "Ngân", "Nhi", "Quân", "Trang", "Vy", "Yến"],
     "invalid": "Chỉ dùng chữ cái và khoảng trắng nhé.",
     "sign": "Ký tên",
     "who": "Chị Mai",
+    "whoFull": "Chị Mai, lễ tân",
+    "lobby": "Sảnh · Tầng 1",
+    "ask": "\"Em điền phiếu giúp chị nhé. Ghi tên mà mọi người sẽ gọi em ấy.\"",
     "special": {
       "phong": "\"Phong à… Em đừng giới thiệu tên với sếp vội nhé. Chuyện dài.\"",
       "tuấn": "\"Trùng tên sếp. Em sẽ được nhớ tên rất nhanh, theo cả hai hướng.\""
