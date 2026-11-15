@@ -10,6 +10,8 @@ for (const c of CARDS) if (c.when==='night' && /^[NV]/.test(c.id)) for (const ch
 const HB = JSON.parse(fs.readFileSync(new URL('../handbook.json', import.meta.url)));
 // mini-game library: milestone days and rewards come from minigames.json; the grade a player gets is drawn from MG="Xuất sắc,Đạt,Trượt" (%)
 G.useMinigames(JSON.parse(fs.readFileSync(new URL('../minigames.json', import.meta.url))));
+// play rhythm (Lily 15/11): midday office events, special days, weekly KPI. RHYTHM=0 runs without it
+if (process.env.RHYTHM !== '0') G.useRhythm(JSON.parse(fs.readFileSync(new URL('../nhip-choi.json', import.meta.url))));
 const MGR = (process.env.MG || '25,50,25').split(',').map(x => +x / 100);
 function rngOf(seed){ let x = seed >>> 0 || 1; return () => { x ^= x << 13; x >>>= 0; x ^= x >>> 17; x ^= x << 5; x >>>= 0; return x / 2**32; }; }
 const W = {chamchi:{xp:3, ut:1.6, qh:.6, pin:.25}, xahoi:{xp:1, ut:1, qh:3, pin:.3}};
@@ -30,24 +32,30 @@ function afternoon(s, kind, sitting){
   const workdaysLeft = Math.round(left*5/7);
   if (need.length && (need.length >= workdaysLeft - +(process.env.SLACK ?? 4))) { const a = need.find(a => a!=='lam_task') || need[0]; return a; }
   if (can && s.day > 18 && s.stats.qh < 50) return 'tam_chuyen';
+  const k = G.kpiStatus(s);                                          // weekly KPI (nhip-choi.json): chase an action KPI when nothing else is urgent
+  if (k && !k.done && k.kpi.goal.type === 'action_count' && (k.kpi.goal.action !== 'tam_chuyen' || sitting?.length)) return k.kpi.goal.action;
   return s.stats.ut < 62 && s.day % 2 ? 'bao_cao_sep' : 'lam_task';
 }
 export function run(kind, seed){
   const rng = rngOf(seed), w = W[kind]; RNG = rngOf(seed ^ 0x9e3779b9); const s = G.newGame({rng, startRooms: DATA.rooms?.start});
-  G.startMorning(s, CARDS, rng); let visits = 0, nights = 0, firstVisit = null, teaDay = null;
+  G.startMorning(s, CARDS, rng); let visits = 0, nights = 0, firstVisit = null, teaDay = null, events = 0, specials = 0;
   const mis = () => G.checkMissions(s, HB);
   for (let guard=0; guard<300 && s.part!=='over'; guard++){
     if (s.part==='morning'){
       for (const r of s.rooms) G.recordRoom(s, r); if (s.day <= 12) for (const n of G.NPC_IDS) if (n!=='coba'||G.roomOpen(s,'canteen')) G.recordTalk(s,n);
       const u = G.todaysUnlock(s, CARDS); if (u) { G.chooseOption(s, u, pick(s,u,w)); mis(); }
+      const sp = G.todaysSpecial(s, CARDS); if (sp) { G.chooseOption(s, sp, pick(s,sp,w)); mis(); specials++; }
+      if (G.kpiToAnnounce(s)) G.kpiSeen(s);
+      if (s.part !== 'morning') continue;                               // a special day can skip the morning (mưa ngập)
       if (s.today.minigame){ const r = rng(); G.playMinigame(s, r<MGR[0]?'xuat_sac':r<MGR[0]+MGR[1]?'dat':'truot'); mis(); continue; }
       const c = G.todaysCard(s, CARDS); if (!c){ s.part='afternoon'; continue; }
       G.chooseOption(s, c, G.autoResolves(s,c)?0:pick(s,c,w)); mis(); if (c.sceneAt==='trasua') teaDay ??= s.day; continue;
     }
     if (s.part==='afternoon'){
+      const ev = G.todaysEvent(s, CARDS); if (ev) { G.chooseOption(s, ev, pick(s,ev,w)); mis(); events++; continue; }
       const sitting = s.today.canteen; let a = afternoon(s, kind, sitting);
       let partner = sitting[0]; if (a==='tam_chuyen'){ const fresh = sitting.find(n=>!s.counters.gossipWith.includes(n)); const best = [...sitting].sort((x,y)=>s.close[y]-s.close[x])[0]; partner = s.counters.gossipWith.length<3 && fresh ? fresh : best; }
-      if (!G.actionAvailable(s,a,{sitting}).ok) a = 'lam_task';
+      if (!G.actionAvailable(s,a,{sitting}).ok) a = ['lam_task','bao_cao_sep','giup_chi_mai','hoi_senior'].find(x => G.actionAvailable(s,x,{sitting}).ok);
       G.doAction(s,a,{sitting, partner, senior: G.SENIORS[Math.floor(rng()*4)]}, rng); mis();
       if (TEA !== 'off') { const kind = TEA !== 'smart' ? TEA : 2*w.pin*(s.stats.pin<35?4:1) > 1*w.qh ? 'self' : 'colleague'; G.buyTea(s, kind); mis(); } // quán trà sữa: one cup a day
       continue;
@@ -62,13 +70,13 @@ export function run(kind, seed){
   }
   const ut = s.stats.ut + (s.stats.qh >= 70 ? 5 : 0);
   const junior = s.ending==='review' && s.stats.xp>=100 && ut>=60 && s.stats.qh>=50 && s.missionsDone.length===HB.missions.length;
-  return {s, junior, visits, nights, firstVisit, teaDay};
+  return {s, junior, visits, nights, firstVisit, teaDay, events, specials};
 }
 const N = +(process.env.N ?? 2000);
 if (N > 0)
 for (const kind of ['chamchi','xahoi']) {
-  let td=[], jr=0, xp=0, end={}, v=0, vr=0, ni=0, fails={xp:0,ut:0,qh:0,mis:0}, minPin=0, qh70=0;
-  for (let i=1;i<=N;i++){ const r = run(kind, i*2654435761 + (+process.env.SEED || 0)); const s=r.s; jr+=r.junior; xp+=s.stats.xp; end[s.ending]=(end[s.ending]||0)+1; v+=r.visits; vr+=r.visits>0; ni+=r.nights; qh70+=s.stats.qh>=70; td.push(r.teaDay ?? 99);
+  let td=[], jr=0, xp=0, end={}, v=0, vr=0, ni=0, fails={xp:0,ut:0,qh:0,mis:0}, minPin=0, qh70=0, ev=0, sd=0, kpiOk=0, kpiN=0, kpiBadge=0;
+  for (let i=1;i<=N;i++){ const r = run(kind, i*2654435761 + (+process.env.SEED || 0)); const s=r.s; jr+=r.junior; xp+=s.stats.xp; end[s.ending]=(end[s.ending]||0)+1; v+=r.visits; vr+=r.visits>0; ni+=r.nights; qh70+=s.stats.qh>=70; ev+=r.events; sd+=r.specials; kpiN+=(s.kpiLog||[]).length; kpiOk+=(s.kpiLog||[]).filter(k=>k.ok).length; kpiBadge+=s.flags.includes('nhan_vien_kpi'); td.push(r.teaDay ?? 99);
     if (s.stats.xp<100) fails.xp++; if (s.stats.ut+(s.stats.qh>=70?5:0)<60) fails.ut++; if (s.stats.qh<50) fails.qh++; if (s.missionsDone.length<10) fails.mis++; }
-  console.log(kind.padEnd(8), 'Junior', (100*jr/N).toFixed(1)+'%', 'XP', (xp/N).toFixed(1), JSON.stringify(end), 'thiếu', JSON.stringify(fails), 'qh70', (100*qh70/N).toFixed(0)+'%', 'visit/ván', (v/N).toFixed(2), 'có visit', (100*vr/N).toFixed(0)+'%', 'lá tối/ván', (ni/N).toFixed(1), 'mở quán: trung vị ngày', td.sort((a,b)=>a-b)[N>>1], 'chưa mở', (100*td.filter(x=>x===99).length/N).toFixed(0)+'%');
+  console.log(kind.padEnd(8), 'Junior', (100*jr/N).toFixed(1)+'%', 'XP', (xp/N).toFixed(1), JSON.stringify(end), 'thiếu', JSON.stringify(fails), 'qh70', (100*qh70/N).toFixed(0)+'%', 'visit/ván', (v/N).toFixed(2), 'có visit', (100*vr/N).toFixed(0)+'%', 'lá tối/ván', (ni/N).toFixed(1), 'mở quán: trung vị ngày', td.sort((a,b)=>a-b)[N>>1], 'chưa mở', (100*td.filter(x=>x===99).length/N).toFixed(0)+'%', 'sự kiện giữa buổi/ván', (ev/N).toFixed(1), 'ngày đặc biệt/ván', (sd/N).toFixed(1), 'KPI đạt', kpiN ? (100*kpiOk/kpiN).toFixed(0)+'%' : '-', 'huy hiệu KPI', (100*kpiBadge/N).toFixed(0)+'%');
 }

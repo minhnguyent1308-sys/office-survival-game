@@ -82,6 +82,10 @@
     "than_voi_coba": {
       "name": "Thân với cô Ba",
       "line": "\"Cô Ba dặn anh phải giữ em lại. Cô Ba chưa dặn anh việc gì bao giờ.\""
+    },
+    "nhan_vien_kpi": {
+      "name": "Nhân viên KPI",
+      "line": "\"Tuần nào anh giao KPI em cũng làm. Anh bắt đầu thấy hơi áp lực.\""
     }
   },
   "endings": [

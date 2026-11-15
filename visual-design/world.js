@@ -181,6 +181,11 @@ export const NPC_LOOKS = {
   linh: {shirt:'#cfe8d6', hair:'#1f1a17', pants:'#4a3b52', style:'ponytail', scarf:P.yellow},
   minh: {shirt:'#fbe7b0', hair:'#2b1d16', pants:'#2f4a3a', style:'spiky', headphones:'#e8505b', scale:[1,1.08,1]},
   tung: {shirt:'#b9dcf2', hair:'#3b2a1e', pants:'#3a3f55', style:'curly', lanyard:true, glasses:'#222'},
+  // people who only appear in staged events (engine.js EXTRA_PEOPLE): same body, own colours (Lily 15/11)
+  sep_tong: {shirt:'#2f3542', pants:'#2f3542', tie:'#e3b23c', hair:'#d9d9d9', style:'short', glasses:'#222', scale:[1.08,1.05,1.08]},
+  chu_tro:  {shirt:'#e9a6a6', pants:'#6b4a3a', hair:'#6b6b6b', style:'bun', scale:[1.05,.95,1.05]},
+  shipper:  {shirt:'#2fb36b', pants:'#2b2f3a', hair:'#2b1d16', style:'short', bag:true},
+  hang_xom: {shirt:'#f2c14e', pants:'#3a4660', hair:'#1f1a17', style:'spiky', headphones:'#3c83ec'},
 };
 
 /* ---------- Scene change office → room: one quote per day, every trip a different line ---------- */

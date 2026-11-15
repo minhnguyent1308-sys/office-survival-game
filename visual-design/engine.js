@@ -11,7 +11,10 @@ const CAP = {xp: 150, pin: 100, ut: 100, qh: 100};
 export const JUNIOR_XP = 100;
 export const CLOSE_START = 20, CLOSE_UNLOCK = 40;
 export const NPC_IDS = ['tuan', 'hang', 'linh', 'minh', 'tung', 'mai', 'coba'];
-export const NPC_NAME = {tuan: 'Anh Tuấn', hang: 'Chị Hằng', linh: 'Chị Linh', minh: 'Anh Minh', tung: 'Anh Tùng', mai: 'Chị Mai', coba: 'Cô Ba', client: 'Khách hàng'};
+export const NPC_NAME = {tuan: 'Anh Tuấn', hang: 'Chị Hằng', linh: 'Chị Linh', minh: 'Anh Minh', tung: 'Anh Tùng', mai: 'Chị Mai', coba: 'Cô Ba', client: 'Khách hàng',
+  sep_tong: 'Sếp tổng', chu_tro: 'Chủ trọ', shipper: 'Anh shipper', hang_xom: 'Hàng xóm'};
+// people who only appear in staged events (no closeness, no card of their own); their looks live in world.js NPC_LOOKS
+export const EXTRA_PEOPLE = ['sep_tong', 'chu_tro', 'shipper', 'hang_xom'];
 export const SENIORS = ['hang', 'linh', 'minh', 'tung'];
 export const VISITORS = [...SENIORS, 'mai', 'tuan'];   // who can come to the rented room (type 'visit' cards)
 export const ROOM_IDS = ['lobby', 'intern', 'boss', 'canteen', 'meeting'];
@@ -20,7 +23,8 @@ export const PLACES = {trasua: 'tra-sua.html'};
 const WEEKDAY = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ nhật'];
 const WEEKEND_CARD_CHANCE = 1 / 3;
 export const WAKE_PIN = 5; // sleeping restores a little Pin every morning (Lily 14/11)
-const NIGHT_CARD_CHANCE = 1 / 2; // evenings at the rented room: study cards + boss/client messages (Lily 14/11: more XP events at home)
+// evenings at the rented room: study cards + boss/client messages (Lily 14/11: more XP events at home); nhip-choi.json events.night overrides (Lily 15/11: 2/3)
+let NIGHT_CARD_CHANCE = 1 / 2;
 
 /* ---------- Calendar: day 1 is a Monday, day 40 a Friday ---------- */
 export const weekday = day => (day - 1) % 7;               // 0 = Monday
@@ -50,6 +54,18 @@ export function gradeOf(game, score) {
   for (const [g] of MG.grades) if (game.thresholds?.[g] != null && score >= game.thresholds[g]) return g;
   return MG.grades.at(-1)[0];
 }
+
+/* ---------- Play rhythm (Lily 15/11): staged events, special days, weekly KPI. Content and odds live in nhip-choi.json ---------- */
+// Each page loads nhip-choi.json and calls useRhythm(data) once, like useMinigames. Without it: no midday events, no special days, no KPI.
+let RH = {events: {midday: 0}, specialDays: {weeks: [], chance: 0}, kpi: {weeks: [], pool: []}};
+export function useRhythm(data) { if (!data) return; RH = {...RH, ...data}; if (data.events?.night != null) NIGHT_CARD_CHANCE = data.events.night; }
+export const rhythm = () => RH;
+export const weekOf = day => Math.floor((day - 1) / 7) + 1;   // week 1 = days 1-5, week 6 = days 36-40
+// stage: an event happens somewhere: "!" over the player, a scene change to stage.spot on stage.map, then the story (pages own the spots)
+export const STAGE_MAPS = ['office', 'home'];
+export const isStaged = c => !!c?.stage;
+export const isMidday = c => c.when === 'midday';            // office, between the morning card and the afternoon turn
+export const isSpecialDay = c => c.type === 'special_day';
 
 /* ---------- Afternoon: one free action at one place ---------- */
 // place = where the player does it in the 3D world (the page maps places to hotspots)
@@ -93,7 +109,7 @@ export function newGame({female = false, rng = Math.random, startRooms = ROOM_ID
     close: Object.fromEntries(NPC_IDS.map(n => [n, CLOSE_START])),
     flags: [], used: [], followups: [], followupsMade: [], history: [],
     counters: {actions: {}, talked: [], rooms: [], gossipWith: [], minigames: {}},
-    missionsDone: [],
+    missionsDone: [], kpiLog: [],
     today: freshToday(),
     ending: null,
   };
@@ -151,8 +167,10 @@ export function drawCard(s, cards, rng = Math.random) {
     if (c && requiresOk(s, c.requires)) return c;
   }
   const phase = phaseOf(s.day);
-  const pool = cards.filter(c => DRAWABLE.has(c.type) && !isNightCard(c) && (c.phases || []).includes(phase) && requiresOk(s, c.requires)
+  let pool = cards.filter(c => DRAWABLE.has(c.type) && !c.when && (c.phases || []).includes(phase) && requiresOk(s, c.requires)
     && roomOpen(s, c.room) && (!s.used.includes(c.id) || c.repeatable) && (c.weight ?? 0) > 0);
+  const only = rulesToday(s, cards).npc;                     // special day (e.g. sếp tổng ghé): the morning belongs to this person
+  if (only && pool.some(c => c.npc === only)) return weighted(pool.filter(c => c.npc === only), rng);
   const event = pool.find(c => c.type === 'character_event');
   if (event) return event;
   const last = s.history.at(-1), prev = s.history.at(-2);
@@ -181,13 +199,86 @@ export function startMorning(s, cards, rng = Math.random) {
   // 08:29 room opening: runs before the morning card and does not replace it
   const unlock = cards.find(c => c.type === 'unlock' && c.day === s.day && !roomOpen(s, c.unlocks));
   if (unlock) s.today.unlockId = unlock.id;
+  if (s.week?.n !== weekOf(s.day)) startWeek(s, cards, rng);
+  if (s.week.specialDay === s.day) { s.today.specialId = s.week.specialId; s.today.specialRules = cardById(cards, s.week.specialId)?.rules?.actions || {}; } // 08:29, after a room opening, before the card
   if (s.day === 1) { s.today.cardId = DAY_ONE.id; return; }
   const mg = drawMinigame(s, rng);
   if (mg) { s.today.minigame = mg.id; return; }             // milestone morning: a mini-game instead of a card
+  drawMidday(s, cards, rng);
+  if (rulesToday(s, cards).skipMorningCard) return;         // e.g. mưa ngập: you arrive late, the special day's card ends the morning
   const c = drawCard(s, cards, rng);
-  if (!c) { s.today.cardDone = true; s.today.notes.push('Sáng nay yên bình đến lạ.'); return; }
+  if (!c) { s.today.cardDone = true; s.part = 'afternoon'; s.today.notes.push('Sáng nay yên bình đến lạ.'); return; }
   s.today.cardId = c.id; addUnique(s.used, c.id);
   s.history.push({day: s.day, card: c.id, npc: c.npc, heavy: !!c.heavy});
+}
+// a quiet working day: not day 1, not a milestone (mini-game) day, not a room opening, not the last day
+const ordinaryDay = (s, cards, day) => day > 1 && day < TOTAL_DAYS && !isWeekend(day) && !isMinigameDay(day) && !cards.some(c => c.type === 'unlock' && c.day === day);
+// Office event between the morning card and the afternoon (when "midday"): rolled at 08:29, played once the morning is done.
+function drawMidday(s, cards, rng) {
+  if (!ordinaryDay(s, cards, s.day) || rng() >= (RH.events.midday || 0)) return;
+  const phase = phaseOf(s.day);
+  const pool = cards.filter(c => isMidday(c) && (c.phases || []).includes(phase) && !s.used.includes(c.id) && roomOpen(s, c.room) && requiresOk(s, c.requires));
+  const c = weighted(pool, rng);
+  if (c) { s.today.eventId = c.id; addUnique(s.used, c.id); }
+}
+// the event waiting right now: only after the morning card (or mini-game) is done and before the afternoon turn is used
+export const todaysEvent = (s, cards) => (s.today.eventId && !s.today.eventDone && s.today.cardDone && s.part === 'afternoon' && !s.today.action ? cardById(cards, s.today.eventId) : null);
+
+/* ---------- Week: a special day (maybe) and a KPI from anh Tuấn (nhip-choi.json) ---------- */
+function startWeek(s, cards, rng) {
+  const n = weekOf(s.day);
+  s.week = {n, base: {actions: {...s.counters.actions}, stats: {...s.stats}}, low: {...s.stats}, kpi: null, kpiSeen: false, specialDay: null, specialId: null};
+  if (RH.kpi.weeks.includes(n)) {
+    const used = (s.kpiLog || []).map(k => k.id), fresh = RH.kpi.pool.filter(k => !used.includes(k.id));
+    const k = weighted(fresh.length ? fresh : RH.kpi.pool, rng); if (k) s.week.kpi = k.id;
+  }
+  if (RH.specialDays.weeks.includes(n) && rng() < RH.specialDays.chance) {
+    const phase = phaseOf(s.day), days = [0, 1, 2, 3, 4].map(w => (n - 1) * 7 + 1 + w).filter(d => d >= s.day && ordinaryDay(s, cards, d));
+    const pool = cards.filter(c => isSpecialDay(c) && !s.used.includes(c.id) && (c.phases || [1, 2, 3]).includes(phase) && requiresOk(s, c.requires) && roomOpen(s, c.room)
+      && days.some(d => c.weekday == null || weekday(d) === c.weekday));
+    const c = weighted(pool, rng);
+    if (c) { const fit = days.filter(d => c.weekday == null || weekday(d) === c.weekday); s.week.specialDay = fit[Math.floor(rng() * fit.length)]; s.week.specialId = c.id; addUnique(s.used, c.id); }
+  }
+}
+export const todaysSpecial = (s, cards) => (s.today.specialId && !s.today.specialDone ? cardById(cards, s.today.specialId) : null);
+// the special day's rules apply all day once it is announced (and also before, so a reload cannot dodge them)
+export const rulesToday = (s, cards) => (s.today.specialId ? cardById(cards, s.today.specialId)?.rules || {} : {});
+export const kpiById = id => RH.kpi.pool.find(k => k.id === id) || null;
+export const kpiToAnnounce = s => (s.week?.kpi && !s.week.kpiSeen && s.part === 'morning' ? kpiById(s.week.kpi) : null);
+export function kpiSeen(s) { if (s.week) s.week.kpiSeen = true; }
+function kpiDone(s, g) {
+  const b = s.week.base;
+  switch (g.type) {
+    case 'action_count': return (s.counters.actions[g.action] || 0) - (b.actions[g.action] || 0) >= g.count;
+    case 'stat_min': return s.week.low[g.stat] >= g.min;                       // lowest value at 17:55 this week (and now)
+    case 'stat_gain': return s.stats[g.stat] - b.stats[g.stat] >= g.gain;
+    default: return false;
+  }
+}
+// HUD line: {kpi, a, b, done}; a/b = progress (stat_min shows the week's low against the floor)
+export function kpiStatus(s) {
+  const k = s.week?.kpi && kpiById(s.week.kpi); if (!k) return null;
+  const g = k.goal, b = s.week.base;
+  const [a, of] = g.type === 'action_count' ? [Math.min(g.count, (s.counters.actions[g.action] || 0) - (b.actions[g.action] || 0)), g.count]
+    : g.type === 'stat_gain' ? [Math.max(0, Math.min(g.gain, s.stats[g.stat] - b.stats[g.stat])), g.gain]
+    : [Math.min(s.week.low[g.stat], s.stats[g.stat]), g.min];
+  return {kpi: k, a, b: of, done: kpiDone(s, g) && (g.type !== 'stat_min' || s.stats[g.stat] >= g.min)};
+}
+// one HUD line, same on every map: "KPI tuần: Báo cáo anh Tuấn 2 lần · 1/2"
+export function kpiLine(s) {
+  const st = kpiStatus(s); if (!st) return '';
+  const g = st.kpi.goal, prog = g.type === 'stat_min' ? `${STAT_NAME[g.stat]} thấp nhất tuần: ${st.a}` : `${st.a}/${st.b}`;
+  return `KPI tuần: ${st.kpi.title} · ${st.done ? 'Đạt ✓' : prog}`;
+}
+// Friday night, before the weekend: the KPI is scored. Reward if met; nothing lost if not (Lily 15/11: keep it relaxed).
+function scoreWeek(s) {
+  const st = kpiStatus(s); if (!st || s.week.scored) return null;
+  s.week.scored = true;
+  const ok = st.done, got = ok ? applyEffects(s, st.kpi.reward) : {};
+  (s.kpiLog ||= []).push({week: s.week.n, id: st.kpi.id, ok});
+  const badge = RH.kpi.badge;
+  if (badge && s.kpiLog.filter(k => k.ok).length >= badge.min) addFlag(s, badge.flag);
+  return {kpi: st.kpi, ok, got, line: ok ? st.kpi.lineOk : st.kpi.lineFail};
 }
 export const cardById = (cards, id) => (id === DAY_ONE.id ? DAY_ONE : cards.find(c => c.id === id) || null);
 export const todaysCard = (s, cards) => (s.today.cardId ? cardById(cards, s.today.cardId) : null);
@@ -213,6 +304,8 @@ export function chooseOption(s, c, index) {
   }
   if (c.sceneAt) addUnique(s.rooms ||= [...ROOM_IDS], c.sceneAt); // (a save with no rooms list had every room open)           // the event took you there: from now on you know the way
   if (c.type === 'unlock') { s.today.unlockDone = true; addUnique(s.rooms, c.unlocks); recordRoom(s, c.unlocks); } // the morning card still follows
+  else if (isSpecialDay(c)) { s.today.specialDone = true; if (c.rules?.skipMorningCard) { s.today.cardDone = true; s.part = 'afternoon'; } }
+  else if (isMidday(c)) s.today.eventDone = true;          // the afternoon turn follows
   else if (isNightCard(c)) s.today.nightDone = true;     // evening at home: the day part stays 'evening'
   else { s.today.cardDone = true; if (c.type !== 'weekend') s.part = 'afternoon'; }
   if (comment) s.today.notes.push(comment);
@@ -232,9 +325,13 @@ export function playMinigame(s, result, extras = []) {
   return got;
 }
 
+// today's special-day rule for one afternoon action: {off: "why"} | {mult: {qh: 2, close: 2}} | {add: {ut: 2}}
+const ruleFor = (s, id) => (s.today.specialRules || {})[id] || {};
 export function actionAvailable(s, id, ctx = {}) {
   const a = ACTIONS[id];
   if (s.part !== 'afternoon' || s.today.action) return {ok: false, why: 'Hết lượt chiều'};
+  if (s.today.eventId && !s.today.eventDone) return {ok: false, why: 'Đang có chuyện, xử lý xong đã'};
+  if (ruleFor(s, id).off) return {ok: false, why: ruleFor(s, id).off};
   if (a.needQh && s.stats.qh < a.needQh) return {ok: false, why: `Cần Quan hệ từ ${a.needQh}`};
   if (!roomOpen(s, PLACE_ROOM[a.place])) return {ok: false, why: 'Phòng này chưa mở'};
   if (a.needSitting && !(ctx.sitting || []).length) return {ok: false, why: 'Chưa có ai ngồi căng tin'};
@@ -242,13 +339,16 @@ export function actionAvailable(s, id, ctx = {}) {
 }
 // ctx: {sitting: [npc ids at the canteen], partner: the one you gossip with, senior: npc id who answers questions}
 export function doAction(s, id, ctx = {}, rng = Math.random) {
-  const a = ACTIONS[id];
+  const a = ACTIONS[id], r = ruleFor(s, id);
   let effects = {...a.effects}, extraNote = null;
+  for (const [k, m] of Object.entries(r.mult || {})) if (k in effects) effects[k] *= m;
+  for (const [k, v] of Object.entries(r.add || {})) effects[k] = (effects[k] || 0) + v;
+  const closeMult = r.mult?.close || 1;
   if (a.extraChance && rng() < a.extraChance) { for (const [k, v] of Object.entries(a.extra)) effects[k] = (effects[k] || 0) + v; extraNote = 'Bạn bị giao thêm việc.'; }
   const target = a.closeness === 'senior' ? ctx.senior : null;
   const got = applyEffects(s, effects, target);
-  if (a.closeness && a.closeness !== 'senior') changeCloseness(s, a.closeness, a.closenessGain, got);
-  if (id === 'tam_chuyen') { const n = ctx.partner || ctx.sitting[0]; changeCloseness(s, n, 5, got); addUnique(s.counters.gossipWith, n); } // only the one you sit next to
+  if (a.closeness && a.closeness !== 'senior') changeCloseness(s, a.closeness, a.closenessGain * closeMult, got);
+  if (id === 'tam_chuyen') { const n = ctx.partner || ctx.sitting[0]; changeCloseness(s, n, 5 * closeMult, got); addUnique(s.counters.gossipWith, n); } // only the one you sit next to
   s.counters.actions[id] = (s.counters.actions[id] || 0) + 1;
   s.today.action = id; s.part = 'evening';
   const line = a.lines[Math.floor(rng() * a.lines.length)].replace('{senior}', NPC_NAME[ctx.senior] || 'Senior');
@@ -270,6 +370,7 @@ export function buyTea(s, kind) {
 
 // 17:55: the only moment burnout and early dismissal are checked (the afternoon can still save you).
 export function endOfDay(s) {
+  if (s.week) for (const k of STATS) s.week.low[k] = Math.min(s.week.low[k], s.stats[k]);   // KPI "giữ Pin từ 30" looks at 17:55
   if (s.stats.pin <= 0) s.ending = 'burnout';
   else if (s.stats.ut < 10) s.ending = 'fired';
   else if (s.day >= TOTAL_DAYS) s.ending = 'review';   // day 40 evaluation arrives in step 3
@@ -298,13 +399,14 @@ export function goHome(s) { if (s.part === 'evening') s.today.atHome = true; }
 // Friday evening -> weekend screen: Pin +20 first, then sometimes a weekend card.
 export function nextDay(s, cards, rng = Math.random) {
   if (weekday(s.day) === 4) {
-    s.part = 'weekend'; s.today = freshToday();
+    const kpi = scoreWeek(s);
+    s.part = 'weekend'; s.today = freshToday(); s.today.kpiResult = kpi;
     const got = applyEffects(s, {pin: 20});
     const phase = phaseOf(s.day + 3);
     const pool = cards.filter(c => c.type === 'weekend' && (c.phases || []).includes(phase) && !s.used.includes(c.id) && requiresOk(s, c.requires));
     const c = pool.length && rng() < WEEKEND_CARD_CHANCE ? weighted(pool, rng) : null;
     if (c) { s.today.cardId = c.id; addUnique(s.used, c.id); }
-    return {weekend: true, got, card: c};
+    return {weekend: true, got, card: c, kpi};
   }
   s.day += 1; wakeUp(s, cards, rng);
   return {weekend: false};
@@ -399,17 +501,42 @@ export class BrowserSaveStore {
   async clear() { try { localStorage.removeItem(this.key); } catch { /* nothing saved */ } }
 }
 
+/* ---------- Data check for nhip-choi.json ---------- */
+export function validateRhythm(data, cardData) {
+  const problems = [], goals = ['action_count', 'stat_min', 'stat_gain'];
+  for (const k of data.kpi?.pool || []) {
+    if (!k.id || !k.title) problems.push(`KPI thiếu id/title`);
+    if (!goals.includes(k.goal?.type)) problems.push(`KPI ${k.id}: goal.type "${k.goal?.type}" lạ (${goals.join(', ')})`);
+    if (k.goal?.type === 'action_count' && !ACTIONS[k.goal.action]) problems.push(`KPI ${k.id}: action "${k.goal.action}" lạ`);
+    if (k.goal?.stat && !STATS.includes(k.goal.stat)) problems.push(`KPI ${k.id}: stat "${k.goal.stat}" lạ`);
+    if (!k.reward || !k.lineOk || !k.lineFail) problems.push(`KPI ${k.id}: thiếu reward / lineOk / lineFail`);
+  }
+  const badge = data.kpi?.badge;
+  if (badge && cardData && !(cardData.flagsBadges || []).includes(badge.flag)) problems.push(`KPI badge "${badge.flag}" chưa có trong flagsBadges của cards.json`);
+  if (cardData && (data.specialDays?.weeks || []).length && !cardData.cards.some(isSpecialDay)) problems.push('Có tuần ngày đặc biệt nhưng cards.json chưa có lá special_day');
+  return problems;
+}
+
 /* ---------- Data check: catches typos in cards.json before they break a run ---------- */
 export function validateCards(data) {
   const cards = data.cards, ids = new Set(cards.map(c => c.id)), flags = new Set([...(data.flagsBadges || []), ...(data.flagsHidden || []), 'co_so_tay']);
   const problems = [];
   for (const c of cards) {
-    if (c.when && c.when !== 'night') problems.push(`${c.id}: when "${c.when}" lạ`);
     if (c.type === 'unlock' && (!ROOM_IDS.includes(c.unlocks) || !c.day)) problems.push(`${c.id}: lá mở phòng thiếu unlocks/day`);
     if (c.type === 'visit' && (c.when !== 'night' || !VISITORS.includes(c.npc))) problems.push(`${c.id}: lá ghé phòng cần when "night" và npc là một trong ${VISITORS.join(', ')}`);
     if (c.sceneAt && !(c.sceneAt in PLACES)) problems.push(`${c.id}: sceneAt "${c.sceneAt}" lạ`);
     if (c.sceneAt && (c.when || !c.room)) problems.push(`${c.id}: lá có sceneAt phải là lá buổi sáng có room (người rủ đứng chờ ở đó)`);
     if (c.room && !ROOM_IDS.includes(c.room)) problems.push(`${c.id}: phòng "${c.room}" lạ`);
+    if (c.when && !['night', 'midday'].includes(c.when)) problems.push(`${c.id}: when "${c.when}" lạ`);
+    if (c.stage) { const st = c.stage;
+      if (!STAGE_MAPS.includes(st.map) || !st.spot) problems.push(`${c.id}: stage cần map (${STAGE_MAPS.join(', ')}) và spot`);
+      if (c.when === 'night' && st.map !== 'home') problems.push(`${c.id}: lá tối có stage phải ở map "home"`);
+      if (c.when === 'midday' && st.map !== 'office') problems.push(`${c.id}: lá giữa buổi có stage phải ở map "office"`);
+      for (const n of st.people || []) if (!NPC_IDS.includes(n) && !EXTRA_PEOPLE.includes(n) && n !== 'client') problems.push(`${c.id}: người "${n}" lạ trong stage`); }
+    if (c.when === 'midday' && !c.stage) problems.push(`${c.id}: lá giữa buổi cần stage`);
+    if (isSpecialDay(c)) for (const [a, r] of Object.entries(c.rules?.actions || {})) {
+      if (!ACTIONS[a]) problems.push(`${c.id}: rules.actions "${a}" không phải việc buổi chiều`);
+      for (const k of Object.keys(r)) if (!['off', 'mult', 'add'].includes(k)) problems.push(`${c.id}: luật "${k}" lạ ở ${a}`); }
     if (c.npc && !NPC_IDS.includes(c.npc) && c.npc !== 'client') problems.push(`${c.id}: npc "${c.npc}" lạ`);
     for (const f of [...(c.requires?.flags || []), ...(c.requires?.anyFlags || []), ...(c.requires?.notFlags || [])]) if (!flags.has(f)) problems.push(`${c.id}: cờ "${f}" chưa khai báo`);
     for (const ch of c.choices || []) {

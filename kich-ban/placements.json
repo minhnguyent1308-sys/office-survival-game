@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "note": "Chỗ đặt liên kết đối tác (affiliate), Lily 15/11/2026: mới chuẩn bị nền, chưa hiện gì. `slots`: chỗ đặt, gọi theo tên chỗ (spot) trên bản đồ (office: danh sách SPOTS trong tang-intern.html; home: SPOTS trong phong-tro.html). `items`: sản phẩm, đang để trống; rỗng thì game không vẽ gì. Một item: {\"slot\": \"bang_tin_sanh\", \"title\": \"Bình giữ nhiệt văn phòng\", \"url\": \"https://...\", \"from\": \"2026-12-01\", \"until\": \"2026-12-31\"}. Dùng nguyên link sàn cấp, không tự rút gọn. Luật cố định trong placements.js: mở tab mới, lưu game trước, luôn có nhãn \"Liên kết đối tác\", không bao giờ thưởng trong game cho việc bấm link.",
+  "slots": [
+    {"id": "bang_tin_sanh", "map": "office", "spot": "bang_tin_sanh", "kind": "poster", "label": "Bảng tin ở sảnh"},
+    {"id": "man_hinh_laptop", "map": "home", "spot": "laptop", "kind": "screen", "label": "Màn hình laptop ở phòng trọ"}
+  ],
+  "items": []
+}

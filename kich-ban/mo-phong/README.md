@@ -20,7 +20,12 @@ Ngày mốc và phần thưởng đọc từ `../minigames.json` (kho mini-game)
 Chọn lá với trọng số 1·XP + 1·Uy tín + 3·Quan hệ + 0,3·Pin. Chiều nào cũng tám chuyện (trước khi căng tin mở thì hỏi senior), ăn trưa khi Pin < 30, sau ngày 20 làm nốt báo cáo nếu còn thiếu. Bot này không lên Junior (thiếu XP và nhiệm vụ), dùng để xem nhánh quan hệ.
 
 ## Biến môi trường
-`N`, `SEED`, `MG`, `NOISE`, `SLACK`, `CARDS` (đường dẫn cards.json khác, tính từ thư mục này), `TASKXP` (ghi đè XP của Làm task), `PF`/`XF` (nhân Pin âm / XP của các lá tối N*, V*).
+`N`, `SEED`, `MG`, `NOISE`, `SLACK`, `CARDS` (đường dẫn cards.json khác, tính từ thư mục này), `TASKXP` (ghi đè XP của Làm task), `PF`/`XF` (nhân Pin âm / XP của các lá tối N*, V*), `RHYTHM=0` (chạy không có nhịp chơi: không sự kiện giữa buổi, ngày đặc biệt, KPI tuần).
 
 ## Quán trà sữa (14/11)
 Bot mua trà sữa một lần mỗi ngày sau việc chiều, khi quán đã mở: `TEA=smart` (mặc định) chọn theo trọng số của bot (thường là mua cho đồng nghiệp, Pin < 35 thì mua cho mình); `TEA=off|self|colleague` để so sánh. Với dữ liệu có 5 lá mở quán: chăm chỉ lên Junior 46,2% (SEED=0) và 44,3% (SEED=77); `off` 44,9%/44,6%, `self` 43,4%/44,4%, `colleague` 45,3%/46,1%. Quán mở trung vị ngày 4.
+
+## Nhịp chơi: sự kiện, ngày đặc biệt, KPI tuần (15/11)
+Bot đọc `../nhip-choi.json`. Ngày đặc biệt: chọn lựa chọn như lá thường; luật của ngày (việc bị đóng, việc được nhân đôi) áp lên việc chiều, việc bị đóng thì bot thử việc kế tiếp. Sự kiện giữa buổi được xử lý trước việc chiều. KPI dạng "làm việc X n lần" được bot ưu tiên khi còn thiếu. Kết quả (N=2000 mỗi lần): chăm chỉ lên Junior **45,4%** (SEED=0) và **45,1%** (SEED=77). Mỗi ván có khoảng 5 sự kiện giữa buổi, 4,3 ngày đặc biệt; bot chăm chỉ đạt 79% số KPI, 83% ván có huy hiệu "Nhân viên KPI"; bot lo quan hệ đạt 40%, 12% có huy hiệu. Để giữ cân bằng, KPI không thưởng XP, và vài lựa chọn sự kiện XP 2 được hạ còn 1.
+
+`choi-thu-mot-van.mjs` (in nhật ký một ván) chưa nạp nhịp chơi, nên ván mẫu chưa có các sự kiện này.

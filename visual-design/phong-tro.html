@@ -30,6 +30,8 @@ body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--font-b
 .where b{font-family:var(--font-display);font-weight:800;font-size:20px;line-height:1.1}
 .where span{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 .where .goal{font-size:12px;font-weight:600;color:var(--accent);max-width:250px;line-height:1.35}
+.where .kpi{font-size:12px;color:var(--ink);max-width:250px;line-height:1.35} /* weekly KPI (same as tầng Intern) */
+.where .kpi.done{color:var(--pin);font-weight:600}
 .seg{display:flex;padding:3px;gap:3px}
 .seg button{font:600 13px var(--font-body);border:0;background:transparent;color:var(--ink);padding:0 12px;border-radius:8px;cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
@@ -76,6 +78,7 @@ body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--font-b
 .delta.down{background:var(--down)}
 .note{font-size:13px;color:var(--muted);margin-top:6px}
 .modal-wrap{position:fixed;inset:0;background:rgba(42,34,48,.35);display:grid;place-items:center;z-index:12;padding:16px}
+.modal-wrap.docked{background:none;place-items:end center;pointer-events:none;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}.modal-wrap.docked .modal{pointer-events:auto}
 .modal{width:min(440px,100%);padding:18px;display:grid;gap:10px;max-height:calc(100vh - 32px);overflow:auto;box-sizing:border-box}
 .modal .row{display:flex;justify-content:flex-end;gap:8px;margin-top:4px;flex-wrap:wrap}
 /* scene change: one full-screen card that fades in, swaps the scene, fades out */
@@ -95,7 +98,7 @@ body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--font-b
 <div id="stage"></div>
 <div id="tags"></div>
 <div class="hud tl">
-  <div class="card where"><b id="room-name">Phòng trọ</b><span id="day-line"></span><span class="goal" id="goal"></span></div>
+  <div class="card where"><b id="room-name">Phòng trọ</b><span id="day-line"></span><span class="goal" id="goal"></span><span class="kpi" id="kpi-line" hidden></span></div>
   <div class="card stats" id="stats" aria-label="Chỉ số"></div>
 </div>
 <div class="hud tr">
@@ -121,6 +124,7 @@ import * as T from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import * as G from './engine.js'; // same rules as tầng Intern; the room is where evenings and weekends happen
 import * as Wd from './world.js';  // palette, builders, characters, walk grid shared with tầng Intern
+import * as Pl from './placements.js'; // partner slots (affiliate): declared, empty for now
 
 const P = Wd.P; // one palette for every map (home tokens included)
 const W = 9, D = 7; // room size in tiles (x, z)
@@ -146,8 +150,9 @@ const cam = new T.OrthographicCamera(-1,1,1,-1,0.1,200);
 const camOffset = new T.Vector3(20, 19, 20);
 const CENTER = new T.Vector3(WX/2, 0, D/2 - .1);
 const camTarget = CENTER.clone();
+let stageTime = null, camFocus = null;   // a staged event: the HUD clock shows its time, the camera leans on its spot
 // evening: same bright look, a touch warmer, plus the bedside lamp
-scene.add(new T.HemisphereLight('#fff8ef', '#c9b89b', 1.5));
+const hemi = new T.HemisphereLight('#fff8ef', '#c9b89b', 1.5); scene.add(hemi);
 const sun = new T.DirectionalLight('#ffe9cf', 1.9);
 sun.position.set(W/2 + 6, 14, D/2 - 4); sun.target.position.set(W/2, 0, D/2); scene.add(sun.target);
 sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); sun.shadow.bias = -0.0006;
@@ -457,9 +462,11 @@ const toastEl = document.getElementById('toast'); let toastT = 0;
 const toast = msg => { toastEl.textContent = msg; toastEl.hidden = false; toastT = 3.5; };
 
 /* ---------- Game: the evening at home. Rules live in engine.js, content in cards.json ---------- */
-const [CARD_DATA, HANDBOOK, MINIGAMES] = await Promise.all(['cards.json', 'handbook.json', 'minigames.json'].map(u => fetch(u).then(r => r.json())));
+const [CARD_DATA, HANDBOOK, MINIGAMES, RHYTHM, PLACEMENTS] = await Promise.all(['cards.json', 'handbook.json', 'minigames.json', 'nhip-choi.json', 'placements.json'].map(u => fetch(u).then(r => r.json())));
 const CARDS = CARD_DATA.cards;
 G.useMinigames(MINIGAMES); // the next morning may be a mini-game day (nextDay/endWeekend draw it)
+G.useRhythm(RHYTHM);       // tonight's odds, and the next morning's special day / KPI / midday event (nhip-choi.json)
+Pl.usePlacements(PLACEMENTS);
 { const bad = G.validateCards(CARD_DATA); if (bad.length) console.warn('cards.json:', bad); }
 // one save for the whole game: the office page wrote it just before "Về phòng trọ"
 const store = new G.BrowserSaveStore();
@@ -474,7 +481,7 @@ if (!S || !G.isAtHome(S)) { location.replace(OFFICE); await new Promise(() => {}
 // what is waiting on the laptop right now: tonight's message, or the weekend card
 function laptopCard(){
   if (!S) return null;
-  if (S.part === 'evening') return G.tonightsCard(S, CARDS);
+  if (S.part === 'evening') { const c = G.tonightsCard(S, CARDS); return c && !G.isStaged(c) ? c : null; } // a staged event happens in the room, not on the laptop
   if (S.part === 'weekend' && S.today.cardId && !S.today.cardDone) return G.todaysCard(S, CARDS);
   return null;
 }
@@ -483,6 +490,7 @@ function openSheet(id){
   if (id === 'laptop' && laptopCard()) return openLaptopCard();
   if (id === 'bed') {
     if (laptopCard()) return showSheet('bed', h.eyebrow, h.title, 'Laptop vẫn đang sáng. Xem tin nhắn đã rồi hẵng ngủ.');
+    if (stagedTonight()) return runStage(stagedTonight());
     const weekend = S.part === 'weekend';
     showSheet('bed', h.eyebrow, h.title, weekend ? 'Hai ngày không email. Ngủ một giấc thật dài, rồi thứ Hai tính tiếp.' : 'Đặt báo thức 7 giờ 30. Thêm một cái 7 giờ 35 cho chắc.');
     sheetAction(weekend ? 'Ngủ tới thứ Hai' : 'Đi ngủ', sleep);
@@ -494,13 +502,16 @@ function openSheet(id){
 /* -- HUD -- */
 const statsEl = document.getElementById('stats'), goalEl = document.getElementById('goal');
 function renderHUD(){
-  const when = S.part === 'weekend' ? `Cuối tuần sau ngày ${S.day}` : `Ngày ${S.day} / ${G.TOTAL_DAYS} · ${G.weekdayName(S.day)}, ${S.part === 'evening' ? '21:30' : '08:29'}`;
+  const when = S.part === 'weekend' ? `Cuối tuần sau ngày ${S.day}` : `Ngày ${S.day} / ${G.TOTAL_DAYS} · ${G.weekdayName(S.day)}, ${stageTime || (S.part === 'evening' ? '21:30' : '08:29')}`;
   document.getElementById('day-line').textContent = when;
   const row = (k, max, extra = '') => { const v = S.stats[k], warn = k === 'pin' && v < 20;
     return `<span class="${warn ? 'warn' : ''}">${G.STAT_NAME[k]}</span><span class="bar" style="--c:var(--${k})"><i style="width:${v / max * 100}%"></i>${extra}</span><span class="val ${warn ? 'warn' : ''}">${v}</span>`; };
   statsEl.innerHTML = row('xp', 150, `<s style="left:${G.JUNIOR_XP / 150 * 100}%"></s>`) + row('pin', 100) + row('ut', 100) + row('qh', 100);
   const c = laptopCard();
-  goalEl.textContent = c ? (c.npc === 'tuan' ? 'Sếp vừa nhắn tin. Mở laptop xem' : 'Có tin nhắn mới trên laptop') : S.part === 'weekend' ? 'Nghỉ cho lại sức, rồi lên giường ngủ tới thứ Hai' : S.part === 'evening' ? 'Lên giường đi ngủ để sang ngày mới' : 'Đến giờ đi làm';
+  const k = G.kpiStatus(S), kEl = document.getElementById('kpi-line');
+  kEl.hidden = !k || !!S.week?.scored; if (k) { kEl.textContent = G.kpiLine(S); kEl.classList.toggle('done', k.done); }
+  const ev = S.part === 'evening' && !S.today.nightDone && G.isStaged(G.tonightsCard(S, CARDS));
+  goalEl.textContent = ev ? 'Có chuyện vừa xảy ra…' : c ? (c.npc === 'tuan' ? 'Sếp vừa nhắn tin. Mở laptop xem' : 'Có tin nhắn mới trên laptop') : S.part === 'weekend' ? 'Nghỉ cho lại sức, rồi lên giường ngủ tới thứ Hai' : S.part === 'evening' ? 'Lên giường đi ngủ để sang ngày mới' : 'Đến giờ đi làm';
 }
 const deltaChips = got => { const d = document.createElement('div'); d.className = 'deltas';
   for (const k of G.STATS) if (got[k]) d.insertAdjacentHTML('beforeend', `<span class="delta ${got[k] < 0 ? 'down' : ''}">${G.STAT_NAME[k]} ${got[k] > 0 ? '+' : '−'}${Math.abs(got[k])}</span>`);
@@ -509,8 +520,8 @@ const deltaChips = got => { const d = document.createElement('div'); d.className
 
 /* -- modal (same as tầng Intern) -- */
 const modalWrap = document.getElementById('modal-wrap'), modalEl = document.getElementById('modal');
-function modal({eyebrow = '', title, nodes = [], actions = []}){
-  modalEl.replaceChildren();
+function modal({eyebrow = '', title, nodes = [], actions = [], docked = false}){   // docked: sits low and clear, so the staged scene stays in view
+  modalEl.replaceChildren(); modalWrap.classList.toggle('docked', docked);
   if (eyebrow) modalEl.appendChild(el('div', 'eyebrow', eyebrow));
   const h = el('h2', null, title); h.id = 'modal-title'; modalEl.appendChild(h);
   nodes.forEach(n => modalEl.appendChild(typeof n === 'string' ? el('p', null, n) : n));
@@ -577,8 +588,65 @@ async function sleep(){
   await sceneChange({eyebrow:'Thứ Bảy', title:'Cuối tuần', sub:'Hai ngày không email. Về lý thuyết.'}, () => {
     r = G.nextDay(S, CARDS); afterChange(); player.path = []; player.g.position.set(2.6, 0, 3.8); lightsFor(); });
   toast(`Cuối tuần: Pin +${r.got.pin || 0}`);
+  if (r.kpi) return showKpiResult(r.kpi);
   if (laptopCard()) setTimeout(laptopToast, 3600);
 }
+
+/* ---------- Friday night: anh Tuấn scores the week's KPI (nhip-choi.json). Missing it costs nothing (Lily 15/11) ---------- */
+function showKpiResult(k){
+  const nodes = [el('p', 'quote', `"${k.kpi.title}"`), el('p', 'comment', k.line)];
+  if (k.ok) nodes.push(deltaChips(k.got));
+  const badge = RHYTHM.kpi.badge; if (k.ok && badge && G.hasFlag(S, badge.flag) && (S.kpiLog || []).filter(x => x.ok).length === badge.min) nodes.push(el('p', 'note', 'Huy hiệu mới: Nhân viên KPI. Anh Tuấn sẽ nhắc đến nó ở buổi đánh giá.'));
+  modal({eyebrow:`Tin nhắn của anh Tuấn · KPI tuần ${S.week.n}`, title: k.ok ? 'Đạt KPI tuần' : 'Chưa đạt KPI tuần', nodes,
+    actions:[{label:'Đóng', onClick:() => { closeModal(); renderHUD(); if (laptopCard()) setTimeout(laptopToast, 600); }}]});
+}
+
+/* ---------- Staged night events (cards.json when "night" + stage, Lily 15/11): "!" over you, a scene change to the spot, then the story ---------- */
+// Named spots in the room (stage.spot): where you stand, where the people in stage.people stand (in order), where the cat goes
+const SPOTS = {
+  door:    {name:'Cửa phòng',   player:{x:5.6, z:2.05, rot:Math.PI}, people:[{x:5.6, z:1.0, rot:0}]},
+  bed:     {name:'Bên giường',  player:{x:2.75, z:3.9, rot:-Math.PI/2}},
+  balcony: {name:'Ban công',    player:{x:9.45, z:5.5, rot:Math.atan2(.85, -1.1)}, people:[{x:10.3, z:4.4, rot:Math.atan2(-.85, 1.1)}]},   // side by side across the screen, not one behind the other
+  kitchen: {name:'Góc bếp',     player:{x:7.2, z:1.55, rot:Math.PI}, cat:[7.95, 1.5]},
+  laptop:  {name:'Laptop', anchor:ANCHOR.laptop},     // partner slot only (placements.json)
+};
+const stagedTonight = () => { if (S?.part !== 'evening') return null; const c = G.tonightsCard(S, CARDS); return c && G.isStaged(c) ? c : null; };
+const meBubbleEl = document.createElement('button'); meBubbleEl.className = 'chip quest'; meBubbleEl.innerHTML = ICON.alert; meBubbleEl.hidden = true; meBubbleEl.tabIndex = -1; meBubbleEl.setAttribute('aria-hidden', 'true');
+tagsEl.appendChild(meBubbleEl);
+let meBubble = 0, staging = false;
+async function runStage(c){
+  const st = c.stage, sp = SPOTS[st.spot]; if (!sp || staging) return;
+  staging = true; fading = true; keys.clear(); player.path = []; pendingHot = null; closeSheet();
+  meBubble = 99; await wait(1300); meBubble = 0;                                   // 1. "!" over your head
+  const extras = [], dark = st.mood === 'dark';
+  await sceneChange({eyebrow:`${G.weekdayName(S.day)} · ${st.time}`, title:c.title, sub:sp.name}, () => {   // 2. scene change, 3. everyone in place
+    const p = sp.player; player.g.position.set(p.x, 0, p.z); player.g.rotation.y = p.rot;
+    (st.people || []).forEach((id, i) => { const q = sp.people?.[Math.min(i, sp.people.length - 1)]; if (!q) return;
+      const ch = makeChar(Wd.NPC_LOOKS[id] || {}); ch.g.position.set(q.x, 0, q.z); ch.g.rotation.y = q.rot; extras.push(ch); });
+    if (sp.cat) { cat.path = []; cat.g.position.set(sp.cat[0], 0, sp.cat[1]); cat.g.rotation.y = Math.atan2(p.x - sp.cat[0], p.z - sp.cat[1]); catState.phase = 'idle'; catState.timer = 30; }
+    if (dark) { hemi.intensity = .3; sun.intensity = .2; }
+    stageTime = st.time; renderHUD();
+    const all = [p, ...extras.map(ch => ({x:ch.g.position.x, z:ch.g.position.z}))];
+    camFocus = new T.Vector3(all.reduce((a, q) => a + q.x, 0) / all.length + .9, 0, all.reduce((a, q) => a + q.z, 0) / all.length + .9);   // +x+z = lower on screen, so the spot sits above the docked story
+    cam.zoom = 1.45; cam.updateProjectionMatrix();
+  });
+  await wait(600);
+  const eyebrow = `Ngày ${S.day} · ${st.time} · ${sp.name}`;                      // 4. the story
+  modal({eyebrow, title:c.title, docked:true, nodes:[c.intro, choiceList(c, i => {
+    const res = G.chooseOption(S, c, i); afterChange(); lightsFor();
+    modal({eyebrow, title:c.title, docked:true, nodes:resultNodes(res), actions:[{label:st.button || 'Tiếp tục', onClick:() => {
+      closeModal(); staging = false;
+      for (const ch of extras) ch.g.removeFromParent();                            // guests leave, lights back on
+      if (dark) { hemi.intensity = 1.5; sun.intensity = 1.9; }
+      stageTime = null; camFocus = null; cam.zoom = 1; cam.updateProjectionMatrix();
+      renderHUD();
+    }}]});
+  })]});
+}
+// what tonight holds once you are in: a staged event starts by itself, a message lights the laptop
+const nightStart = () => { const c = stagedTonight(); if (c) setTimeout(() => runStage(c), reduce ? 200 : 700); else laptopToast(); };
+const updateSlots = Pl.mountSlots({map:'home', anchorOf:id => SPOTS[id]?.anchor, layer:tagsEl, save, project:(e, [x, y, z]) => place(e, x, y, z)});
+{ const bad = [...G.validateRhythm(RHYTHM, CARD_DATA), ...Pl.validatePlacements(PLACEMENTS, 'home', Object.keys(SPOTS))]; if (bad.length) console.warn('nhip-choi.json / placements.json:', bad); }
 
 /* ---------- Arrival: the scene-change card from the office fades out on the room ---------- */
 setGender(!!S.female);
@@ -590,7 +658,7 @@ if (S.part === 'evening') {
 afterChange(); lightsFor();
 if (location.hash) history.replaceState(null, '', location.pathname + location.search); // the run lives in storage now
 fading = true;
-setTimeout(async () => { fadeEl.classList.remove('on'); await wait(500); fading = false; laptopToast(); }, reduce ? 200 : 900);
+setTimeout(async () => { fadeEl.classList.remove('on'); await wait(500); fading = false; nightStart(); }, reduce ? 200 : 900);
 
 /* ---------- Loop ---------- */
 let followK = 0;
@@ -625,9 +693,11 @@ function tick(now){
   animateWalk(player, moving, dt);
   updateCat(dt); updateGuest(dt);
   if (toastT > 0) { toastT -= dt; if (toastT <= 0) toastEl.hidden = true; }
+  if (meBubble > 0) meBubbleEl.hidden = !place(meBubbleEl, pos.x, 2.25, pos.z); else meBubbleEl.hidden = true;
+  updateSlots();
   const room = roomAt(pos.x, pos.z), rn = room && room.id !== 'home' ? 'Phòng trọ · ' + room.name : 'Phòng trọ';
   if (rn !== lastRoom) { lastRoom = rn; document.getElementById('room-name').textContent = rn; }
-  v3.set(CENTER.x + (pos.x - CENTER.x)*followK, 0, CENTER.z + (pos.z - CENTER.z)*followK);
+  if (camFocus) v3.copy(camFocus); else v3.set(CENTER.x + (pos.x - CENTER.x)*followK, 0, CENTER.z + (pos.z - CENTER.z)*followK);
   camTarget.lerp(v3, reduce ? 1 : Math.min(1, dt*3));
   cam.position.copy(camTarget).add(camOffset); cam.lookAt(camTarget);
   // nearest hotspot + chips: the night's goal lights up (laptop "!" or the bed), everything else shows only when close
@@ -635,10 +705,10 @@ function tick(now){
   // the door's label waits until you have walked away from it once: you spawn right beside the door and it would cover the screen on arrival
   { const a = hotAt('door'), d = Math.hypot(a[0]-pos.x, a[1]-pos.z); if (d >= 1.4) doorArmed = true; }
   for (const id of Object.keys(HOT)) { if (id === 'door' && !doorArmed) continue; const a = hotAt(id), d = Math.hypot(a[0]-pos.x, a[1]-pos.z); if (d < best) { best = d; nearId = id; } }
-  const msg = !!laptopCard(), hide = busy();
+  const msg = !!laptopCard(), hide = busy() || staging;
   for (const [id, e] of Object.entries(tagEls)) {
     const on = place(e, ...anchorOf(id)) && !hide; e.hidden = !on;
-    const near = id === nearId, quest = id === 'laptop' && msg, task = id === 'bed' && !msg && !!S;
+    const near = id === nearId, quest = id === 'laptop' && msg, task = id === 'bed' && !msg && !!S && !stagedTonight();
     const state = [near, quest, task].join('|');
     if (e.dataset.state !== state) { e.dataset.state = state; e.classList.toggle('near', near); e.classList.toggle('quest', quest); e.classList.toggle('task', task);
       e.innerHTML = (quest ? ICON.alert : HOT[id].act) + (near && !quest ? '<kbd> · E / chạm</kbd>' : ''); }

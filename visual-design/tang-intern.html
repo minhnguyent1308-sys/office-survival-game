@@ -66,6 +66,9 @@ body{background:var(--ground);color:var(--ink);font-family:var(--font-body);over
 .modal p{margin:0;font-size:15px;line-height:1.5}
 /* game HUD: day, goal, four stats */
 .where .goal{font-size:12px;font-weight:600;color:var(--accent);max-width:250px;line-height:1.35}
+.where .kpi{font-size:12px;color:var(--ink);max-width:250px;line-height:1.35} /* weekly KPI from anh Tuấn (nhip-choi.json) */
+.where .kpi.done{color:var(--pin);font-weight:600}
+.where .today{font-size:12px;font-weight:600;color:var(--ink);background:var(--yellow);border-radius:6px;padding:1px 6px;justify-self:start;max-width:250px} /* special day */
 .stats{padding:8px 12px;display:grid;grid-template-columns:auto 92px 30px;gap:5px 8px;align-items:center;font-size:12px}
 .stats .bar{height:8px;border-radius:99px;background:var(--rule);border:1.5px solid var(--ink);overflow:hidden;position:relative}
 .stats .bar i{display:block;height:100%;background:var(--c)}
@@ -133,7 +136,7 @@ body{background:var(--ground);color:var(--ink);font-family:var(--font-body);over
 <div id="stage"></div>
 <div id="tags"></div>
 <div class="hud tl">
-  <div class="card where"><b id="room-name">Tầng 1 · Hành lang</b><span id="day-line">Ngày 1 / 40 · Thứ Hai, 08:29</span><span class="goal" id="goal"></span></div>
+  <div class="card where"><b id="room-name">Tầng 1 · Hành lang</b><span id="day-line">Ngày 1 / 40 · Thứ Hai, 08:29</span><span class="today" id="day-note" hidden></span><span class="goal" id="goal"></span><span class="kpi" id="kpi-line" hidden></span></div>
   <div class="card stats" id="stats" aria-label="Chỉ số"></div>
 </div>
 <div class="hud tr">
@@ -160,6 +163,7 @@ body{background:var(--ground);color:var(--ink);font-family:var(--font-body);over
 import * as T from 'three';
 import * as G from './engine.js'; // rules of the 40-day loop (no 3D inside)
 import * as Wd from './world.js';
+import * as Pl from './placements.js'; // partner slots (affiliate): declared, empty for now
 import {runMinigame, validateMinigames} from './minigames.js'; // mini-game screens; content in minigames.json  // palette, builders, characters, walk grid shared with the rented room
 
 const P = Wd.P; // one palette for every map
@@ -805,10 +809,10 @@ function updateSeniors(dt){
 }
 
 /* ---------- Game: the 40-day loop. Rules live in engine.js, content in cards.json + handbook.json ---------- */
-const [CARD_DATA, HANDBOOK, MINIGAMES, REVIEW] = await Promise.all(['cards.json', 'handbook.json', 'minigames.json', 'danh-gia.json'].map(u => fetch(u).then(r => r.json())));
+const [CARD_DATA, HANDBOOK, MINIGAMES, REVIEW, RHYTHM, PLACEMENTS] = await Promise.all(['cards.json', 'handbook.json', 'minigames.json', 'danh-gia.json', 'nhip-choi.json', 'placements.json'].map(u => fetch(u).then(r => r.json())));
 const CARDS = CARD_DATA.cards;
-G.useMinigames(MINIGAMES);
-{ const bad = [...G.validateCards(CARD_DATA), ...validateMinigames(MINIGAMES)]; if (bad.length) console.warn('cards.json / minigames.json:', bad); }
+G.useMinigames(MINIGAMES); G.useRhythm(RHYTHM); Pl.usePlacements(PLACEMENTS);
+{ const bad = [...G.validateCards(CARD_DATA), ...validateMinigames(MINIGAMES), ...G.validateRhythm(RHYTHM, CARD_DATA)]; if (bad.length) console.warn('cards.json / minigames.json / nhip-choi.json:', bad); }
 // cards.json names people by their story id; the 3D scene uses its own ids for three of them
 const TO_3D = {tuan:'boss', mai:'letan', coba:'chef'}, FROM_3D = {boss:'tuan', letan:'mai', chef:'coba'};
 const id3d = n => TO_3D[n] || n, storyId = id => FROM_3D[id] || id;
@@ -828,6 +832,7 @@ if (location.hash) history.replaceState(null, '', location.pathname + location.s
 if (!S) { S = G.newGame({startRooms: CARD_DATA.rooms?.start}); G.startMorning(S, CARDS); }
 S.today.canteen ||= G.rollCanteen(); // saves made before the canteen roll existed
 const save = () => store.save(S);
+let staging = false, stageTime = null; // a staged event is playing (runStage); the clock shows the event's time
 let questId = null; // hotspot that carries today's "!" (a person, or a place for cards with no person)
 
 /* -- people walking to the room their card names, then back home -- */
@@ -864,7 +869,7 @@ function summonClient(spot){
 const statsEl = document.getElementById('stats'), goalEl = document.getElementById('goal');
 const hbBtn = document.getElementById('open-handbook');
 function renderHUD(){
-  document.getElementById('day-line').textContent = `Ngày ${S.day} / ${G.TOTAL_DAYS} · ${G.weekdayName(S.day)}, ${TIME[S.part]}`;
+  document.getElementById('day-line').textContent = `Ngày ${S.day} / ${G.TOTAL_DAYS} · ${G.weekdayName(S.day)}, ${stageTime || TIME[S.part]}`;
   const row = (k, max, extra = '') => { const v = S.stats[k], warn = k === 'pin' && v < 20;
     return `<span class="${warn ? 'warn' : ''}">${G.STAT_NAME[k]}</span><span class="bar" style="--c:var(--${k})"><i style="width:${v / max * 100}%"></i>${extra}</span><span class="val ${warn ? 'warn' : ''}">${v}</span>`; };
   statsEl.innerHTML = row('xp', 150, `<s style="left:${G.JUNIOR_XP / 150 * 100}%"></s>`) + row('pin', 100) + row('ut', 100) + row('qh', 100);
@@ -872,6 +877,10 @@ function renderHUD(){
   hbBtn.textContent = `Sổ tay ${S.missionsDone.length}/${HANDBOOK.missions.length}`;
   hbBtn.classList.toggle('flash', S.day >= 30 && S.missionsDone.length < HANDBOOK.missions.length);
   goalEl.textContent = goalText();
+  const k = G.kpiStatus(S), kEl = document.getElementById('kpi-line');
+  kEl.hidden = !k || S.part === 'over'; if (k) { kEl.textContent = G.kpiLine(S); kEl.classList.toggle('done', k.done); }
+  const note = G.todaysSpecial(S, CARDS) ? null : G.cardById(CARDS, S.today.specialId)?.note, nEl = document.getElementById('day-note');
+  nEl.hidden = !note; nEl.textContent = note || '';
 }
 function goalText(){
   if (S.part === 'morning' && !S.today.cardDone) {
@@ -880,6 +889,7 @@ function goalText(){
     if (c.room) return `Có chuyện đang chờ bạn ở ${ROOM_NAME[c.room]}`;
     return '';
   }
+  if (S.part === 'afternoon' && G.todaysEvent(S, CARDS)) return 'Có chuyện vừa xảy ra…';
   if (S.part === 'afternoon') return S.today.action ? '' : afternoonPlaces();
   if (S.part === 'evening') return 'Xong việc hôm nay. Bấm "Tan làm" để sang ngày mới';
   return '';
@@ -922,9 +932,11 @@ function resultNodes(res){
 
 /* -- morning: today's card -- */
 function setupMorning(){
-  questId = null; renderHUD();
+  questId = null; renderHUD(); dressForToday();
   if (S.part !== 'morning' || S.today.cardDone) return;
   const u = G.todaysUnlock(S, CARDS); if (u) return showUnlock(u);
+  const sp = G.todaysSpecial(S, CARDS); if (sp) return showSpecial(sp);
+  const k = G.kpiToAnnounce(S); if (k) return showKpi(k);
   if (S.day === G.TOTAL_DAYS && !S.today.dossierSeen) return showDossier();
   if (S.today.minigame) return showMinigame();
   const c = G.todaysCard(S, CARDS);
@@ -936,9 +948,32 @@ function setupMorning(){
     if (HOME_ROOM[questId] !== c.room) summon(questId, WAIT[c.room]);
     else if (n.wander) summon(questId, n.at); }                                   // a wanderer waits at their own desk
 }
+// 08:29 special day (cards.json type special_day): the news, one choice, today's rules in a note; then the normal morning
+function showSpecial(c){
+  const eyebrow = `Ngày ${S.day} · 08:29 · Ngày đặc biệt`, note = c.note ? [el('p', 'note', c.note)] : [];
+  modal({eyebrow, title:c.title, nodes:[el('p', null, c.intro), ...note, choiceList(c, i => {
+    const res = G.chooseOption(S, c, i); S.today.specialPick = i; afterChange(); dressForToday();
+    modal({eyebrow, title:c.title, nodes:[...resultNodes(res), ...note], actions:[{label:'Vào làm', onClick:() => { closeModal(); setupMorning(); }}]});
+  })]});
+}
+// Monday of a KPI week (nhip-choi.json): anh Tuấn's sticky note. Missing it costs nothing (Lily 15/11).
+function showKpi(k){
+  const reward = effectText(k.reward);
+  modal({eyebrow:`Ngày ${S.day} · KPI tuần ${S.week.n}`, title:k.title, nodes:[el('p', null, RHYTHM.kpi.intro), el('p', 'quote', `"${k.title}. Hạn: 17:55 thứ Sáu."`),
+      el('p', 'note', `Đạt: ${reward}. Chưa đạt: không sao, tuần sau làm tiếp.`)],
+    actions:[{label:'Nhận việc', onClick:() => { G.kpiSeen(S); save(); closeModal(); setupMorning(); }}]});
+}
+// "Thứ Sáu áo cam": colleagues (and you, if you said yes) wear the day's shirt colour; any other day, back to their own
+function dressForToday(){
+  const color = G.rulesToday(S, CARDS).shirt || null, who = [['boss', NPCS.boss.c], ['hang', NPCS.hang.c], ['linh', NPCS.linh.c], ['minh', NPCS.minh.c], ['tung', NPCS.tung.c], ['letan', NPCS.letan.c], ['player', player]];
+  for (const [id, c] of who) {
+    const own = (id === 'player' ? P.shirt : NPCS[id].look.shirt) || P.shirt, wear = color && (id !== 'player' || S.today.specialPick === 0) ? color : own;
+    c.g.traverse(m => { if (!m.isMesh || !m.material?.color) return; m.userData.shirt ??= m.material.color.getHexString() === new T.Color(own).getHexString(); if (m.userData.shirt) m.material = mat(wear); });
+  }
+}
 // 08:29 room opening (MO_CANTEEN, MO_MEETING): a modal announcement, then the normal morning
 function showUnlock(u){
-  if (u.openScene) return showUnlockScene(u);
+  if (u.stage || u.openScene) return showUnlockScene(u);
   modal({eyebrow:`Ngày ${S.day} · 08:29 · ${ROOM_NAME[u.unlocks]} mở cửa`, title:u.title, nodes:[el('p', null, u.intro), choiceList(u, i => {
     const res = G.chooseOption(S, u, i); applyRooms(); afterChange();
     const sc = u.choices[i]?.scene;
@@ -1109,21 +1144,94 @@ function sceneGroup(assign, ps, instant){
 }
 // the meeting room, used for the verdict (day 40) and the room's opening (day 10): anh Tuấn at the head, the others seated, you beside anh Tuấn
 function meetingScene(people, instant){
-  closeSheet(); closeModal(); questId = null; cutscene = true; focusHalf = [6, 5.6];
-  camFocus = innerHeight > innerWidth ? MEETING_CENTER.clone().add(new T.Vector3(1.4, 0, 1.4)) : MEETING_CENTER; // phone: lift the room above the dialog
-  let seat = 0; const assign = [];
-  for (const story of people) {
-    const id = id3d(story); if (!NPCS[id]) continue;
-    const [x, z] = id === 'boss' ? VERDICT_FRONT.boss : VERDICT_SEATS[seat++];
-    assign.push([id, id === 'boss' ? {x, z, rot: Math.PI / 2} : {x, z, rot: facing(x, z, VERDICT_LOOK), sit: true}]);
-  }
-  const [px, pz] = VERDICT_FRONT.player;
-  return sceneGroup(assign, {x: px, z: pz, rot: Math.PI / 2}, instant).then(() => assign);
+  closeSheet(); closeModal(); questId = null; cutscene = true;
+  const sp = SPOTS.meeting; focusOn(sp);
+  const {assign, ps} = stageAssign(sp, people);
+  return sceneGroup(assign, ps, instant).then(() => assign);
 }
+/* -- staged events (cards.json stage, Lily 15/11): "!" over you, a scene change, everyone in place, then the story -- */
+// Named spots on this map (stage.spot). Each says where you stand and where the people listed in stage.people go:
+// people: one place per person in order · lead: anh Tuấn's place · seats: chairs, in order · crowd: a ring around you · keep: stays where they are.
+const SPOTS = {
+  meeting:         {name:'Phòng họp', player:{x:VERDICT_FRONT.player[0], z:VERDICT_FRONT.player[1], rot:Math.PI/2}, lead:{x:VERDICT_FRONT.boss[0], z:VERDICT_FRONT.boss[1], rot:Math.PI/2},
+                    seats:VERDICT_SEATS.map(([x, z]) => ({x, z, rot:facing(x, z, VERDICT_LOOK), sit:true})), focus:[22.8, 3.1], half:[6, 5.6], phoneShift:1.4},
+  elevator:        {name:'Trước thang máy', player:{x:10.7, z:1.8, rot:Math.PI/2}, people:[{x:11.8, z:1.8, rot:-Math.PI/2}], focus:[11.3, 2.4], half:[6.4, 5]},
+  copier:          {name:'Máy photo, phòng Intern', player:{x:1.4, z:11.2, rot:Math.PI}, people:[{x:2.5, z:11.4, rot:-Math.PI*.7}], focus:[2.4, 11], half:[6.4, 5]},
+  lobby_crowd:     {name:'Sảnh', player:{x:13.2, z:3.6, rot:0}, crowd:true, focus:[13.4, 3.6], half:[7, 5.4]},
+  canteen_tables:  {name:'Căng tin', player:{seat:4, y:-.23}, seats:[6, 7, 8, 3].map(k => ({seat:k, y:-.23})), focus:[21, 12.6], half:[8.2, 6.4], phoneShift:1.2},
+  boss_room:       {name:'Phòng sếp', player:{x:4.9, z:4.3, rot:-Math.PI/2}, people:[{x:3.7, z:4.3, rot:Math.PI/2}], focus:[3.8, 3.4], half:[6.4, 5]},
+  canteen_counter: {name:'Quầy cơm cô Ba', player:{x:20, z:10.5, rot:Math.PI}, people:[{keep:true}], focus:[20, 10], half:[6.4, 5]},
+  // partner slots (placements.json): only an anchor on the wall, no scene
+  bang_tin_sanh:   {name:'Bảng tin ở sảnh', anchor:[13.6, 2.2, .1]},
+};
+const seatSpot = q => q.seat == null ? q : (t => ({x:t[0], z:t[1], rot:t[2], sit:true, y:q.y}))(SEATS[q.seat]);
+function focusOn(sp){
+  focusHalf = sp.half; const c = new T.Vector3(sp.focus[0], 0, sp.focus[1]);
+  camFocus = innerHeight > innerWidth ? c.add(new T.Vector3(sp.phoneShift ?? 1.2, 0, sp.phoneShift ?? 1.2)) : c; // phone: lift the scene above the dialog
+}
+// people (story ids) -> [[3D id, spot]] + your own spot; ids not in NPCS (client, extras) come back in `others`
+function stageAssign(sp, people){
+  const ps = seatSpot(sp.player), assign = [], others = [];
+  let k = 0, seat = 0;
+  const ring = sp.crowd ? ringAround(ps, people.length) : null;
+  for (const story of people) {
+    const id = id3d(story), place = sp.crowd ? ring[k] : id === 'boss' && sp.lead ? sp.lead : sp.seats ? sp.seats[seat++] : sp.people?.[Math.min(k, sp.people.length - 1)];
+    k++; if (!place) continue;
+    if (place.keep) continue;
+    if (NPCS[id]) assign.push([id, seatSpot(place)]); else others.push([story, seatSpot(place)]);
+  }
+  return {assign, ps:{...ps, teleport:true}, others};
+}
+// spots in a ring around a point, walkable and not on top of each other (the faint scene and the fire alarm)
+function ringAround(P, n){
+  const spots = [];
+  for (const r of [1.2, 1.8, 2.4]) for (let k = 0; k < 8 && spots.length < n; k++) {
+    const a = k * Math.PI / 4 + .4, x = P.x + Math.cos(a) * r, z = P.z + Math.sin(a) * r;
+    if (free(x, z) && !spots.some(q => Math.hypot(q.x - x, q.z - z) < .8)) spots.push({x, z, rot: Math.atan2(P.x - x, P.z - z)});
+  }
+  return spots;
+}
+// people who only appear in events (sếp tổng…): built once from world.js NPC_LOOKS, hidden when the scene ends
+const EXTRA = {};
+function extraChar(id){ if (!EXTRA[id]) { EXTRA[id] = makeChar(Wd.NPC_LOOKS[id] || {}); } EXTRA[id].g.visible = true; return EXTRA[id]; }
+let meBubble = 0; const meBubbleEl = document.createElement('div'); meBubbleEl.className = 'chip quest'; meBubbleEl.innerHTML = ICON.alert; meBubbleEl.hidden = true; meBubbleEl.setAttribute('aria-hidden', 'true');
+document.getElementById('tags').appendChild(meBubbleEl);
+async function runStage(c){
+  const st = c.stage, sp = SPOTS[st.spot]; if (!sp || staging) return;
+  staging = true; closeSheet(); questId = null; cutscene = true; player.path = []; pendingHot = null;
+  meBubble = 99; await wait(reduce ? 600 : 1300); meBubble = 0;                // 1. "!" over your head
+  const card = {eyebrow:`${G.weekdayName(S.day)} · ${st.time}`, title:c.title, sub:sp.name};
+  Wd.paintFade(card); fadeEl.classList.add('on'); await wait(600);               // 2. scene change
+  stageTime = st.time; renderHUD();
+  const {assign, ps, others} = stageAssign(sp, st.people || []);               // 3. everyone in place
+  await sceneGroup(assign, ps, true);
+  const shown = others.map(([story, q]) => { const ch = story === 'client' ? (clientState.phase = 'questWait', client) : extraChar(story);
+    ch.path = []; ch.g.visible = true; ch.g.position.set(q.x, 0, q.z); ch.g.rotation.y = q.rot; return [story, ch]; });
+  focusOn(sp); camTarget.copy(camFocus); cam.zoom = focusZoom(); cam.updateProjectionMatrix();
+  await wait(700); fadeEl.classList.remove('on'); await wait(450);
+  const close = document.getElementById('sheet-close'), body = document.getElementById('sheet-body');   // 4. the story
+  document.getElementById('sheet-eyebrow').textContent = `Ngày ${S.day} · ${st.time} · ${sp.name}`; document.getElementById('sheet-title').textContent = c.title;
+  for (const k of ['sheet-eyebrow', 'sheet-title']) document.getElementById(k).hidden = false;
+  body.replaceChildren(el('p', null, c.intro), choiceList(c, i => {
+    const res = G.chooseOption(S, c, i); afterChange();
+    body.replaceChildren(...resultNodes(res), el('p', 'note', afternoonPlaces() + '.'));
+    sheetAction(st.button || 'Tiếp tục', () => {                                   // everyone back to their own place
+      close.hidden = false; closeSheet(); cutscene = false; camFocus = null; sceneSit = null; staging = false; stageTime = null;
+      if (sp.player.seat != null) { const t = SEATS[sp.player.seat]; player.g.position.set(t[3], 0, t[4]); }   // off the stool, beside it
+      for (const [id] of assign) release(id);
+      for (const [story, ch] of shown) { if (story === 'client') release('client'); else ch.g.visible = false; }
+      renderHUD();
+    });
+  }));
+  close.hidden = true; sheet.hidden = false; document.getElementById('hint').hidden = true;
+}
+const wait = ms => new Promise(r => setTimeout(r, reduce ? Math.min(ms, 300) : ms));
+{ const bad = Pl.validatePlacements(PLACEMENTS, 'office', Object.keys(SPOTS)); if (bad.length) console.warn('placements.json:', bad); }
+const updateSlots = Pl.mountSlots({map:'office', anchorOf:id => SPOTS[id]?.anchor, layer:document.getElementById('tags'), save:() => store.save(S), project:(el, [x, y, z]) => place(el, x, y, z)});
 const gatherForVerdict = instant => meetingScene(REVIEW.gather.people, instant);
 // day 10, 08:29: the room opens on a scene (cards.json MO_MEETING.openScene): everyone already sits inside, the story and your choice happen there, then each goes back to their own place
 async function showUnlockScene(u){
-  const os = u.openScene;
+  const os = u.stage || u.openScene;                                               // cards.json stage (spot "meeting"); openScene = saves/data from before 15/11
   if (!G.roomOpen(S, u.unlocks)) { S.rooms.push(u.unlocks); applyRooms(); save(); }   // the room must exist to be shown; chooseOption confirms it
   const assign = await meetingScene(os.people, false), close = document.getElementById('sheet-close');
   document.getElementById('sheet-eyebrow').textContent = os.eyebrow; document.getElementById('sheet-title').textContent = u.title;
@@ -1149,9 +1257,7 @@ async function showCanteenScene(sc){
   camFocus = innerHeight > innerWidth ? CANTEEN_CENTER.clone().add(new T.Vector3(1.2, 0, 1.2)) : CANTEEN_CENTER;
   let assign, ps;
   if (sc.kind === 'sitAll') {
-    const crew = ['hang', 'linh', 'minh', 'tung'], at = [6, 7, 8, 3];            // stools: three at one table, one beside the player
-    assign = crew.map((id, i) => { const t = SEATS[at[i]]; return [id, {x:t[0], z:t[1], rot:t[2], sit:true, y:-.23}]; });
-    const t = SEATS[4]; ps = {x:t[0], z:t[1], rot:t[2], sit:true, y:-.23, teleport:true};
+    ({assign, ps} = stageAssign(SPOTS.canteen_tables, ['hang', 'linh', 'minh', 'tung']));   // stools: three at one table, one beside the player
   } else {                                                                         // queue: 2-3 colleagues in a straight line in front of the counter
     const crew = G.SENIORS.slice().sort(() => Math.random() - .5).slice(0, 2 + Math.floor(Math.random() * 2));
     assign = crew.map((id, i) => [id, {x:19.8, z:10.5 + i * .85, rot:Math.PI}]);   // facing the counter
@@ -1194,11 +1300,7 @@ async function showFaintScene(){
   else await new Promise(res => { const t0 = performance.now(), step = now => { const k = Math.min(1, (now - t0) / 700); player.g.rotation.x = -Math.PI / 2 * k * k; k < 1 ? requestAnimationFrame(step) : res(); }; requestAnimationFrame(step); });
   await wait(reduce ? 200 : 700);
   // the others run over and stop in a ring around where you fell (spots must be walkable; wider ring if the room is crowded)
-  const P = player.g.position, spots = [];
-  for (const r of [1.2, 1.8, 2.4]) for (let k = 0; k < 8 && spots.length < f.people.length; k++) {
-    const a = k * Math.PI / 4 + .4, x = P.x + Math.cos(a) * r, z = P.z + Math.sin(a) * r;
-    if (free(x, z) && !spots.some(q => Math.hypot(q.x - x, q.z - z) < .8)) spots.push({x, z, rot: Math.atan2(P.x - x, P.z - z)});
-  }
+  const P = player.g.position, spots = ringAround(P, f.people.length);
   focusHalf = [6.5, 5];
   const crowd = f.people.map(id3d).filter(id => NPCS[id]).map((id, i) => [id, spots[i] || spots[0]]).filter(([, sp]) => sp);
   await sceneGroup(crowd, {x: P.x, z: P.z, rot: player.g.rotation.y, teleport: true}, false);
@@ -1267,7 +1369,7 @@ function gameTalk(id){
 }
 setGender(S.female);
 for (const id of ['lock_canteen', 'lock_canteen2', 'lock_meeting']) HOT[id].text = CARD_DATA.rooms?.lockedSigns?.[HOT[id].lock] || 'Phòng này chưa mở.';
-applyRooms();
+applyRooms(); dressForToday();
 gm.addEventListener('click', () => { S.female = false; save(); }); gf.addEventListener('click', () => { S.female = true; save(); });
 // resume exactly where the save left off
 if (G.isAtHome(S)) goHome();                  // evening after 17:55 or the weekend: that happens in the rented room
@@ -1295,7 +1397,7 @@ function resize(){
   Object.assign(cam, {left:-f*a, right:f*a, top:f, bottom:-f}); cam.updateProjectionMatrix();
 }
 addEventListener('resize', resize); resize();
-let nearId = null, t0 = performance.now(), lastRoom = null, elapsed = 0;
+let nearId = null, t0 = performance.now(), lastRoom = null, elapsed = 0, evIdle = 0;
 const INTRO_S = 10; // the desk label shows (bouncing) for the first 10 s, then behaves like every other spot
 const v3 = new T.Vector3();
 const place = (el, x, y, z) => { v3.set(x, y, z).project(cam);
@@ -1329,6 +1431,11 @@ function tick(now){
   Object.values(NPCS).forEach((n, i) => n.c.parts.head.position.y = 1.56 + (i%2 ? br : -br));
   if (toastT > 0) { toastT -= dt; if (toastT <= 0) toastEl.hidden = true; }
   else if (toastQueue.length) toast(toastQueue.shift());
+  // staged midday event (cards.json when "midday"): once the morning is over and nothing is on screen, it starts by itself
+  const ev = !staging && !cutscene && !mgRunning && sheet.hidden && modalWrap.hidden && !fadeEl.classList.contains('on') ? G.todaysEvent(S, CARDS) : null;
+  if (ev) { evIdle += dt; if (evIdle > 1.2) { evIdle = 0; runStage(ev); } } else evIdle = 0;
+  updateSlots();
+  if (meBubble > 0) { meBubble -= dt; meBubbleEl.hidden = !place(meBubbleEl, pos.x, 2.25 + pos.y, pos.z); } else meBubbleEl.hidden = true;
   // HUD room name
   const room = roomAt(pos.x, pos.z), rn = room ? room.name : 'Hành lang';
   if (rn !== lastRoom) { lastRoom = rn; document.getElementById('room-name').textContent = 'Tầng 1 · ' + rn; if (room) { G.recordRoom(S, room.id); afterChange(); } }

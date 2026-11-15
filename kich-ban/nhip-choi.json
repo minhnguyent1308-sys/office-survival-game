@@ -1,0 +1,145 @@
+{
+  "version": 1,
+  "note": "Nhịp chơi (Lily duyệt 15/11/2026): tỉ lệ sự kiện, ngày đặc biệt, KPI tuần. Nội dung sự kiện và ngày đặc biệt nằm trong cards.json (when \"midday\" / type \"special_day\"); file này chỉ giữ tỉ lệ, lịch và KPI. Tuần 1 = ngày 1-5, tuần 6 = ngày 36-40. Trượt KPI không bị phạt.",
+  "events": {
+    "midday": 0.25,
+    "night": 0.5
+  },
+  "specialDays": {
+    "weeks": [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "chance": 0.85
+  },
+  "kpi": {
+    "weeks": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "badge": {
+      "flag": "nhan_vien_kpi",
+      "min": 3
+    },
+    "intro": "Sáng thứ Hai, anh Tuấn dán một tờ giấy nhớ lên màn hình của bạn:",
+    "pool": [
+      {
+        "id": "kpi_bao_cao",
+        "title": "Báo cáo anh Tuấn 2 lần",
+        "goal": {
+          "type": "action_count",
+          "action": "bao_cao_sep",
+          "count": 2
+        },
+        "reward": {
+          "ut": 3
+        },
+        "lineOk": "Anh Tuấn: \"Hai lần báo cáo, đúng như đã hẹn. Anh bắt đầu nhớ tên em rồi đấy.\"",
+        "lineFail": "Anh Tuấn: \"Tuần này em hơi im lặng. Không sao, tuần sau anh vẫn ở phòng này.\""
+      },
+      {
+        "id": "kpi_task",
+        "title": "Làm task 3 lần",
+        "goal": {
+          "type": "action_count",
+          "action": "lam_task",
+          "count": 3
+        },
+        "reward": {
+          "ut": 3
+        },
+        "lineOk": "Anh Tuấn: \"Ba task, không ai phải nhắc. Anh ghi vào sổ rồi.\"",
+        "lineFail": "Anh Tuấn: \"Task vẫn còn đó, nó không chạy đi đâu. Tuần sau mình làm tiếp.\""
+      },
+      {
+        "id": "kpi_pin",
+        "title": "Giữ Pin từ 30 trở lên cả tuần",
+        "goal": {
+          "type": "stat_min",
+          "stat": "pin",
+          "min": 30
+        },
+        "reward": {
+          "ut": 3
+        },
+        "lineOk": "Anh Tuấn: \"Cả tuần không thấy em ngáp. Anh nghi em có bí quyết.\"",
+        "lineFail": "Anh Tuấn: \"Tuần này em trông như cái laptop còn 5% pin. Cuối tuần sạc đầy nhé.\""
+      },
+      {
+        "id": "kpi_co_ba",
+        "title": "Ăn trưa với cô Ba 2 lần",
+        "goal": {
+          "type": "action_count",
+          "action": "an_trua_co_ba",
+          "count": 2
+        },
+        "reward": {
+          "qh": 3
+        },
+        "lineOk": "Anh Tuấn: \"Cô Ba khen em ăn uống đúng giờ. Đây là KPI duy nhất anh đặt vì lo cho em.\"",
+        "lineFail": "Anh Tuấn: \"Cô Ba hỏi anh sao dạo này không thấy em. Anh không biết trả lời sao.\""
+      },
+      {
+        "id": "kpi_quan_he",
+        "title": "Tăng Quan hệ thêm 8",
+        "goal": {
+          "type": "stat_gain",
+          "stat": "qh",
+          "gain": 8
+        },
+        "reward": {
+          "ut": 3
+        },
+        "lineOk": "Anh Tuấn: \"Cả phòng nhắc tên em nhiều hơn tuần trước. Theo hướng tốt, anh đã kiểm tra.\"",
+        "lineFail": "Anh Tuấn: \"Làm việc tốt rồi, giờ thử nói chuyện với mọi người nhiều hơn chút xem.\""
+      },
+      {
+        "id": "kpi_hoi_senior",
+        "title": "Hỏi senior học việc 2 lần",
+        "goal": {
+          "type": "action_count",
+          "action": "hoi_senior",
+          "count": 2
+        },
+        "reward": {
+          "qh": 3
+        },
+        "lineOk": "Anh Tuấn: \"Chị Hằng bảo em hỏi đúng chỗ. Hỏi đúng chỗ là một kỹ năng đấy.\"",
+        "lineFail": "Anh Tuấn: \"Không hỏi thì không sai, nhưng cũng không nhanh. Tuần sau hỏi thêm nhé.\""
+      },
+      {
+        "id": "kpi_uy_tin",
+        "title": "Tăng Uy tín thêm 6",
+        "goal": {
+          "type": "stat_gain",
+          "stat": "ut",
+          "gain": 6
+        },
+        "reward": {
+          "pin": 5
+        },
+        "lineOk": "Anh Tuấn: \"Tuần này sếp tổng hỏi anh em là ai. Anh trả lời rất tự hào.\"",
+        "lineFail": "Anh Tuấn: \"Em làm nhiều mà ít người thấy. Tuần sau báo cáo to hơn chút.\""
+      },
+      {
+        "id": "kpi_tam_chuyen",
+        "title": "Ngồi tám chuyện 2 lần",
+        "goal": {
+          "type": "action_count",
+          "action": "tam_chuyen",
+          "count": 2
+        },
+        "reward": {
+          "qh": 3
+        },
+        "lineOk": "Anh Tuấn: \"Anh không chính thức giao KPI tám chuyện. Nhưng em làm tốt thật.\"",
+        "lineFail": "Anh Tuấn: \"Căng tin có ghế cho em mà. Tuần sau xuống ngồi nhé.\""
+      }
+    ]
+  }
+}

@@ -91,3 +91,22 @@ Mỗi lá là một object trong file `cards.json` (mảng). Thêm lá mới = t
 - Sau khi biết quán: thang máy có dòng "T · Quán trà sữa", xuống được từ sau lá buổi sáng đến trước khi về phòng trọ (không phải ngày 40). Mỗi ngày mua một lần, không tốn lượt chiều: mua cho mình Pin +2, mua cho đồng nghiệp Quan hệ chung +1 (không cộng thân thiết). Luật ở `TEA`, `teaOpen`, `buyTea` trong engine.js.
 - Thỉnh thoảng (60%) gặp một đồng nghiệp đang xếp hàng hoặc chờ lấy ly; nói chuyện tính vào nhiệm vụ "Chào hỏi cả công ty".
 - Mô phỏng 2×2500 ván với bot mua mỗi ngày theo trọng số của nó: chăm chỉ lên Junior 46,2% và 44,3% (mục tiêu 42–49%).
+
+## Sự kiện có cảnh, ngày đặc biệt, KPI tuần (Lily duyệt 15/11/2026)
+**Trường `stage`** (dùng chung cho mọi lá có cảnh): `{map: "office"|"home", spot, time, people?, mood?, eyebrow?, button?}`. Khi lá chạy: bong bóng "!" hiện trên đầu nhân vật khoảng 1,3 giây, màn chuyển cảnh, mọi người đứng vào chỗ (`spot` là tên chỗ trong bảng SPOTS của từng trang), rồi mới hiện lời kể và lựa chọn. `people` là id nhân vật (kể cả 4 nhân vật phụ mới: `sep_tong`, `chu_tro`, `shipper`, `hang_xom`, dùng lại mẫu người có sẵn, đổi màu). `mood: "dark"` làm tối phòng (cúp điện). `MO_MEETING.openScene` cũ đã chuyển sang `stage`; trang vẫn đọc `openScene` cho save cũ.
+
+**Sự kiện** (`type: "event"`):
+- `when: "night"`: sự kiện ở nhà (EN_*), rút chung kho lá tối. Tỉ lệ một đêm có lá: `nhip-choi.json events.night`.
+- `when: "midday"`: sự kiện ở công ty (EO_*), rút lúc 08:29 với xác suất `events.midday`, xảy ra sau khi xong chuyện buổi sáng, trước việc buổi chiều. Trong lúc chờ xử lý, việc buổi chiều bị khóa.
+- Lá có `when` không vào kho rút buổi sáng.
+
+**Ngày đặc biệt** (`type: "special_day"`): mỗi tuần trong `specialDays.weeks` có xác suất `chance` rơi vào một ngày thường (không phải ngày mở phòng, mini-game, ngày 40). Không báo trước. `weekday` (0 = thứ Hai) ghim vào thứ đó. `rules`:
+- `npc`: buổi sáng chỉ rút lá của người này.
+- `skipMorningCard`: bỏ chuyện buổi sáng, vào thẳng buổi chiều.
+- `actions.<việc>.off`: đóng việc đó (chuỗi là lý do hiện cho người chơi); `.mult`: nhân hiệu ứng (`close` = thân thiết); `.add`: cộng thêm.
+- `shirt`: màu áo cả văn phòng (người chơi chỉ đổi nếu chọn lựa chọn đầu).
+- `note`: dòng ghi chú trên HUD.
+
+**KPI tuần** (`nhip-choi.json kpi`): giao sáng thứ Hai các tuần trong `kpi.weeks` (2–5; 40 ngày chỉ có 6 tuần làm việc), chấm tối thứ Sáu. Ba dạng `goal`: `action_count` (làm việc X n lần), `stat_min` (chỉ số không xuống dưới n cả tuần), `stat_gain` (chỉ số tăng thêm n). Đạt thì nhận `reward` (không bao giờ có XP) và câu `lineOk`; trượt chỉ nghe `lineFail`, không bị phạt. Đạt `badge.min` tuần thì có huy hiệu `nhan_vien_kpi` (danh-gia.json).
+
+**Chỗ đặt đối tác** (`placements.json`, chưa bật): `slots` là các chỗ có thể hiện liên kết (bảng tin sảnh, màn hình laptop), `items` để trống. Luật cố định trong `placements.js`: luôn ghi nhãn "Liên kết đối tác", lưu game trước khi mở tab mới, và không bao giờ thưởng gì trong game cho việc bấm.

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "Dữ liệu lá kịch bản MVP tầng 1. Nguồn: doc Kịch bản MVP tầng 1, tab Kho 45 lá kịch bản. qh cộng vào thanh chung và thân thiết của npc (hoặc qhTarget nếu có; qhTarget null = chỉ thanh chung). L7 hẹn lại chính nó chỉ một lần. Lá type unlock: chạy lúc 08:29 đúng ngày `day`, trước lá buổi sáng, rồi mở phòng `unlocks`. Phòng chưa mở: không rút lá có room đó, ẩn việc buổi chiều ở đó. Lá type unlock có thể gắn `scene` vào một lựa chọn (MO_CANTEEN: kind sitAll = cả phòng ngồi căng tin; kind queue = bạn đứng cạnh cô Ba, 2–3 người xếp hàng trước quầy). Cảnh chạy sau màn kết quả lựa chọn, trước buổi sáng. Lá type unlock có thể có `openScene` (MO_MEETING): buổi sáng bắt đầu ở phòng họp với mọi người trong `people` ngồi sẵn, lời kể và các lựa chọn hiện ngay tại đó; xong thì ai về vị trí của người đó. Lá có `sceneAt` (ví dụ \"trasua\"): người rủ đứng chờ ở `room` như lá thường; nói chuyện xong cả hai chuyển cảnh sang quán, `sceneLine` và lựa chọn hiện ở đó; chọn xong quán mở luôn (thêm vào rooms), bạn ở lại quán và tự đi ra cửa để về.",
+  "note": "Dữ liệu lá kịch bản MVP tầng 1. Nguồn: doc Kịch bản MVP tầng 1, tab Kho 45 lá kịch bản. qh cộng vào thanh chung và thân thiết của npc (hoặc qhTarget nếu có; qhTarget null = chỉ thanh chung). L7 hẹn lại chính nó chỉ một lần. Lá type unlock: chạy lúc 08:29 đúng ngày `day`, trước lá buổi sáng, rồi mở phòng `unlocks`. Phòng chưa mở: không rút lá có room đó, ẩn việc buổi chiều ở đó. Lá type unlock có thể gắn `scene` vào một lựa chọn (MO_CANTEEN: kind sitAll = cả phòng ngồi căng tin; kind queue = bạn đứng cạnh cô Ba, 2–3 người xếp hàng trước quầy). Cảnh chạy sau màn kết quả lựa chọn, trước buổi sáng. Lá type unlock có thể có `openScene` (MO_MEETING): buổi sáng bắt đầu ở phòng họp với mọi người trong `people` ngồi sẵn, lời kể và các lựa chọn hiện ngay tại đó; xong thì ai về vị trí của người đó. Lá có `sceneAt` (ví dụ \"trasua\"): người rủ đứng chờ ở `room` như lá thường; nói chuyện xong cả hai chuyển cảnh sang quán, `sceneLine` và lựa chọn hiện ở đó; chọn xong quán mở luôn (thêm vào rooms), bạn ở lại quán và tự đi ra cửa để về. Sự kiện có cảnh (Lily 15/11): lá có `stage` {map: office|home, spot, time, people, mood?}; type \"event\" + when \"midday\" (văn phòng, sau chuyện buổi sáng) hoặc when \"night\" (phòng trọ). Ngày đặc biệt: type \"special_day\", `rules` (npc, skipMorningCard, actions {off|mult|add}, shirt), `weekday` tùy chọn, `note` hiện dưới lựa chọn. Lịch và tỉ lệ ở nhip-choi.json.",
   "flagsBadges": [
     "chien_binh_cuoi_tuan",
     "seen_tin_nhan_sep",
@@ -18,7 +18,8 @@
     "than_voi_tung",
     "than_voi_mai",
     "than_voi_coba",
-    "nhan_vien_moi_guong_mau"
+    "nhan_vien_moi_guong_mau",
+    "nhan_vien_kpi"
   ],
   "flagsHidden": [
     "duoc_giao_du_an",
@@ -3078,9 +3079,10 @@
           "comment": "Phòng bên cạnh không vui. Phòng kế toán càng không vui."
         }
       ],
-      "openScene": {
-        "kind": "meetingRoom",
-        "eyebrow": "Ngày 10 · 08:29 · Phòng họp mới mở",
+      "stage": {
+        "map": "office",
+        "spot": "meeting",
+        "time": "08:29",
         "people": [
           "tuan",
           "hang",
@@ -3089,6 +3091,7 @@
           "tung",
           "mai"
         ],
+        "eyebrow": "Ngày 10 · 08:29 · Phòng họp mới mở",
         "button": "Ai về chỗ nấy"
       }
     },
@@ -3699,6 +3702,989 @@
           "comment": "Hóa ra hồi intern sếp cũng từng gửi nhầm email cho cả công ty."
         }
       ]
+    },
+    {
+      "id": "EN_DIEN",
+      "title": "Tiền điện tháng này",
+      "npc": null,
+      "stage": {
+        "map": "home",
+        "spot": "door",
+        "time": "20:15",
+        "people": [
+          "chu_tro"
+        ]
+      },
+      "intro": "Chủ trọ gõ cửa, tay cầm cuốn sổ bìa xanh: \"Tháng này phòng em 480 nghìn tiền điện. Cả dãy có mỗi phòng em bật điều hòa lúc 2 giờ sáng.\"",
+      "choices": [
+        {
+          "label": "Trả ngay, cười thật tươi",
+          "effects": {
+            "xp": 0,
+            "pin": -3,
+            "ut": 0,
+            "qh": 2
+          },
+          "comment": "Chủ trọ gật gù: \"Phòng này sống có trách nhiệm.\" Ví của bạn thì không nghĩ vậy."
+        },
+        {
+          "label": "Xin khất đến hôm có lương",
+          "effects": {
+            "xp": 0,
+            "pin": -5,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Chủ trọ ghi vào sổ, gạch chân hai lần. Bạn có cảm giác vừa bị đánh giá thử việc thêm một lần nữa."
+        },
+        {
+          "label": "Hỏi sao tháng này cao thế",
+          "effects": {
+            "xp": 0,
+            "pin": 3,
+            "ut": 0,
+            "qh": 1
+          },
+          "comment": "Hai người cùng soi công tơ. Hóa ra phòng bên câu trộm điện từ tháng trước. Chủ trọ bớt cho bạn 100 nghìn, kèm một nải chuối."
+        }
+      ],
+      "type": "event",
+      "when": "night",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 5,
+      "heavy": false,
+      "repeatable": false,
+      "room": null
+    },
+    {
+      "id": "EN_ME",
+      "title": "Mẹ gọi video",
+      "npc": null,
+      "stage": {
+        "map": "home",
+        "spot": "bed",
+        "time": "21:00",
+        "people": []
+      },
+      "intro": "Điện thoại rung, màn hình hiện \"Mẹ\". Camera của mẹ chĩa thẳng lên trần nhà: \"Con ăn cơm chưa? Ở công ty có ai bắt nạt con không?\"",
+      "choices": [
+        {
+          "label": "Kể thật hết, kể cả vụ file lúc 17:55",
+          "effects": {
+            "xp": 0,
+            "pin": 8,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Mẹ nghe hết rồi bảo: \"Thôi về quê, nhà còn mấy con gà.\" Bạn bật cười, thấy nhẹ cả người."
+        },
+        {
+          "label": "Nói \"Con ổn mà, công ty vui lắm\"",
+          "effects": {
+            "xp": 0,
+            "pin": 3,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Mẹ nhìn quầng thâm dưới mắt bạn ba giây, rồi gửi lên một thùng mì tôm \"để dành ăn đêm\"."
+        },
+        {
+          "label": "Quay camera sang cho mẹ xem mèo",
+          "effects": {
+            "xp": 0,
+            "pin": 6,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Cuộc gọi 40 phút, mèo chiếm 38 phút. Trước khi cúp máy, mẹ hỏi mèo đã ăn gì chưa."
+        }
+      ],
+      "type": "event",
+      "when": "night",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 5,
+      "heavy": false,
+      "repeatable": false,
+      "room": null
+    },
+    {
+      "id": "EN_KARAOKE",
+      "title": "Karaoke lúc 23 giờ",
+      "npc": null,
+      "stage": {
+        "map": "home",
+        "spot": "balcony",
+        "time": "23:00",
+        "people": [
+          "hang_xom"
+        ]
+      },
+      "intro": "Phòng bên hát \"Nối lại tình xưa\" lần thứ tư trong tối. Cái loa kẹo kéo quay thẳng sang ban công nhà bạn.",
+      "choices": [
+        {
+          "label": "Sang góp một bài",
+          "effects": {
+            "xp": 0,
+            "pin": -8,
+            "ut": 0,
+            "qh": 4
+          },
+          "comment": "Bạn hát \"Em của ngày hôm qua\", cả dãy trọ vỗ tay. Sáng mai đi làm, giọng khàn như vừa thuyết trình ba tiếng.",
+          "addFlags": [
+            "ngoi_sao_karaoke"
+          ]
+        },
+        {
+          "label": "Nhắn khéo: \"Anh chị hát hay quá, mai em đi làm sớm ạ\"",
+          "effects": {
+            "xp": 0,
+            "pin": -2,
+            "ut": 0,
+            "qh": 1
+          },
+          "comment": "Năm phút sau loa nhỏ lại. Mười phút sau to lại, nhưng là bài chậm."
+        },
+        {
+          "label": "Đeo tai nghe, bật tiếng mưa",
+          "effects": {
+            "xp": 0,
+            "pin": -4,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Tiếng mưa trong tai, tiếng \"Nối lại tình xưa\" ngoài tai. Đêm đó bạn mơ thấy mình hát bè."
+        }
+      ],
+      "type": "event",
+      "when": "night",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 5,
+      "heavy": false,
+      "repeatable": false,
+      "room": null
+    },
+    {
+      "id": "EN_SHIPPER",
+      "title": "Ly trà sữa không phải của bạn",
+      "npc": null,
+      "stage": {
+        "map": "home",
+        "spot": "door",
+        "time": "19:40",
+        "people": [
+          "shipper"
+        ]
+      },
+      "intro": "Anh shipper đứng ở cửa, tay cầm ly trà sữa full topping: \"Phòng 302 đúng không em?\" Bạn ở phòng 203.",
+      "choices": [
+        {
+          "label": "Chỉ đường lên phòng 302",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 2
+          },
+          "comment": "Anh shipper cảm ơn rối rít, tặng bạn một cái ống hút dư. Lòng tốt hôm nay được trả bằng nhựa."
+        },
+        {
+          "label": "Nhận luôn, chuyển khoản lại cho chủ ly",
+          "effects": {
+            "xp": 0,
+            "pin": 6,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Bạn chuyển 45 nghìn cho một người lạ tên \"Bé Na 302\". Ly trà sữa ngon hơn hẳn, vì có chút cảm giác phạm tội."
+        },
+        {
+          "label": "Cầm ly đi gõ từng phòng tìm chủ",
+          "effects": {
+            "xp": 0,
+            "pin": -4,
+            "ut": 0,
+            "qh": 4
+          },
+          "comment": "Bạn gõ sáu cửa, quen chín người, được mời hai bữa lẩu. Chủ ly trà sữa là bà cụ ở tầng trệt."
+        }
+      ],
+      "type": "event",
+      "when": "night",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 5,
+      "heavy": false,
+      "repeatable": false,
+      "room": null
+    },
+    {
+      "id": "EN_MEO",
+      "title": "Mèo Deadline và đĩa thịt kho",
+      "npc": null,
+      "stage": {
+        "map": "home",
+        "spot": "kitchen",
+        "time": "19:10",
+        "people": []
+      },
+      "intro": "Bạn quay lưng đi tắm đúng năm phút. Quay lại, đĩa thịt kho đã sạch bong. Mèo Deadline ngồi cạnh, liếm mép, nhìn bạn như chưa có chuyện gì xảy ra.",
+      "choices": [
+        {
+          "label": "Nấu lại bữa khác",
+          "effects": {
+            "xp": 0,
+            "pin": -3,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Bạn ăn tối lúc 21 giờ. Mèo ngồi canh suốt, chờ phiên bản thứ hai."
+        },
+        {
+          "label": "Ăn mì gói thêm quả trứng",
+          "effects": {
+            "xp": 0,
+            "pin": 2,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Không ngon bằng thịt kho, nhưng không ai tranh."
+        },
+        {
+          "label": "Nhịn, đi ngủ sớm cho đỡ đói",
+          "effects": {
+            "xp": 0,
+            "pin": 4,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Đói nhưng ngủ ngon. Mèo nằm đè lên bụng bạn cả đêm, có vẻ như để xin lỗi."
+        }
+      ],
+      "type": "event",
+      "when": "night",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 5,
+      "heavy": false,
+      "repeatable": false,
+      "room": null
+    },
+    {
+      "id": "EN_CUP_DIEN",
+      "title": "Cúp điện cả dãy trọ",
+      "npc": null,
+      "stage": {
+        "map": "home",
+        "spot": "balcony",
+        "time": "20:30",
+        "people": [
+          "hang_xom"
+        ],
+        "mood": "dark"
+      },
+      "intro": "Cả dãy trọ tối om. Laptop còn 12% pin, đúng bằng Pin của bạn hôm thứ Năm. Hàng xóm phòng bên cũng vừa ra ban công, cầm cây nến.",
+      "choices": [
+        {
+          "label": "Ra ban công nói chuyện với hàng xóm",
+          "effects": {
+            "xp": 0,
+            "pin": 5,
+            "ut": 0,
+            "qh": 4
+          },
+          "comment": "Hàng xóm hóa ra làm cùng tòa nhà, tầng 6. Bạn biết thêm lương Trưởng bộ phận là bao nhiêu. Không biết thì hơn."
+        },
+        {
+          "label": "Đi ngủ sớm",
+          "effects": {
+            "xp": 0,
+            "pin": 8,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Không có điện, không có email, không có sticker lúc 23 giờ. Bạn ngủ ngon nhất từ đầu tháng."
+        },
+        {
+          "label": "Ôm laptop ra quán cà phê làm nốt",
+          "effects": {
+            "xp": 1,
+            "pin": -8,
+            "ut": 1,
+            "qh": 0
+          },
+          "comment": "Quán cũng cúp điện. Bạn giành được ổ cắm cuối cùng, chạy máy bằng điện máy phát."
+        }
+      ],
+      "type": "event",
+      "when": "night",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 5,
+      "heavy": false,
+      "repeatable": false,
+      "room": null
+    },
+    {
+      "id": "EO_THANG_MAY",
+      "title": "Kẹt thang máy cùng sếp tổng",
+      "npc": null,
+      "room": "lobby",
+      "stage": {
+        "map": "office",
+        "spot": "elevator",
+        "time": "10:40",
+        "people": [
+          "sep_tong"
+        ]
+      },
+      "intro": "Thang máy dừng giữa tầng 1 và tầng 2. Trong thang chỉ có bạn và một ông chú mặc vest, cầm hai cái điện thoại. Mãi sau bạn mới nhận ra đó là sếp tổng.",
+      "choices": [
+        {
+          "label": "Giới thiệu bản thân, kể về việc đang làm",
+          "effects": {
+            "xp": 0,
+            "pin": -5,
+            "ut": 4,
+            "qh": 0
+          },
+          "comment": "Sếp tổng nghe, gật đầu, hỏi tên trưởng phòng của bạn. Chiều đó anh Tuấn được gọi lên tầng 7. Chưa ai biết là tốt hay xấu."
+        },
+        {
+          "label": "Im lặng, nhìn số tầng",
+          "effects": {
+            "xp": 0,
+            "pin": 2,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Mười hai phút im lặng. Lần đầu tiên bạn thấy sếp tổng cũng biết ngượng."
+        },
+        {
+          "label": "Kể chuyện cười cho đỡ căng",
+          "effects": {
+            "xp": 0,
+            "pin": -3,
+            "ut": 1,
+            "qh": 3
+          },
+          "comment": "Sếp tổng cười đúng một tiếng. Thư ký của ông bảo cả năm nay chưa nghe ông cười."
+        }
+      ],
+      "type": "event",
+      "when": "midday",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 3,
+      "heavy": false,
+      "repeatable": false
+    },
+    {
+      "id": "EO_MAY_IN",
+      "title": "Máy in kẹt trước giờ họp",
+      "npc": "minh",
+      "room": "intern",
+      "stage": {
+        "map": "office",
+        "spot": "copier",
+        "time": "09:50",
+        "people": [
+          "minh"
+        ]
+      },
+      "intro": "Còn mười phút đến giờ họp, máy in kêu \"kẹt giấy\" và nhả ra nửa trang slide. Ai cũng nhìn bạn, vì bạn đứng gần nhất.",
+      "choices": [
+        {
+          "label": "Tự mở máy ra sửa",
+          "effects": {
+            "xp": 1,
+            "pin": -5,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Bạn rút ra tờ giấy kẹt, một cái ghim bấm và tấm ảnh thẻ của một nhân viên năm 2016. Máy chạy lại.",
+          "qhTarget": null
+        },
+        {
+          "label": "Nhờ anh Minh",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 3
+          },
+          "comment": "Anh Minh đá nhẹ vào hông máy đúng một cái. Máy chạy. Anh không giải thích gì."
+        },
+        {
+          "label": "Chạy xuống tiệm photo đầu ngõ",
+          "effects": {
+            "xp": 0,
+            "pin": -6,
+            "ut": 3,
+            "qh": 0
+          },
+          "comment": "Bạn về kịp trước sếp 30 giây, slide còn ấm. Anh Tuấn không biết đã có chuyện gì, và thế là tốt nhất.",
+          "qhTarget": null
+        }
+      ],
+      "type": "event",
+      "when": "midday",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 3,
+      "heavy": false,
+      "repeatable": false
+    },
+    {
+      "id": "EO_BAO_CHAY",
+      "title": "Chuông báo cháy",
+      "npc": "mai",
+      "room": "lobby",
+      "stage": {
+        "map": "office",
+        "spot": "lobby_crowd",
+        "time": "11:20",
+        "people": [
+          "tuan",
+          "hang",
+          "linh",
+          "minh",
+          "tung",
+          "mai"
+        ]
+      },
+      "intro": "Chuông báo cháy kêu inh ỏi, cả tầng kéo ra sảnh. Chị Mai cầm loa: \"Mọi người bình tĩnh. Có thể là cháy thật, cũng có thể anh Minh lại cắm ấm siêu tốc.\"",
+      "choices": [
+        {
+          "label": "Xếp hàng đúng quy trình",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 2,
+            "qh": 2
+          },
+          "comment": "Bạn là người duy nhất nhớ bài diễn tập phòng cháy. Chị Mai ghi tên bạn vào sổ."
+        },
+        {
+          "label": "Ôm laptop chạy trước",
+          "effects": {
+            "xp": 1,
+            "pin": -3,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Bạn cứu được laptop và file \"final_v7\". Mọi người thì cứu được nhau.",
+          "qhTarget": null
+        },
+        {
+          "label": "Ở lại làm nốt task",
+          "effects": {
+            "xp": 1,
+            "pin": 0,
+            "ut": -3,
+            "qh": 0
+          },
+          "comment": "Đúng là ấm siêu tốc. Nhưng sếp đã kịp thấy bạn ngồi một mình giữa phòng trống, gõ phím rất bình tĩnh.",
+          "qhTarget": null
+        }
+      ],
+      "type": "event",
+      "when": "midday",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 3,
+      "heavy": false,
+      "repeatable": false
+    },
+    {
+      "id": "EO_SINH_NHAT",
+      "title": "Sinh nhật bất ngờ",
+      "npc": "hang",
+      "room": "canteen",
+      "stage": {
+        "map": "office",
+        "spot": "canteen_tables",
+        "time": "11:30",
+        "people": [
+          "hang",
+          "linh",
+          "minh",
+          "tung"
+        ]
+      },
+      "intro": "Chị Linh kéo cả phòng xuống căng tin: hôm nay sinh nhật chị Hằng, và chị Hằng là người duy nhất không biết. Cô Ba đã giấu cái bánh trong tủ lạnh từ sáng.",
+      "choices": [
+        {
+          "label": "Góp tiền mua quà",
+          "effects": {
+            "xp": 0,
+            "pin": -2,
+            "ut": 0,
+            "qh": 4
+          },
+          "comment": "Quà là một cuốn sổ mới. Chị Hằng cảm động lắm, rồi nói nhỏ: \"Chị vẫn dùng cuốn cũ thôi.\""
+        },
+        {
+          "label": "Hát chúc mừng to nhất",
+          "effects": {
+            "xp": 0,
+            "pin": -4,
+            "ut": 0,
+            "qh": 3
+          },
+          "comment": "Chị Linh quay video đăng nhóm chat. Bạn nổi tiếng trong đúng hai tiếng.",
+          "qhTarget": "linh"
+        },
+        {
+          "label": "Lẻn về làm việc",
+          "effects": {
+            "xp": 1,
+            "pin": 0,
+            "ut": 0,
+            "qh": -2
+          },
+          "comment": "Bạn làm xong một task. Ảnh cả phòng hôm đó thiếu đúng một người."
+        }
+      ],
+      "type": "event",
+      "when": "midday",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 3,
+      "heavy": false,
+      "repeatable": false
+    },
+    {
+      "id": "EO_KHACH_LAC",
+      "title": "Khách lạc vào phòng sếp",
+      "npc": "client",
+      "room": "boss",
+      "stage": {
+        "map": "office",
+        "spot": "boss_room",
+        "time": "10:15",
+        "people": [
+          "client"
+        ]
+      },
+      "intro": "Một vị khách đi nhầm tầng, ngồi luôn xuống sofa phòng sếp và xin mật khẩu wifi. Anh Tuấn đang họp online, đeo tai nghe, ra hiệu cho bạn: \"Em xử lý giúp anh.\"",
+      "choices": [
+        {
+          "label": "Mời nước, tiếp chuyện thay sếp",
+          "effects": {
+            "xp": 0,
+            "pin": -4,
+            "ut": 3,
+            "qh": 0
+          },
+          "comment": "Khách hóa ra là đối tác mới. Uống hết hai ly trà, ký luôn biên bản ghi nhớ trên bàn sếp."
+        },
+        {
+          "label": "Gọi chị Mai lên đón",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 2
+          },
+          "comment": "Chị Mai lên sau 40 giây, đã biết tên, công ty và giờ hẹn của khách. Bạn không hiểu chị biết bằng cách nào.",
+          "qhTarget": "mai"
+        },
+        {
+          "label": "Giả vờ không thấy, đi pha cà phê",
+          "effects": {
+            "xp": 0,
+            "pin": 3,
+            "ut": -2,
+            "qh": 0
+          },
+          "comment": "Lúc bạn quay lại, khách đã đi. Mật khẩu wifi được viết trên tờ giấy nhớ của sếp."
+        }
+      ],
+      "type": "event",
+      "when": "midday",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 3,
+      "heavy": false,
+      "repeatable": false
+    },
+    {
+      "id": "EO_MON_MOI",
+      "title": "Món mới của cô Ba",
+      "npc": "coba",
+      "room": "canteen",
+      "stage": {
+        "map": "office",
+        "spot": "canteen_counter",
+        "time": "11:45",
+        "people": [
+          "coba"
+        ]
+      },
+      "intro": "Cô Ba bưng ra một đĩa cơm màu tím: \"Cơm chiên lá cẩm, cô nấu thử. Con ăn đầu tiên nhé.\" Cả căng tin quay lại nhìn.",
+      "choices": [
+        {
+          "label": "Ăn hết, khen thật lòng",
+          "effects": {
+            "xp": 0,
+            "pin": 6,
+            "ut": 0,
+            "qh": 3
+          },
+          "comment": "Cô Ba cười tít mắt. Từ hôm đó suất của bạn luôn nhiều hơn người khác một muôi."
+        },
+        {
+          "label": "Góp ý thật: hơi mặn ạ",
+          "effects": {
+            "xp": 0,
+            "pin": 3,
+            "ut": 1,
+            "qh": 1
+          },
+          "comment": "Cô Ba nếm lại, gật gù: \"Con nói đúng.\" Hôm sau món này vào thực đơn, bớt mặn."
+        },
+        {
+          "label": "Xin thêm phần mang lên cho cả phòng",
+          "effects": {
+            "xp": 0,
+            "pin": 2,
+            "ut": 0,
+            "qh": 3
+          },
+          "comment": "Cả phòng intern ăn cơm tím. Anh Minh chụp ảnh đồ ăn lần đầu tiên trong năm.",
+          "qhTarget": null
+        }
+      ],
+      "type": "event",
+      "when": "midday",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 3,
+      "heavy": false,
+      "repeatable": false
+    },
+    {
+      "id": "SD_LUONG",
+      "title": "Ngày lương về",
+      "npc": null,
+      "room": null,
+      "rules": {
+        "actions": {
+          "an_trua_co_ba": {
+            "mult": {
+              "pin": 2
+            }
+          }
+        }
+      },
+      "intro": "08:29, điện thoại \"ting\" một tiếng: lương tháng đã về. Cả phòng intern bỗng tươi tỉnh lạ thường. Cô Ba báo trưa nay có thêm món gà rán.",
+      "choices": [
+        {
+          "label": "Mời cả phòng trà sữa",
+          "effects": {
+            "xp": 0,
+            "pin": 5,
+            "ut": 0,
+            "qh": 4
+          },
+          "comment": "Bạn chuyển khoản sáu ly trà sữa. Số dư giảm, nhưng cả phòng nhớ tên bạn.",
+          "qhTarget": null
+        },
+        {
+          "label": "Để dành, chỉ mua cho mình một ly",
+          "effects": {
+            "xp": 0,
+            "pin": 10,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Bạn ngồi nhâm nhi ly trà sữa, nhìn số dư và thấy cuộc đời vẫn còn hy vọng."
+        }
+      ],
+      "note": "Hôm nay: Ăn trưa với cô Ba được gấp đôi Pin.",
+      "type": "special_day",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 1,
+      "heavy": false,
+      "repeatable": false
+    },
+    {
+      "id": "SD_MAT_DIEN",
+      "title": "Mất điện buổi chiều",
+      "npc": null,
+      "room": null,
+      "rules": {
+        "actions": {
+          "lam_task": {
+            "off": "Mất điện, máy tính không bật được"
+          },
+          "hoi_senior": {
+            "off": "Mất điện, senior cũng ra hành lang ngồi"
+          },
+          "tam_chuyen": {
+            "mult": {
+              "qh": 2,
+              "close": 2
+            }
+          }
+        }
+      },
+      "intro": "08:29, chị Mai đi từng phòng: \"Chiều nay tòa nhà bảo trì điện từ 13 giờ. Ai cần làm gì thì làm buổi sáng nhé.\"",
+      "choices": [
+        {
+          "label": "Dạ, em biết rồi ạ",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Cả phòng tranh thủ sạc đầy mọi thứ, kể cả sạc dự phòng của người khác."
+        }
+      ],
+      "note": "Chiều nay: không Làm task, không Hỏi senior. Tám chuyện được gấp đôi Quan hệ.",
+      "type": "special_day",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 1,
+      "heavy": false,
+      "repeatable": false
+    },
+    {
+      "id": "SD_SEP_TONG",
+      "title": "Sếp tổng ghé phòng",
+      "npc": "tuan",
+      "room": null,
+      "rules": {
+        "npc": "tuan",
+        "actions": {
+          "bao_cao_sep": {
+            "mult": {
+              "ut": 2
+            }
+          }
+        }
+      },
+      "intro": "08:29, anh Tuấn đi qua từng bàn, cà vạt thắt chặt hơn mọi ngày: \"Hôm nay sếp tổng xuống thăm phòng mình. Mọi người cứ làm việc tự nhiên. Nhưng tự nhiên một cách chuyên nghiệp.\"",
+      "choices": [
+        {
+          "label": "Dọn bàn thật gọn",
+          "effects": {
+            "xp": 0,
+            "pin": -3,
+            "ut": 2,
+            "qh": 0
+          },
+          "comment": "Bàn bạn gọn đến mức anh Tùng tưởng bạn sắp nghỉ việc."
+        },
+        {
+          "label": "Cứ làm việc như mọi ngày",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Bàn của bạn vẫn có ba cốc trà sữa rỗng. Đó cũng là một kiểu chân thật."
+        }
+      ],
+      "note": "Hôm nay: chuyện buổi sáng là của anh Tuấn. Báo cáo anh Tuấn được gấp đôi Uy tín.",
+      "type": "special_day",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 1,
+      "heavy": false,
+      "repeatable": false
+    },
+    {
+      "id": "SD_AO_CAM",
+      "title": "Thứ Sáu áo cam",
+      "npc": "linh",
+      "room": null,
+      "weekday": 4,
+      "rules": {
+        "actions": {
+          "tam_chuyen": {
+            "mult": {
+              "qh": 2,
+              "close": 2
+            }
+          }
+        },
+        "shirt": "#f39a3d"
+      },
+      "intro": "08:29, cả phòng mặc áo đồng phục màu cam để chụp ảnh fanpage. Chị Linh đứng ở cửa, tay cầm thêm một cái áo cam size XL: \"Chị biết thế nào cũng có người quên.\"",
+      "choices": [
+        {
+          "label": "Mặc áo cam, cười thật tươi",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 3
+          },
+          "comment": "Ảnh fanpage có bạn ở hàng đầu. Mẹ bạn chia sẻ ảnh đó lên Facebook ba lần."
+        },
+        {
+          "label": "Giữ áo trắng như mọi ngày",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 1,
+            "qh": 0
+          },
+          "comment": "Bạn là chấm trắng duy nhất giữa một rừng màu cam. Rất dễ tìm trong ảnh.",
+          "qhTarget": null
+        }
+      ],
+      "note": "Hôm nay: Tám chuyện được gấp đôi Quan hệ.",
+      "type": "special_day",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 1,
+      "heavy": false,
+      "repeatable": false
+    },
+    {
+      "id": "SD_MUA_NGAP",
+      "title": "Mưa ngập đường",
+      "npc": null,
+      "room": null,
+      "rules": {
+        "skipMorningCard": true
+      },
+      "intro": "07:30, trời mưa như trút. Đường ra công ty ngập đến nửa bánh xe. Nhóm chat công ty có 47 tin nhắn, toàn ảnh xe chết máy.",
+      "choices": [
+        {
+          "label": "Lội nước đến công ty",
+          "effects": {
+            "xp": 0,
+            "pin": -5,
+            "ut": 3,
+            "qh": 0
+          },
+          "comment": "Bạn đến lúc 10 giờ, ống quần ướt đến gối. Anh Tuấn nhìn ống quần, gật đầu ghi nhận."
+        },
+        {
+          "label": "Chờ nước rút, ngủ thêm một giấc",
+          "effects": {
+            "xp": 0,
+            "pin": 10,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Bạn đến lúc 10 giờ 30, tóc còn in vết gối. Sếp không nói gì, vì sếp cũng vừa đến."
+        }
+      ],
+      "note": "Hôm nay bạn đến muộn: không có chuyện buổi sáng, vào thẳng buổi chiều.",
+      "type": "special_day",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 1,
+      "heavy": false,
+      "repeatable": false
+    },
+    {
+      "id": "SD_KIEM_TOAN",
+      "title": "Ngày kiểm toán",
+      "npc": "mai",
+      "room": "canteen",
+      "rules": {
+        "actions": {
+          "an_trua_co_ba": {
+            "off": "Căng tin đóng cửa cho đoàn kiểm toán"
+          },
+          "tam_chuyen": {
+            "off": "Căng tin đóng cửa cho đoàn kiểm toán"
+          },
+          "giup_chi_mai": {
+            "add": {
+              "ut": 2
+            },
+            "mult": {
+              "close": 2
+            }
+          }
+        }
+      },
+      "intro": "08:29, đoàn kiểm toán đến, mượn luôn căng tin làm chỗ ngồi. Chị Mai ôm ba chồng hồ sơ: \"Hôm nay ai rảnh tay thì xuống sảnh giúp chị với.\"",
+      "choices": [
+        {
+          "label": "Cất hết giấy tờ cá nhân khỏi bàn",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 1,
+            "qh": 0
+          },
+          "comment": "Bạn cất đi hóa đơn trà sữa, tờ note \"file này không gấp\" và một bản CV chưa gửi."
+        }
+      ],
+      "note": "Hôm nay căng tin đóng cửa. Giúp chị Mai được thêm Uy tín và gấp đôi thân thiết.",
+      "type": "special_day",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 1,
+      "heavy": false,
+      "repeatable": false
     }
   ],
   "rooms": {
