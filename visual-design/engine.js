@@ -251,6 +251,17 @@ export const rulesToday = (s, cards) => (s.today.specialId ? cardById(cards, s.t
 export const kpiById = id => RH.kpi.pool.find(k => k.id === id) || null;
 export const kpiToAnnounce = s => (s.week?.kpi && !s.week.kpiSeen && s.part === 'morning' ? kpiById(s.week.kpi) : null);
 export function kpiSeen(s) { if (s.week) s.week.kpiSeen = true; }
+// "Làm lơ" (Lily 15/11): no KPI this week (nothing scored Friday), and one random stat drops by a random 2-5 right away.
+// The stat is drawn from Pin / Uy tín / Quan hệ: XP is never lost (applyEffects), so drawing XP would cost nothing.
+// Logged in kpiLog (ok: false, ignored: true) so the same note does not come back next week. Returns what actually changed.
+export const KPI_IGNORE_COST = [2, 5], KPI_IGNORE_STATS = ['pin', 'ut', 'qh'];
+export function kpiIgnore(s, rng = Math.random) {
+  const k = s.week?.kpi && kpiById(s.week.kpi); if (!k || s.week.kpiSeen) return null;
+  const stat = KPI_IGNORE_STATS[Math.floor(rng() * KPI_IGNORE_STATS.length)], [lo, hi] = KPI_IGNORE_COST, amount = lo + Math.floor(rng() * (hi - lo + 1));
+  s.week.kpiSeen = true; s.week.kpi = null; s.week.kpiIgnored = {id: k.id, stat, amount};
+  (s.kpiLog ||= []).push({week: s.week.n, id: k.id, ok: false, ignored: true});
+  return {kpi: k, stat, amount, got: applyEffects(s, {[stat]: -amount})};
+}
 function kpiDone(s, g) {
   const b = s.week.base;
   switch (g.type) {
@@ -275,7 +286,7 @@ export function kpiLine(s) {
   const g = st.kpi.goal, prog = g.type === 'stat_min' ? `${STAT_NAME[g.stat]} thấp nhất tuần: ${st.a}` : `${st.a}/${st.b}`;
   return `KPI tuần: ${st.kpi.title} · ${st.done ? 'Đạt ✓' : prog}`;
 }
-// Friday night, before the weekend: the KPI is scored. Reward if met; nothing lost if not (Lily 15/11: keep it relaxed).
+// Friday night, before the weekend: the KPI is scored. Reward if met; nothing lost if not (Lily 15/11: keep it relaxed). An ignored KPI is not scored.
 function scoreWeek(s) {
   const st = kpiStatus(s); if (!st || s.week.scored) return null;
   s.week.scored = true;

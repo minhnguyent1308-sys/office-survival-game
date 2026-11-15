@@ -20,12 +20,25 @@ Ngày mốc và phần thưởng đọc từ `../minigames.json` (kho mini-game)
 Chọn lá với trọng số 1·XP + 1·Uy tín + 3·Quan hệ + 0,3·Pin. Chiều nào cũng tám chuyện (trước khi căng tin mở thì hỏi senior), ăn trưa khi Pin < 30, sau ngày 20 làm nốt báo cáo nếu còn thiếu. Bot này không lên Junior (thiếu XP và nhiệm vụ), dùng để xem nhánh quan hệ.
 
 ## Biến môi trường
-`N`, `SEED`, `MG`, `NOISE`, `SLACK`, `CARDS` (đường dẫn cards.json khác, tính từ thư mục này), `TASKXP` (ghi đè XP của Làm task), `PF`/`XF` (nhân Pin âm / XP của các lá tối N*, V*), `RHYTHM=0` (chạy không có nhịp chơi: không sự kiện giữa buổi, ngày đặc biệt, KPI tuần).
+`N`, `SEED`, `MG`, `NOISE`, `SLACK`, `CARDS` (đường dẫn cards.json khác, tính từ thư mục này), `TASKXP` (ghi đè XP của Làm task), `PF`/`XF` (nhân Pin âm / XP của các lá tối N*, V*), `RHYTHM=0` (chạy không có nhịp chơi: không sự kiện giữa buổi, ngày đặc biệt, KPI tuần), `KPI=smart|nhan|lo` (cách bot trả lời tờ giấy nhớ KPI, xem mục dưới).
 
 ## Quán trà sữa (14/11)
 Bot mua trà sữa một lần mỗi ngày sau việc chiều, khi quán đã mở: `TEA=smart` (mặc định) chọn theo trọng số của bot (thường là mua cho đồng nghiệp, Pin < 35 thì mua cho mình); `TEA=off|self|colleague` để so sánh. Với dữ liệu có 5 lá mở quán: chăm chỉ lên Junior 46,2% (SEED=0) và 44,3% (SEED=77); `off` 44,9%/44,6%, `self` 43,4%/44,4%, `colleague` 45,3%/46,1%. Quán mở trung vị ngày 4.
 
 ## Nhịp chơi: sự kiện, ngày đặc biệt, KPI tuần (15/11)
 Bot đọc `../nhip-choi.json`. Ngày đặc biệt: chọn lựa chọn như lá thường; luật của ngày (việc bị đóng, việc được nhân đôi) áp lên việc chiều, việc bị đóng thì bot thử việc kế tiếp. Sự kiện giữa buổi được xử lý trước việc chiều. KPI dạng "làm việc X n lần" được bot ưu tiên khi còn thiếu. Kết quả (N=2000 mỗi lần): chăm chỉ lên Junior **45,4%** (SEED=0) và **45,1%** (SEED=77). Mỗi ván có khoảng 5 sự kiện giữa buổi, 4,3 ngày đặc biệt; bot chăm chỉ đạt 79% số KPI, 83% ván có huy hiệu "Nhân viên KPI"; bot lo quan hệ đạt 40%, 12% có huy hiệu. Để giữ cân bằng, KPI không thưởng XP, và vài lựa chọn sự kiện XP 2 được hạ còn 1.
+
+## Nhận hoặc Làm lơ KPI tuần (15/11)
+Sáng thứ Hai có KPI, người chơi chọn **Nhận việc** (như cũ: đạt thì thưởng, trượt không sao) hoặc **Làm lơ**: tuần đó không có KPI (tối thứ Sáu không chấm) và mất ngay 2–5 (ngẫu nhiên) của một chỉ số ngẫu nhiên trong Pin, Uy tín, Quan hệ. XP không nằm trong danh sách vì luật chung "XP không bao giờ bị trừ" (`applyEffects`).
+
+Vì Nhận không bao giờ thiệt, lựa chọn tốt nhất của bot luôn là Nhận. Giống cách bot chọn lá, với xác suất `NOISE` = 0,65 bot trả lời ngẫu nhiên (50/50), nên làm lơ khoảng 1,3 trong 4 KPI mỗi ván (`KPI=smart`, mặc định). `KPI=nhan` luôn nhận, `KPI=lo` luôn làm lơ.
+
+| N=2500, chăm chỉ lên Junior | SEED=0 | SEED=77 |
+|---|---|---|
+| `smart` (mặc định) | **43,0%** | **43,2%** |
+| `nhan` (luôn nhận, như trước 15/11) | 45,4% | 45,1% |
+| `lo` (luôn làm lơ) | 39,4% | 40,0% |
+
+Với `smart`: bot chăm chỉ đạt 79% số KPI đã nhận, nhưng huy hiệu "Nhân viên KPI" (cần đạt 3 KPI) giảm từ 83% xuống 36% số ván vì ít KPI được nhận hơn. Bot lo quan hệ: đạt 39%, huy hiệu 4%.
 
 `choi-thu-mot-van.mjs` (in nhật ký một ván) chưa nạp nhịp chơi, nên ván mẫu chưa có các sự kiện này.
