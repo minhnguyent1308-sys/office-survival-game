@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="vi">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quán trà sữa</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Be+Vietnam+Pro:wght@400;600&display=swap">
+<style>
+/* Same design system as tang-intern.html: tokens, HUD cards, chips, sheet, modal. Only the shop is new. */
+:root{
+  --ground:#f9f0e1; --ink:#2a2230; --paper:#fffdf8; --muted:#7a6f74; --accent:#e8505b; --lock:#b9b0a6; --yellow:#f7d046;
+  --xp:#3c83ec; --pin:#44ba6a; --ut:#e3b23c; --qh:#f45561;
+  --up:#dff3e4; --down:#fde2e3; --rule:#eadfcd;
+  --font-display:"Baloo 2","Be Vietnam Pro",system-ui,sans-serif;
+  --font-body:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+html,body{height:100%}
+[hidden]{display:none!important}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--font-body);overflow:hidden;-webkit-tap-highlight-color:transparent}
+#stage{position:fixed;inset:0}
+#stage canvas{display:block;width:100%;height:100%;touch-action:none;cursor:pointer}
+.hud{position:fixed;display:flex;gap:8px;align-items:flex-start;pointer-events:none;z-index:5}
+.hud > *{pointer-events:auto}
+.hud.tl{top:calc(12px + env(safe-area-inset-top,0px));left:max(16px,env(safe-area-inset-left,0px));flex-direction:column}
+.hud.tr{top:calc(12px + env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px))}
+.card{background:var(--paper);border:2px solid var(--ink);border-radius:12px;box-shadow:0 3px 0 var(--ink)}
+.where{padding:8px 12px;display:grid;gap:2px}
+.where b{font-family:var(--font-display);font-weight:800;font-size:20px;line-height:1.1}
+.where span{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.where .goal{font-size:12px;font-weight:600;color:var(--accent);max-width:250px;line-height:1.35}
+.seg{display:flex;padding:3px;gap:3px}
+.seg button{font:600 13px var(--font-body);border:0;background:transparent;color:var(--ink);padding:0 12px;border-radius:8px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.seg button:focus-visible,.btn:focus-visible,.chip:focus-visible,.choice:focus-visible,.tool:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.tool{font:600 13px var(--font-body);padding:0 12px;cursor:pointer;color:var(--ink);display:inline-flex;align-items:center}
+.hud.tr > *{height:40px;box-sizing:border-box}
+.hint{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));font-size:12px;color:var(--muted);background:var(--paper);border:1px solid var(--lock);border-radius:999px;padding:6px 14px;white-space:nowrap;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis;z-index:4}
+.toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(76px + env(safe-area-inset-top,0px));font:600 13px var(--font-body);background:var(--accent);color:#fff;border:2px solid var(--ink);border-radius:999px;padding:6px 14px;z-index:6;white-space:nowrap;box-shadow:0 3px 0 var(--ink)}
+#tags{position:fixed;inset:0;pointer-events:none;z-index:3}
+.chip{position:absolute;transform:translate(-50%,-100%);pointer-events:auto;font:600 12px var(--font-body);color:var(--ink);background:var(--paper);border:2px solid var(--ink);border-radius:999px;padding:3px 10px;white-space:nowrap;cursor:pointer;opacity:.85;transition:transform .15s,opacity .15s}
+.chip::after{content:"";position:absolute;left:50%;bottom:-7px;width:10px;height:10px;background:inherit;border:inherit;border-top:0;border-left:0;transform:translateX(-50%) rotate(45deg)}
+.chip .bubble{width:46px;height:44px;display:block}
+.chip.near{opacity:1;background:var(--accent);color:#fff;border-color:var(--ink);transform:translate(-50%,-112%) scale(1.08)}
+.chip kbd{font:inherit;opacity:.85;margin-left:4px}
+.chip.quest{background:transparent;border:0;padding:0;opacity:1;transform:translate(-22%,-94%);transform-origin:22% 94%;animation:quest-bob 1.1s ease-in-out infinite}
+.chip.quest::after{display:none}
+.chip.quest.near{background:transparent;animation:none;transform:translate(-22%,-94%) scale(1.12)}
+@keyframes quest-bob{0%,100%{transform:translate(-22%,-94%)}50%{transform:translate(-22%,-114%)}}
+.chip.task{opacity:1;border-color:var(--accent);color:var(--accent)}
+.chip.task.near{color:#fff}
+.sheet{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(460px,calc(100% - 32px));padding:16px 18px 14px;z-index:6;display:grid;gap:8px;box-sizing:border-box}
+.sheet .eyebrow,.modal .eyebrow{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.sheet p,.modal p{margin:0;font-size:15px;line-height:1.5}
+.sheet .row{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+.sheet h2,.modal h2{margin:0;font:800 24px/1.1 var(--font-display);text-wrap:balance}
+.btn{font:600 14px var(--font-body);background:var(--ink);color:var(--paper);border:0;border-radius:10px;padding:8px 16px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--ink)}
+.stats{padding:8px 12px;display:grid;grid-template-columns:auto 92px 30px;gap:5px 8px;align-items:center;font-size:12px}
+.stats .bar{height:8px;border-radius:99px;background:var(--rule);border:1.5px solid var(--ink);overflow:hidden;position:relative}
+.stats .bar i{display:block;height:100%;background:var(--c)}
+.stats .bar s{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--ink)}
+.stats .val{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.stats .warn{color:var(--accent);animation:flash 1s steps(2) infinite}
+@keyframes flash{50%{opacity:.35}}
+.choices{display:grid;gap:8px;margin-top:6px}
+.choice{text-align:left;font:500 14px/1.4 var(--font-body);background:var(--paper);color:var(--ink);border:2px solid var(--ink);border-radius:10px;padding:8px 12px;cursor:pointer;box-shadow:0 2px 0 var(--ink)}
+.choice:hover{background:#fff4d6}
+.choice b{color:var(--accent);margin-right:6px}
+.choice small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.quote{color:var(--muted);font-size:13px}
+.comment{font-style:italic}
+.deltas{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.delta{font:600 12px var(--font-body);border-radius:999px;padding:2px 8px;border:1.5px solid var(--ink);background:var(--up)}
+.delta.down{background:var(--down)}
+.note{font-size:13px;color:var(--muted);margin-top:6px}
+.modal-wrap{position:fixed;inset:0;background:rgba(42,34,48,.35);display:grid;place-items:center;z-index:12;padding:16px}
+.modal{width:min(440px,100%);padding:18px;display:grid;gap:10px;max-height:calc(100vh - 32px);overflow:auto;box-sizing:border-box}
+.modal .row{display:flex;justify-content:flex-end;gap:8px;margin-top:4px;flex-wrap:wrap}
+/* scene change: one full-screen card that fades in, swaps the scene, fades out */
+.fade{position:fixed;inset:0;z-index:10;background:var(--ink);color:var(--paper);display:grid;place-items:center;align-content:center;gap:6px;text-align:center;padding:16px;opacity:0;pointer-events:none;transition:opacity .5s ease}
+.fade.on{opacity:1;pointer-events:auto}
+.fade small{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--yellow);font-weight:600}
+.fade b{font:800 40px/1.05 var(--font-display)}
+.fade span{font-size:15px;opacity:.8;max-width:360px}
+@media (prefers-reduced-motion:reduce){.chip{transition:none}.chip.quest,.stats .warn{animation:none}.fade{transition:none}}
+@media (max-width:640px){.hud.tl{top:calc(62px + env(safe-area-inset-top,0px))}}
+/* HUD layout: day card + stats stacked top-left, buttons top-right, Tan làm bottom-right; the hint, sheet and toast keep clear of all of them */
+.hint{max-width:calc(100% - 300px)}
+@media (max-width:760px){.hint{max-width:calc(100% - 32px);bottom:calc(64px + env(safe-area-inset-bottom,0px))}.sheet{bottom:calc(64px + env(safe-area-inset-bottom,0px))}}
+@media (max-width:900px){.toast{top:calc(272px + env(safe-area-inset-top,0px));white-space:normal;text-align:center;width:max-content;max-width:calc(100% - 32px);box-sizing:border-box}} /* toast drops below the day card + stats column */
+</style>
+
+<div id="stage"></div>
+<div id="tags"></div>
+<div class="hud tl">
+  <div class="card where"><b id="room-name">Quán trà sữa</b><span id="day-line"></span><span class="goal" id="goal"></span></div>
+  <div class="card stats" id="stats" aria-label="Chỉ số"></div>
+</div>
+<div class="hud tr">
+  <div class="card seg" role="group" aria-label="Chọn nhân vật">
+    <button id="g-m" aria-pressed="true">Nam</button><button id="g-f" aria-pressed="false">Nữ</button>
+  </div>
+</div>
+<div class="toast" id="toast" hidden role="status"></div>
+<div class="hint" id="hint">Chạm vào sàn để đi · WASD / phím mũi tên · E để tương tác</div>
+<div class="card sheet" id="sheet" hidden role="dialog" aria-modal="false" aria-labelledby="sheet-title">
+  <div class="eyebrow" id="sheet-eyebrow"></div>
+  <h2 id="sheet-title"></h2>
+  <div id="sheet-body"></div>
+  <div class="row"><button class="btn" id="sheet-close">Đóng</button></div>
+</div>
+<div class="fade on" id="fade" aria-live="polite"><small id="fade-eyebrow"></small><b id="fade-title">Quán trà sữa</b><span id="fade-sub"></span></div>
+<script>/* first frame: paint the scene-change card the previous page handed over, before the 3D world loads */try{const f=JSON.parse(sessionStorage.getItem('ssns-fade')),d=document.getElementById('fade');sessionStorage.removeItem('ssns-fade');if(f&&(d.classList.contains('on')||location.hash.includes('from=home'))){d.style.transition='none';d.classList.add('on');for(const k of['eyebrow','title','sub'])document.getElementById('fade-'+k).textContent=f[k]||''}}catch(e){}</script>
+<div class="modal-wrap" id="modal-wrap" hidden><div class="card modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"></div></div>
+
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+import * as T from 'three';
+import * as G from './engine.js'; // same rules as tầng Intern; buying tea is G.buyTea, the opening event is a card with sceneAt "trasua"
+import * as Wd from './world.js';  // palette, builders, characters, walk grid shared with every map
+
+const P = Wd.P; // one palette for every map
+const W = 8, D = 6;                         // the shop, in tiles (x, z)
+const WALK = {x0:0, z0:D, x1:W, z1:D + 1.7}; // the pavement in front of it
+const DOOR = {x0:4.9, x1:6.3};               // gap in the glass front
+const ROOMS = [
+  {id:'shop', name:'Quán trà sữa', x0:0, z0:0, x1:W, z1:D},
+  {id:'walk', name:'Vỉa hè', ...WALK},
+];
+const roomAt = (x, z) => ROOMS.find(r => x >= r.x0 && x < r.x1 && z >= r.z0 && z < r.z1);
+await Promise.race([document.fonts?.load('800 60px "Baloo 2"').catch(()=>{}), new Promise(r => setTimeout(r, 1500))]);
+
+/* ---------- Renderer, scene, camera (same rig as the rented room) ---------- */
+const stage = document.getElementById('stage');
+const renderer = new T.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
+renderer.outputColorSpace = T.SRGBColorSpace;
+stage.appendChild(renderer.domElement);
+const scene = new T.Scene(); scene.background = new T.Color(getComputedStyle(document.documentElement).getPropertyValue('--ground').trim());
+const cam = new T.OrthographicCamera(-1,1,1,-1,0.1,200);
+const camOffset = new T.Vector3(20, 19, 20);
+const CENTER = new T.Vector3(W/2, 0, WALK.z1/2 - .1);
+const camTarget = CENTER.clone();
+scene.add(new T.HemisphereLight('#ffffff', '#c9b89b', 1.6));
+const sun = new T.DirectionalLight('#fff3e0', 1.9);
+sun.position.set(W/2 + 6, 14, D/2 - 4); sun.target.position.set(W/2, 0, D/2); scene.add(sun.target);
+sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); sun.shadow.bias = -0.0006;
+Object.assign(sun.shadow.camera, {left:-9, right:9, top:9, bottom:-9, near:1, far:50}); scene.add(sun);
+
+/* ---------- Builders: shared (world.js) ---------- */
+const {mat, box, faceMats, sign, plant, makeChar, tagHot, blockers, hotMeshes} = Wd.makeKit(scene);
+const cyl = (x, y, z, rt, rb, h, c, o = {}) => { const m = new T.Mesh(new T.CylinderGeometry(rt, rb, h, o.seg || 18), o.material || mat(c)); m.position.set(x, y, z); m.castShadow = o.cast ?? true; m.receiveShadow = true; scene.add(m); if (o.hot) { m.userData.hot = o.hot; hotMeshes.push(m); } return m; };
+// shop-only palette, kept next to the shared one: milk tea browns + the shop's pink
+const TEA = {milk:'#d9b48f', brown:'#a8714a', matcha:'#a9cf7f', taro:'#c4a6e0', peach:'#f6b38a', pearl:'#3a2a25', pink:'#f7a9bd', pinkDark:'#e0708f'};
+
+/* ---------- Floor: pink-and-cream tiles inside, grey paving outside ---------- */
+{
+  const K = 2, c = document.createElement('canvas'); c.width = W*K; c.height = Math.ceil(WALK.z1*K); const x = c.getContext('2d');
+  for (let i=0;i<c.width;i++) for (let j=0;j<c.height;j++){
+    const out = (j+.5)/K >= D;
+    x.fillStyle = out ? ['#d9d6d0', '#cdc9c2'][(i + (j>>1)) % 2] : ['#fbeee6', '#f6dcd3'][(i+j)%2]; x.fillRect(i,j,1,1);
+  }
+  const t = new T.CanvasTexture(c); t.magFilter = T.NearestFilter; t.colorSpace = T.SRGBColorSpace;
+  box(0, 0, -.2, W, WALK.z1, .2, '#cdc9c2', {round:0, cast:false, faces:[mat('#bdb8b0'),mat('#cdc9c2'),new T.MeshStandardMaterial({map:t, roughness:.9}),mat('#cdc9c2'),mat('#b3aea6'),mat('#cdc9c2')]});
+  box(0, WALK.z1 - .12, -.05, W, .12, .1, '#a9a49c', {round:0, cast:false}); // kerb
+}
+/* ---------- Walls: two far walls (cutaway), glass on the two near sides like the office's glass rooms ---------- */
+box(-.25, -.25, 0, .25, D + .25, 3, TEA.pink, {round:0, block:true});
+box(0, -.25, 0, W, .25, 3, '#fde3ea', {round:0, block:true});
+box(-.25, -.25, 3, .25, D + .25, .08, P.trim, {round:0}); box(0, -.25, 3, W, .25, .08, P.trim, {round:0});
+box(0, 0, 0, .04, D, .14, P.woodDark, {round:0, cast:false}); box(0, 0, 0, W, .04, .14, P.woodDark, {round:0, cast:false});
+const glass = new T.MeshStandardMaterial({color:P.glass, transparent:true, opacity:.26, roughness:.1, depthWrite:false});
+const glassWall = (x0, z0, x1, z1) => { const w = x1-x0, d = z1-z0;
+  box(x0, z0, 0, w, d, 2.3, P.glass, {round:0, material:glass, cast:false, block:true});
+  box(x0, z0, 2.3, w, d, .08, P.metalDark, {round:0}); box(x0, z0, 0, w, d, .08, P.metalDark, {round:0, cast:false}); };
+glassWall(0, D - .05, DOOR.x0, D + .05); glassWall(DOOR.x1, D - .05, W, D + .05); glassWall(W - .05, 0, W + .05, D);
+box(DOOR.x0, D - .05, 2.3, DOOR.x1 - DOOR.x0, .1, .08, P.metalDark, {round:0});                     // door lintel
+box(DOOR.x0 + .1, D - .02, 0, .5, .04, 2.2, P.glass, {round:0, material:glass, cast:false});        // the door leaf, propped open
+sign(.3, D + .02, 1.98, 4.2, .04, .3, 'TRÀ SỮA TẦNG TRỆT', TEA.pinkDark, '#fff', 4, 80, 1024, 74); // name strip along the top of the glass, low enough to keep the two tables in view
+
+/* ---------- Counter + bar along the back wall ---------- */
+sign(.6, .02, 1.75, 4.6, .04, 1.05, 'MENU · TRÀ SỮA 25K · TRÂN CHÂU +5K', P.ink, P.yellow, 4, 46, 1024, 180); // chalkboard above the bar
+box(.4, .05, 0, 4.8, .55, .9, P.paper, {round:.02});                                // back bar
+box(.35, .02, .9, 4.9, .62, .05, P.wood, {round:.01});
+[[.7,TEA.milk],[1.1,TEA.brown],[1.5,TEA.matcha],[1.9,TEA.taro]].forEach(([x,c]) => { box(x, .12, .95, .32, .32, .55, P.metal, {round:.04}); box(x + .04, .44, 1.15, .24, .02, .25, c, {round:0, cast:false}); }); // tea urns + labels
+box(2.6, .1, .95, .5, .4, .5, P.metalDark, {round:.04}); box(2.68, .1, 1.45, .34, .3, .03, P.dark, {round:0}); // sealing machine
+cyl(2.85, 1.18, .55, .14, .14, .06, P.red);                                         // its red button
+box(3.5, .1, .95, .9, .38, .3, P.paper, {round:.03}); [3.6, 3.85, 4.1].forEach(x => cyl(x + .05, 1.36, .28, .08, .08, .2, TEA.pearl)); // topping tubs
+box(4.6, .12, .95, .4, .3, .45, P.blue, {round:.05});                               // shaker machine
+// the counter people order at (z 1.45..2.05): cream front, pink trim, register + tip jar
+box(.4, 1.45, 0, 4.8, .6, 1.0, P.paper, {round:.02, block:true, hot:'counter'});
+box(.36, 1.42, 1.0, 4.88, .66, .06, P.wood, {round:.01, hot:'counter'});
+box(.4, 2.04, .15, 4.8, .02, .7, TEA.pink, {round:0, cast:false});
+box(1.0, 1.55, 1.06, .45, .35, .28, P.dark, {round:.03}); box(1.05, 1.58, 1.34, .35, .05, .15, P.screen, {round:0, cast:false}); // register
+cyl(1.8, 1.16, 1.75, .09, .08, .2, P.glass, {material:new T.MeshStandardMaterial({color:P.glass, transparent:true, opacity:.6})}); // tip jar
+box(2.2, 1.6, 1.06, .5, .3, .02, P.yellow, {round:0, cast:false});                 // "order here" card
+// queue markers on the floor in front of the counter
+for (let k = 0; k < 3; k++) box(2.45 + k*.05, 2.6 + k*.75, 0, .7, .08, .01, P.gold, {round:0, cast:false});
+sign(.05, 2.4, 1.0, .04, 1.6, .5, 'XẾP HÀNG Ở ĐÂY →', P.yellow, P.ink, 0, 54, 512, 128);
+
+/* ---------- Pick-up shelf: cups waiting, each with a name on it ---------- */
+box(5.6, .05, 0, 2.2, .55, .85, P.wood, {block:true, hot:'shelf'});
+box(5.6, .05, .85, 2.2, .55, .04, P.woodDark, {round:0, hot:'shelf'});
+box(5.6, .05, 1.35, 2.2, .45, .04, P.woodDark, {round:0});
+sign(5.7, .02, 1.85, 2.0, .04, .45, 'CHỜ LẤY LY', TEA.pinkDark, '#fff', 4, 70, 512, 120);
+function cup(x, y, z, tea, s = 1){
+  cyl(x, y + .15*s, z, .085*s, .07*s, .3*s, tea);
+  cyl(x, y + .035*s, z, .07*s, .07*s, .06*s, TEA.pearl);
+  cyl(x, y + .305*s, z, .09*s, .09*s, .015*s, '#fff');
+  const st = cyl(x + .03*s, y + .4*s, z, .018*s, .018*s, .24*s, TEA.pinkDark, {seg:8}); st.rotation.z = -.2;
+  box(x - .06*s, z + .07*s, y + .1*s, .12*s, .02, .08*s, '#fff', {round:0, cast:false});   // name sticker
+}
+[[5.85,TEA.milk],[6.2,TEA.taro],[6.55,TEA.brown],[6.9,TEA.matcha],[7.25,TEA.peach]].forEach(([x,c]) => cup(x, .9, .3, c, 1.1));
+[[6.0,TEA.peach],[6.75,TEA.milk],[7.4,TEA.taro]].forEach(([x,c]) => cup(x, 1.39, .25, c, .9));
+
+/* ---------- Two small tables by the window (that is all the seating) ---------- */
+const STOOLS = [];
+function table(cx, cz){
+  cyl(cx, .7, cz, .38, .38, .05, P.paper); cyl(cx, .35, cz, .05, .07, .66, P.metalDark); cyl(cx, .02, cz, .22, .22, .04, P.metalDark);
+  blockers.push({x0:cx - .38, z0:cz - .38, x1:cx + .38, z1:cz + .38});
+  for (const [dx, dz] of [[-.62, 0], [.62, 0]]) { const sx = cx + dx, sz = cz + dz;
+    cyl(sx, .44, sz, .2, .2, .06, TEA.pinkDark); cyl(sx, .21, sz, .04, .06, .42, P.metalDark);
+    blockers.push({x0:sx - .18, z0:sz - .18, x1:sx + .18, z1:sz + .18}); STOOLS.push([sx, sz, dx < 0 ? Math.PI/2 : -Math.PI/2]); }
+  return [cx, cz];
+}
+const TABLES = [table(1.25, 4.6), table(3.4, 4.6)];
+cup(1.2, .72, 4.45, TEA.milk, .8);                                                    // somebody left one behind
+plant(.0, 5.3, .6);
+sign(.05, 4.15, 1.5, .04, 1.1, .5, 'TRÂN CHÂU MỚI', P.paper, TEA.pinkDark, 0, 90, 512, 232);
+
+/* ---------- The pavement: a row of motorbikes, a shipper waiting, the way back into the office building ---------- */
+function motorbike(x, z, c){
+  const wheel = (dx) => { const w = cyl(x + dx, .2, z, .2, .2, .08, P.dark, {seg:16}); w.rotation.z = Math.PI/2; w.rotation.y = Math.PI/2; };
+  wheel(-.45); wheel(.45);
+  box(x - .45, z - .12, .25, .9, .24, .3, c, {round:.08}); box(x - .35, z - .13, .55, .55, .26, .1, P.dark, {round:.04}); // body + seat
+  box(x + .4, z - .25, .55, .06, .5, .06, P.metalDark, {round:.02});                  // handlebar
+  blockers.push({x0:x - .7, z0:z - .3, x1:x + .7, z1:z + .3});
+}
+motorbike(1.0, 7.0, P.red); motorbike(2.6, 7.0, P.blue);
+motorbike(4.2, 7.0, P.green); box(3.6, 6.82, .62, .5, .36, .4, P.green, {round:.04});   // the shipper's delivery box
+sign(3.62, 7.18, .7, .46, .02, .2, 'GIAO NHANH', P.green, '#fff', 4, 60, 256, 64);
+// the building entrance post at the right end of the pavement: the way back up
+box(7.25, 6.55, 0, .12, .12, 1.7, P.metalDark, {round:.02, hot:'exit'});
+sign(6.75, 6.5, 1.55, 1.1, .06, .5, '← TẬP ĐOÀN DEADLINE', P.ink, P.yellow, 4, 44, 512, 128);
+box(6.75, 6.5, 1.55, 1.1, .06, .5, P.ink, {round:0, cast:false, hot:'exit', material:new T.MeshBasicMaterial({visible:false})});
+
+/* ---------- People: you, chị Thu behind the counter, sometimes a colleague, the shipper outside ---------- */
+const player = makeChar({lanyard:true});
+const ENTRY = [5.6, 7.0];
+const owner = makeChar({shirt:TEA.pink, pants:P.pants, hair:'#2b1d16', style:'ponytail', apron:true, clip:P.yellow});
+owner.g.position.set(2.8, 0, .95); tagHot(owner, 'counter');
+const shipper = makeChar({shirt:P.green, pants:'#2f4a3a', hair:'#2b1d16', style:'short'});
+{ const helmet = new T.Mesh(new T.SphereGeometry(.36, 16, 12, 0, Math.PI*2, 0, Math.PI/2), mat(P.green)); helmet.position.y = .18; shipper.parts.head.add(helmet); }
+shipper.g.position.set(5.0, 0, 7.15); shipper.g.rotation.y = Math.PI; tagHot(shipper, 'shipper');
+
+/* ---------- Hotspots: where the player stands + what they read ---------- */
+const HOT = {
+  counter: {at:[2.8, 2.6],  tag:'Quầy', act:'Gọi món', title:'Chị Thu, chủ quán', eyebrow:'Quầy gọi món',
+            lines:['Chị Thu: "Tầng mấy đấy em? Thôi khỏi nói, nhìn mặt là biết tầng 1, phòng intern."', 'Chị Thu: "Ít đường thì được, không đường thì về uống trà đá căng tin nhé."', 'Chị Thu: "Sếp em uống trà đào, ít đá. Em không nghe chị nói nhé."', 'Chị Thu: "Ở đây chị biết hết chuyện tòa nhà. Trân châu với tin đồn đều nấu mới mỗi hai tiếng."']},
+  shelf:   {at:[6.6, 1.25], tag:'Kệ chờ lấy ly', act:'Xem kệ ly', title:'Kệ chờ lấy ly', eyebrow:'Ly nào cũng có tên',
+            lines:['Năm ly đang chờ: "A.Tùng ít ngọt", "C.Hằng L", "Sếp", "Khách tầng 7", "Ai đặt nhầm".', 'Có một ly ghi "Intern". Không phải của bạn. Có ba intern ở tầng 5.', 'Ly ghi "C.Linh, 14 ly, chuyển khoản sau". Chị Thu đã khoanh tròn chữ "sau".']},
+  table:   {at:[2.3, 4.6],  tag:'Bàn nhỏ', act:'Ngồi bàn', title:'Hai chiếc bàn bên cửa kính', eyebrow:'Chỗ ngồi duy nhất',
+            lines:['Quán có đúng hai bàn. Ai ngồi được ở đây là người có quyền lực.', 'Trên bàn có ly trà sữa ai bỏ quên, đã tan hết đá. Giống động lực chiều thứ Sáu.', 'Từ đây nhìn thấy cửa tòa nhà. Bạn vừa thấy sếp đi ra, và vội quay mặt vào tường.']},
+  shipper: {at:[5.0, 6.45], tag:'Anh shipper', act:'Hỏi chuyện', title:'Anh shipper', eyebrow:'Đang chờ đơn',
+            lines:['Anh shipper: "Tòa này đặt nhiều nhất lúc 3 giờ chiều. Anh đoán là giờ họp."', 'Anh shipper: "Đơn của tầng 7 lúc nào cũng ghi chú: giao tận bàn, đừng gọi điện."', 'Anh shipper: "Em làm tầng mấy? Tầng 1 à. Anh giao lên đấy nhiều, phòng em uống khỏe nhất."']},
+  exit:    {at:[7.0, 6.95], tag:'Về văn phòng', act:'Lên lại văn phòng', title:'Lối vào tòa nhà', eyebrow:'Tập đoàn Deadline · thang máy'},
+};
+HOT.guest = {at:[0,0], tag:'', act:'Nói chuyện', title:'', eyebrow:'', dynamic:true, lines:[]};
+HOT.regular = {at:[0,0], tag:'', act:'Nói chuyện', title:'', eyebrow:'Cũng xuống mua trà sữa', dynamic:true, lines:[]};
+// colleagues you may bump into here (not during an event): one line each per visit
+const REGULAR_LINES = {
+  hang: ['Chị Hằng: "Ly thứ hai trong ngày. Đừng kể với ai."', 'Chị Hằng: "Order chị là gì, em nhớ không? Thôi, chị kiểm tra trí nhớ em sau."'],
+  linh: ['Chị Linh: "Chị đang khảo sát cả phòng thích vị gì cho tiệc cuối năm. Em điền form chưa?"', 'Chị Linh: "Mười bốn ly, mà chị Thu vẫn nhớ đúng ly nào của ai. Chị phục."'],
+  minh: ['Anh Minh tháo một bên tai nghe, gật đầu với bạn, rồi đeo lại.', 'Anh Minh: "Không đường." Đó là toàn bộ câu chuyện.'],
+  tung: ['Anh Tùng: "Anh trốn xuống đây năm phút. Nếu sếp hỏi thì anh đang đi photo."', 'Anh Tùng: "Lên Junior rồi vẫn phải tự xuống mua trà sữa nhé em."'],
+  mai:  ['Chị Mai: "Chị thấy em xuống đây ba lần tuần này rồi đấy. Chị chỉ ghi lại thôi."', 'Chị Mai: "Quầy lễ tân không bỏ trống được lâu. Chị mua mang về."'],
+};
+const REGULARS = Object.keys(REGULAR_LINES);
+const SPOTS = {queue:[2.8, 3.4, Math.PI], pickup:[6.6, 1.3, Math.PI]}; // where a regular waits (x, z, facing)
+const ANCHOR = {counter:[2.8, 2.35, .95], shelf:[6.6, 1.85, .35], table:[2.3, 1.2, 4.6], shipper:[5.0, 2.3, 7.15], exit:[7.3, 2.25, 6.55]};
+const anchorOf = id => { const c = id === 'guest' ? guest?.c : id === 'regular' ? regular?.c : null;
+  if (id === 'guest' || id === 'regular') return c?.g.visible ? [c.g.position.x, c.g.position.y + 2.3, c.g.position.z] : [-99, 0, -99];
+  return ANCHOR[id]; };
+const hotAt = id => { const c = id === 'guest' ? guest?.c : id === 'regular' ? regular?.c : null;
+  if (id === 'guest' || id === 'regular') return c?.g.visible ? [c.g.position.x + .3, c.g.position.z + .55] : [-99, -99];
+  return HOT[id].at; };
+const ICON = Wd.ICON;
+
+/* ---------- Walk grid + movement (world.js): the shop and the pavement are ground ---------- */
+const {buildGrid, free, planPath} = Wd.makeWalkGrid({W, D:WALK.z1, blockers, walkable:(x, z) => !!roomAt(x, z)});
+const reduce = Wd.reduceMotion, stepChar = Wd.stepChar, animateWalk = Wd.animateWalk;
+
+/* ---------- Input ---------- */
+let pendingHot = null; const keys = new Set();
+const ray = new T.Raycaster(), ndc = new T.Vector2(), floorPlane = new T.Plane(new T.Vector3(0,1,0), 0);
+function walkTo(x, z, hot=null){ if (busy()) return; if (planPath(player, x, z)) { pendingHot = hot; closeSheet();
+  if (hot && !player.path.length) { pendingHot = null; openSheet(hot); } } }
+const goHot = id => walkTo(...hotAt(id), id);
+renderer.domElement.addEventListener('pointerdown', e => {
+  const r = renderer.domElement.getBoundingClientRect();
+  ndc.set(((e.clientX - r.left)/r.width)*2 - 1, -((e.clientY - r.top)/r.height)*2 + 1);
+  ray.setFromCamera(ndc, cam);
+  const hit = ray.intersectObjects(hotMeshes, false)[0];
+  if (hit) { goHot(hit.object.userData.hot); return; }
+  const p = new T.Vector3(); if (ray.ray.intersectPlane(floorPlane, p)) walkTo(p.x, p.z);
+});
+addEventListener('keydown', e => {
+  if (e.target.closest && e.target.closest('button')) return;
+  if (busy()) return;
+  const k = e.key.toLowerCase();
+  if (['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(k)) { keys.add(k); player.path = []; pendingHot = null; e.preventDefault(); }
+  if (k === 'e' || k === 'enter') { if (nearId) openSheet(nearId); }
+  if (k === 'escape') closeSheet();
+});
+addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
+addEventListener('blur', () => keys.clear());
+
+/* ---------- Gender toggle ---------- */
+const gm = document.getElementById('g-m'), gf = document.getElementById('g-f');
+function setGender(f){ player.parts.setHair(f ? 'long' : 'short'); gm.setAttribute('aria-pressed', !f); gf.setAttribute('aria-pressed', f); if (S && S.female !== f) { S.female = f; save(); } }
+gm.onclick = () => setGender(false); gf.onclick = () => setGender(true);
+
+/* ---------- Tags + sheet (same components as the other maps) ---------- */
+const tagsEl = document.getElementById('tags'), tagEls = {};
+for (const [id, h] of Object.entries(HOT)) {
+  const b = document.createElement('button'); b.className = 'chip'; b.setAttribute('aria-label', h.tag || h.act); b.textContent = h.tag; b.onclick = () => goHot(id);
+  tagsEl.appendChild(b); tagEls[id] = b;
+}
+const sheet = document.getElementById('sheet');
+let talkId = null;
+const nextLine = Wd.makeLineBag();
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+function sheetAction(label, onClick){
+  const close = document.getElementById('sheet-close'); close.parentElement.querySelector('.sheet-main')?.remove();
+  close.classList.toggle('ghost', !!label); if (!label) return;
+  const b = el('button', 'btn sheet-main', label); b.onclick = onClick; close.after(b);
+}
+function showSheet(id, eyebrow, title, nodes){
+  talkId = id; sheetAction(null);
+  document.getElementById('sheet-eyebrow').textContent = eyebrow; document.getElementById('sheet-title').textContent = title;
+  document.getElementById('sheet-body').replaceChildren(...nodes.map(n => typeof n === 'string' ? el('p', null, n) : n));
+  sheet.hidden = false; document.getElementById('hint').hidden = true;
+  const a = anchorOf(id); if (a[0] > -50) player.g.rotation.y = Math.atan2(a[0] - player.g.position.x, a[2] - player.g.position.z);
+}
+function closeSheet(){ sheet.hidden = true; talkId = null; document.getElementById('hint').hidden = false; sheetAction(null); }
+document.getElementById('sheet-close').onclick = closeSheet;
+const toastEl = document.getElementById('toast'); let toastT = 0;
+const toast = msg => { toastEl.textContent = msg; toastEl.hidden = false; toastT = 3.5; };
+
+/* ---------- Game: rules in engine.js, the event cards in cards.json ---------- */
+const [CARD_DATA, HANDBOOK, MINIGAMES] = await Promise.all(['cards.json', 'handbook.json', 'minigames.json'].map(u => fetch(u).then(r => r.json())));
+const CARDS = CARD_DATA.cards;
+G.useMinigames(MINIGAMES);
+{ const bad = G.validateCards(CARD_DATA); if (bad.length) console.warn('cards.json:', bad); }
+const store = new G.BrowserSaveStore();
+const fromHash = () => { try { const m = location.hash.match(/s=([^&]+)/); return m ? JSON.parse(decodeURIComponent(m[1])) : null; } catch { return null; } };
+let S = (await store.load()) || fromHash();
+const save = () => store.save(S);
+const OFFICE = 'index.html';
+// today's card if it is the one that brought you here and is still waiting for your choice
+const eventCard = () => { if (!S || S.part !== 'morning' || S.today.cardDone) return null; const c = G.todaysCard(S, CARDS); return c?.sceneAt === 'trasua' ? c : null; };
+if (!S || !(eventCard() || G.teaOpen(S))) { location.replace(OFFICE); await new Promise(() => {}); } // nothing to do here right now
+
+/* -- HUD -- */
+const statsEl = document.getElementById('stats'), goalEl = document.getElementById('goal');
+let guest = null, regular = null, arrivedForEvent = false;
+const clock = () => arrivedForEvent ? '10:15' : S.part === 'afternoon' ? '15:00' : '17:30'; // came down with someone in the morning / free visit after lunch / after the afternoon's work
+function renderHUD(){
+  document.getElementById('day-line').textContent = `Ngày ${S.day} / ${G.TOTAL_DAYS} · ${G.weekdayName(S.day)}, ${clock()}`;
+  const row = (k, max, extra = '') => { const v = S.stats[k], warn = k === 'pin' && v < 20;
+    return `<span class="${warn ? 'warn' : ''}">${G.STAT_NAME[k]}</span><span class="bar" style="--c:var(--${k})"><i style="width:${v / max * 100}%"></i>${extra}</span><span class="val ${warn ? 'warn' : ''}">${v}</span>`; };
+  statsEl.innerHTML = row('xp', 150, `<s style="left:${G.JUNIOR_XP / 150 * 100}%"></s>`) + row('pin', 100) + row('ut', 100) + row('qh', 100);
+  const ev = eventCard();
+  goalEl.textContent = ev ? `${G.NPC_NAME[ev.npc]} đang chờ bạn ở quầy`
+    : G.teaOpen(S) && !S.today.tea ? 'Gọi một ly ở quầy chị Thu, hoặc ra vỉa hè để về văn phòng'
+    : 'Ra vỉa hè, đi tới lối vào tòa nhà để lên lại văn phòng';
+}
+const deltaChips = got => { const d = document.createElement('div'); d.className = 'deltas';
+  for (const k of G.STATS) if (got[k]) d.insertAdjacentHTML('beforeend', `<span class="delta ${got[k] < 0 ? 'down' : ''}">${G.STAT_NAME[k]} ${got[k] > 0 ? '+' : '−'}${Math.abs(got[k])}</span>`);
+  for (const [n, v] of Object.entries(got.close || {})) d.insertAdjacentHTML('beforeend', `<span class="delta ${v < 0 ? 'down' : ''}">Thân với ${G.NPC_NAME[n]} ${v > 0 ? '+' : '−'}${Math.abs(v)}</span>`);
+  return d; };
+const effectText = e => G.STATS.filter(k => e[k]).map(k => `${G.STAT_NAME[k]} ${e[k] > 0 ? '+' : '−'}${Math.abs(e[k])}`).join(' · ');
+function afterChange(){ for (const f of G.checkMissions(S, HANDBOOK)) toast(`Xong nhiệm vụ: ${f.mission.title}`); renderHUD(); save(); }
+const modalWrap = document.getElementById('modal-wrap');
+function choiceList(c, onPick){
+  const box = el('div', 'choices');
+  if (G.autoResolves(S, c)) { const b = el('button', 'choice', 'Tiếp'); b.onclick = () => onPick(0); box.appendChild(b); return box; }
+  c.choices.forEach((ch, i) => { const b = el('button', 'choice'); b.innerHTML = `<b>${'ABC'[i]}</b>`; b.append(ch.label); b.onclick = () => onPick(i); box.appendChild(b); });
+  return box;
+}
+function resultNodes(res){
+  const out = [];
+  if (res.label) out.push(el('p', 'quote', 'Bạn chọn: ' + res.label));
+  if (res.comment) out.push(el('p', 'comment', res.comment));
+  out.push(deltaChips(res.got));
+  return out;
+}
+
+/* -- the event: whoever asked you down stands at the counter with you; your choice plays here, then they go back up and you stay -- */
+function spawnGuest(npc){
+  const c = makeChar(Wd.NPC_LOOKS[npc]); tagHot(c, 'guest');
+  c.g.position.set(3.5, 0, 2.55); c.g.rotation.y = Math.PI;               // at the counter, facing chị Thu
+  HOT.guest.tag = G.NPC_NAME[npc]; HOT.guest.title = G.NPC_NAME[npc];
+  guest = {c, npc, leaving:false};
+}
+function openEvent(){
+  const c = eventCard(); if (!c) return false;
+  const nodes = [el('p', null, c.sceneLine || c.intro), choiceList(c, i => {
+    const res = G.chooseOption(S, c, i); afterChange();
+    document.getElementById('sheet-body').replaceChildren(...resultNodes(res),
+      el('p', 'note', `${G.NPC_NAME[c.npc]} cầm ly đi lên trước. Bạn vẫn ở quán: gọi thêm một ly ở quầy nếu muốn, rồi ra vỉa hè, đi tới lối vào tòa nhà để lên văn phòng.`));
+    if (guest) { guest.leaving = true; planPath(guest.c, W - .3, 6.9); }
+  })];
+  showSheet('guest', `Ngày ${S.day} · ${G.NPC_NAME[c.npc]} · Quán trà sữa`, c.title, nodes);
+  return true;
+}
+function spawnRegular(){
+  if (Math.random() < .4) return;
+  const npc = REGULARS[Math.floor(Math.random() * REGULARS.length)], spot = Math.random() < .5 ? SPOTS.queue : SPOTS.pickup;
+  const c = makeChar(Wd.NPC_LOOKS[npc]); tagHot(c, 'regular'); c.g.position.set(spot[0], 0, spot[1]); c.g.rotation.y = spot[2];
+  HOT.regular.tag = G.NPC_NAME[npc]; HOT.regular.title = G.NPC_NAME[npc]; HOT.regular.lines = REGULAR_LINES[npc];
+  regular = {c, npc};
+}
+
+/* -- buying: two choices at the counter, once a working day (engine.js TEA: self Pin +2, colleague Quan hệ +1) -- */
+function openCounter(){
+  const h = HOT.counter, nodes = [el('p', null, nextLine('counter', h.lines))];
+  if (G.teaOpen(S) && !S.today.tea) {
+    const box = el('div', 'choices');
+    for (const [kind, t] of Object.entries(G.TEA)) { const b = el('button', 'choice'); b.innerHTML = `<b>${kind === 'self' ? 'A' : 'B'}</b>`; b.append(t.label); b.appendChild(el('small', null, effectText(t.effects)));
+      b.onclick = () => { const r = G.buyTea(S, kind); afterChange(); if (!r) return;
+        document.getElementById('sheet-body').replaceChildren(el('p', 'comment', kind === 'self' ? 'Chị Thu đưa ly cho bạn: "Ngụm đầu tiên là ngon nhất. Mấy ngụm sau là để làm việc."' : 'Bạn xách ly lên đặt lên bàn một anh chị trong phòng. Cả dãy bàn quay lại nhìn bạn, thiện cảm hơn hẳn.'), deltaChips(r.got)); };
+      box.appendChild(b); }
+    nodes.push(box);
+  } else if (S.today.tea) nodes.push(el('p', 'note', 'Hôm nay bạn mua rồi. Chị Thu: "Một ngày một ly thôi em, hai ly là thành nghiện."'));
+  showSheet('counter', h.eyebrow, h.title, nodes);
+}
+function openSheet(id){
+  if ((id === 'guest' || id === 'counter') && eventCard()) return openEvent();
+  if (id === 'counter') return openCounter();
+  const h = HOT[id];
+  if (id === 'exit') {
+    if (eventCard()) return showSheet('exit', h.eyebrow, h.title, [`${G.NPC_NAME[eventCard().npc]} vẫn đang chờ bạn ở quầy.`]);
+    showSheet('exit', h.eyebrow, h.title, ['Băng qua sảnh tòa nhà, bấm thang máy lên tầng 1.']);
+    sheetAction('Lên lại văn phòng', backToOffice); return;
+  }
+  if (id === 'regular') G.recordTalk(S, regular.npc), afterChange();       // counts for "Chào hỏi cả công ty", same as the office
+  showSheet(id, h.eyebrow, h.title, [nextLine(id === 'regular' ? 'reg:' + regular.npc : id, h.lines)]);
+}
+
+/* -- scene change back to the office: the same full-screen card as every other trip -- */
+const fadeEl = document.getElementById('fade'); let fading = false;
+const busy = () => fading || !modalWrap.hidden;
+const wait = ms => new Promise(r => setTimeout(r, reduce ? Math.min(ms, 300) : ms));
+const UP_LINES = ['Thang máy đông như giờ cao điểm. Ly trà sữa của bạn vẫn an toàn.', 'Trên đường lên, bạn gặp sếp ở thang máy. Hai người cùng nhìn số tầng.', 'Đá trong ly tan dần, giống quyết tâm làm việc buổi chiều.'];
+async function backToOffice(){
+  fading = true; keys.clear(); player.path = []; pendingHot = null; closeSheet();
+  const card = {eyebrow:`${G.weekdayName(S.day)} · ${clock()}`, title:'Lên lại văn phòng', sub:UP_LINES[Math.floor(Math.random() * UP_LINES.length)]};
+  Wd.paintFade(card); Wd.carryFade(card); fadeEl.classList.add('on'); await save(); await wait(650);
+  location.href = OFFICE + '#from=trasua&s=' + encodeURIComponent(JSON.stringify(S));
+}
+
+/* ---------- Arrival: the office's card fades out on the shop ---------- */
+setGender(!!S.female);
+if (eventCard()) { arrivedForEvent = true; spawnGuest(eventCard().npc); player.g.position.set(2.5, 0, 2.55); player.g.rotation.y = Math.PI; }
+else { spawnRegular(); player.g.position.set(ENTRY[0], 0, ENTRY[1]); planPath(player, 4.2, 3.0); }
+afterChange();
+if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+fading = true;
+setTimeout(async () => { fadeEl.classList.remove('on'); await wait(500); fading = false; if (eventCard()) openEvent(); }, reduce ? 200 : 900);
+
+/* ---------- Loop ---------- */
+let followK = 0;
+function resize(){
+  const w = innerWidth, h = innerHeight, a = w/h; renderer.setSize(w, h, false);
+  const f = a >= 1 ? Math.max(8.2 / a, 5.9) : 6.7 / a; followK = a >= 1 ? 0 : .45;
+  const sh = f * (a >= 1 ? .2 : .14); // frustum raised = map drawn lower, clear of the two HUD panels top-left
+  Object.assign(cam, {left:-f*a, right:f*a, top:f+sh, bottom:-f+sh}); cam.updateProjectionMatrix();
+}
+addEventListener('resize', resize); resize();
+let nearId = null, t0 = performance.now(), lastRoom = null;
+const v3 = new T.Vector3();
+const place = (e, x, y, z) => { v3.set(x, y, z).project(cam);
+  e.style.left = ((v3.x+1)/2*innerWidth) + 'px'; e.style.top = ((1-v3.y)/2*innerHeight) + 'px';
+  return Math.abs(v3.x) <= 1 && v3.y <= .97 && v3.y >= -1; };
+function tick(now){
+  const dt = Math.min(.05, (now - t0)/1000); t0 = now; const speed = 3.4; let moving = false;
+  const pos = player.g.position;
+  let kx = 0, kz = 0;
+  if (keys.has('w')||keys.has('arrowup')) { kx -= 1; kz -= 1; }
+  if (keys.has('s')||keys.has('arrowdown')) { kx += 1; kz += 1; }
+  if (keys.has('a')||keys.has('arrowleft')) { kx -= 1; kz += 1; }
+  if (keys.has('d')||keys.has('arrowright')) { kx += 1; kz -= 1; }
+  if (kx || kz) {
+    const l = Math.hypot(kx, kz), dx = kx/l*speed*dt, dz = kz/l*speed*dt;
+    if (free(pos.x + dx, pos.z)) pos.x += dx; if (free(pos.x, pos.z + dz)) pos.z += dz;
+    player.g.rotation.y = Math.atan2(kx, kz); moving = true; closeSheet();
+  } else if (player.path.length) {
+    moving = stepChar(player, dt, speed);
+    if (!player.path.length && pendingHot) { const id = pendingHot; pendingHot = null; openSheet(id); }
+  }
+  animateWalk(player, moving, dt);
+  if (guest?.leaving && guest.c.g.visible) { const m = stepChar(guest.c, dt, 2.6); animateWalk(guest.c, m, dt); if (!m) { guest.c.g.visible = false; guest.c.g.traverse(o => { const i = hotMeshes.indexOf(o); if (i >= 0) hotMeshes.splice(i, 1); }); } }
+  // people you are talking to turn to you
+  for (const [id, c] of [['regular', regular?.c], ['counter', owner], ['shipper', shipper]]) if (c && talkId === id) c.g.rotation.y = Math.atan2(pos.x - c.g.position.x, pos.z - c.g.position.z);
+  if (toastT > 0) { toastT -= dt; if (toastT <= 0) toastEl.hidden = true; }
+  const room = roomAt(pos.x, pos.z), rn = room?.id === 'walk' ? 'Quán trà sữa · Vỉa hè' : 'Quán trà sữa';
+  if (rn !== lastRoom) { lastRoom = rn; document.getElementById('room-name').textContent = rn; }
+  v3.set(CENTER.x + (pos.x - CENTER.x)*followK, 0, CENTER.z + (pos.z - CENTER.z)*followK);
+  camTarget.lerp(v3, reduce ? 1 : Math.min(1, dt*3));
+  cam.position.copy(camTarget).add(camOffset); cam.lookAt(camTarget);
+  // nearest hotspot + chips: the event's "!" on whoever asked you down, the way out once you are done; the rest only when close
+  nearId = null; let best = 1.4;
+  for (const id of Object.keys(HOT)) { const a = hotAt(id), d = Math.hypot(a[0]-pos.x, a[1]-pos.z); if (d < best) { best = d; nearId = id; } }
+  const ev = !!eventCard(), hide = busy();
+  for (const [id, e] of Object.entries(tagEls)) {
+    const on = place(e, ...anchorOf(id)) && !hide; e.hidden = !on;
+    const near = id === nearId, quest = id === 'guest' && ev, task = id === 'exit' && !ev && !!S.today.tea || id === 'counter' && !ev && G.teaOpen(S) && !S.today.tea;
+    const state = [near, quest, task].join('|');
+    if (e.dataset.state !== state) { e.dataset.state = state; e.classList.toggle('near', near); e.classList.toggle('quest', quest); e.classList.toggle('task', task);
+      e.innerHTML = (quest ? ICON.alert : HOT[id].act) + (near && !quest ? '<kbd> · E / chạm</kbd>' : ''); }
+    if (!near && !quest && !task) e.hidden = true;
+  }
+  renderer.render(scene, cam);
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+window.__ready = true;
+</script>

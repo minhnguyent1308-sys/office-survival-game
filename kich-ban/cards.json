@@ -1,0 +1,3715 @@
+{
+  "version": 1,
+  "note": "Dữ liệu lá kịch bản MVP tầng 1. Nguồn: doc Kịch bản MVP tầng 1, tab Kho 45 lá kịch bản. qh cộng vào thanh chung và thân thiết của npc (hoặc qhTarget nếu có; qhTarget null = chỉ thanh chung). L7 hẹn lại chính nó chỉ một lần. Lá type unlock: chạy lúc 08:29 đúng ngày `day`, trước lá buổi sáng, rồi mở phòng `unlocks`. Phòng chưa mở: không rút lá có room đó, ẩn việc buổi chiều ở đó. Lá type unlock có thể gắn `scene` vào một lựa chọn (MO_CANTEEN: kind sitAll = cả phòng ngồi căng tin; kind queue = bạn đứng cạnh cô Ba, 2–3 người xếp hàng trước quầy). Cảnh chạy sau màn kết quả lựa chọn, trước buổi sáng. Lá type unlock có thể có `openScene` (MO_MEETING): buổi sáng bắt đầu ở phòng họp với mọi người trong `people` ngồi sẵn, lời kể và các lựa chọn hiện ngay tại đó; xong thì ai về vị trí của người đó. Lá có `sceneAt` (ví dụ \"trasua\"): người rủ đứng chờ ở `room` như lá thường; nói chuyện xong cả hai chuyển cảnh sang quán, `sceneLine` và lựa chọn hiện ở đó; chọn xong quán mở luôn (thêm vào rooms), bạn ở lại quán và tự đi ra cửa để về.",
+  "flagsBadges": [
+    "chien_binh_cuoi_tuan",
+    "seen_tin_nhan_sep",
+    "ghi_diem_voi_sep",
+    "thu_quy_bat_dac_di",
+    "ngoi_sao_karaoke",
+    "duoc_khach_hang_quy_men",
+    "so_tay_chi_hang",
+    "tin_mat_chi_mai",
+    "bi_kip_anh_tung",
+    "than_voi_tuan",
+    "than_voi_hang",
+    "than_voi_linh",
+    "than_voi_minh",
+    "than_voi_tung",
+    "than_voi_mai",
+    "than_voi_coba",
+    "nhan_vien_moi_guong_mau"
+  ],
+  "flagsHidden": [
+    "duoc_giao_du_an",
+    "giu_bi_mat_macro",
+    "hoc_macro",
+    "quen_chi_mai",
+    "dong_minh_hoi_tam",
+    "dong_minh_hoi_an_nhanh",
+    "loi_moi_chi_linh",
+    "loi_moi_khach_hang"
+  ],
+  "cards": [
+    {
+      "id": "T1",
+      "title": "File lúc 17:55",
+      "type": "normal",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 3,
+      "heavy": true,
+      "repeatable": false,
+      "npc": "tuan",
+      "room": "boss",
+      "intro": "Thứ Sáu 17:55, sếp nhắn: \"Em xem giúp anh file này nhé, không gấp đâu, sáng thứ Hai anh cần.\"",
+      "choices": [
+        {
+          "label": "\"Dạ vâng ạ\", làm xuyên cuối tuần",
+          "effects": {
+            "xp": 3,
+            "pin": -15,
+            "ut": 5,
+            "qh": 0
+          },
+          "addFlags": [
+            "chien_binh_cuoi_tuan"
+          ],
+          "comment": "Cuối tuần của bạn đã được tái cơ cấu."
+        },
+        {
+          "label": "\"Dạ sáng thứ Hai em gửi anh sớm ạ\"",
+          "effects": {
+            "xp": 2,
+            "pin": -5,
+            "ut": 2,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Seen rồi tắt máy",
+          "effects": {
+            "xp": 0,
+            "pin": 5,
+            "ut": -5,
+            "qh": 0
+          },
+          "addFlags": [
+            "seen_tin_nhan_sep"
+          ],
+          "followup": {
+            "card": "T2",
+            "afterDays": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "T2",
+      "title": "Sếp hỏi về file",
+      "type": "followup",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 0,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "tuan",
+      "room": "boss",
+      "intro": "\"File hôm trước em xem chưa?\"",
+      "choices": [
+        {
+          "label": "\"Em đang hoàn thiện ạ\", rồi thức đêm làm",
+          "effects": {
+            "xp": 2,
+            "pin": -10,
+            "ut": 0,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Thật thà nhận chưa làm",
+          "effects": {
+            "xp": 0,
+            "pin": 5,
+            "ut": -2,
+            "qh": 0
+          },
+          "comment": "Sếp ghi nhận sự thật thà. Bằng một tiếng thở dài."
+        },
+        {
+          "label": "Đổ cho ổ chung bị lỗi",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": -5
+          },
+          "qhTarget": "minh",
+          "comment": "Anh Minh nghe thấy."
+        }
+      ]
+    },
+    {
+      "id": "T3",
+      "title": "\"Intern có ý tưởng gì không?\"",
+      "type": "normal",
+      "phases": [
+        2,
+        3
+      ],
+      "weight": 3,
+      "heavy": true,
+      "repeatable": false,
+      "npc": "tuan",
+      "room": "meeting",
+      "intro": "Giữa cuộc họp, sếp quay sang bạn: \"Intern có ý tưởng gì không?\"",
+      "choices": [
+        {
+          "label": "Nói một ý tưởng thật",
+          "effects": {
+            "xp": 3,
+            "pin": -5,
+            "ut": 5,
+            "qh": 0
+          },
+          "addFlags": [
+            "ghi_diem_voi_sep"
+          ],
+          "comment": "Ý tưởng hay. Em làm luôn nhé."
+        },
+        {
+          "label": "\"Em xin gửi lại anh qua email ạ\"",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 1,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Nhắc lại ý của sếp bằng từ khác",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 3,
+            "qh": -3
+          },
+          "qhTarget": null,
+          "comment": "Cả phòng nhìn bạn. Sếp gật gù."
+        }
+      ]
+    },
+    {
+      "id": "T4",
+      "title": "Tóm tắt một trang",
+      "type": "normal",
+      "phases": [
+        1,
+        2
+      ],
+      "weight": 3,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "tuan",
+      "room": "boss",
+      "intro": "Bạn gửi bản tóm tắt một trang như sếp dặn. Sếp: \"Hơi ngắn. Em bổ sung thêm chi tiết đi.\"",
+      "choices": [
+        {
+          "label": "Viết thành năm trang",
+          "effects": {
+            "xp": 2,
+            "pin": -10,
+            "ut": 2,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Thêm một trang phụ lục",
+          "effects": {
+            "xp": 2,
+            "pin": -5,
+            "ut": 3,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Gửi lại đúng bản cũ, đổi tên thành v2",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 1,
+            "qh": 0
+          },
+          "comment": "Sếp: \"Bản này đầy đủ hơn nhiều.\""
+        }
+      ]
+    },
+    {
+      "id": "T5",
+      "title": "Sếp giao dự án",
+      "type": "normal",
+      "phases": [
+        2
+      ],
+      "weight": 5,
+      "heavy": true,
+      "repeatable": false,
+      "npc": "tuan",
+      "room": "boss",
+      "intro": "\"Tháng này em phụ anh một phần dự án khách hàng nhé. Cơ hội lớn đấy.\"",
+      "choices": [
+        {
+          "label": "Nhận ngay, hứa xong trong ba ngày",
+          "effects": {
+            "xp": 0,
+            "pin": -10,
+            "ut": 5,
+            "qh": 0
+          },
+          "addFlags": [
+            "duoc_giao_du_an"
+          ]
+        },
+        {
+          "label": "Hỏi rõ yêu cầu và deadline",
+          "effects": {
+            "xp": 3,
+            "pin": 0,
+            "ut": 2,
+            "qh": 0
+          },
+          "addFlags": [
+            "duoc_giao_du_an"
+          ]
+        },
+        {
+          "label": "\"Em nghĩ việc này hợp với anh Tùng hơn\"",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": -3,
+            "qh": 0
+          },
+          "addFlags": [
+            "duoc_giao_du_an"
+          ],
+          "comment": "Sếp: \"Em nói đúng. Hai đứa làm chung.\""
+        }
+      ]
+    },
+    {
+      "id": "T6",
+      "title": "Họp đứng",
+      "type": "normal",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 2,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "tuan",
+      "room": "meeting",
+      "intro": "Sếp vừa đi học khóa lãnh đạo: \"Từ giờ phòng mình họp đứng, cho nhanh.\" Cuộc họp đầu tiên kéo dài 90 phút.",
+      "choices": [
+        {
+          "label": "Đứng hàng đầu ghi chép",
+          "effects": {
+            "xp": 0,
+            "pin": -5,
+            "ut": 3,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Đứng sau cái cột",
+          "effects": {
+            "xp": 0,
+            "pin": 5,
+            "ut": 0,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Mang ghế vào ngồi",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": -3,
+            "qh": 5
+          },
+          "comment": "Cả phòng thầm biết ơn bạn."
+        }
+      ]
+    },
+    {
+      "id": "T7",
+      "when": "night",
+      "title": "Sticker lúc 23h",
+      "type": "normal",
+      "phases": [
+        2,
+        3
+      ],
+      "weight": 3,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "tuan",
+      "room": null,
+      "intro": "23 giờ, sếp gửi một sticker vào nhóm chat công ty. Không kèm lời nào.",
+      "choices": [
+        {
+          "label": "Thả tim ngay",
+          "effects": {
+            "xp": 0,
+            "pin": -3,
+            "ut": 2,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Tắt máy đi ngủ",
+          "effects": {
+            "xp": 0,
+            "pin": 5,
+            "ut": 0,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Trả lời \"Dạ vâng ạ\" kèm ba sticker",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 1,
+            "qh": -2
+          },
+          "qhTarget": null,
+          "comment": "Nhóm chat có thêm 47 tin \"Dạ vâng ạ\"."
+        }
+      ]
+    },
+    {
+      "id": "T8",
+      "title": "Cơ hội học hỏi ngoài giờ",
+      "type": "normal",
+      "phases": [
+        2,
+        3
+      ],
+      "weight": 2,
+      "heavy": true,
+      "repeatable": false,
+      "npc": "tuan",
+      "room": "boss",
+      "intro": "\"Mình không gọi là tăng ca. Mình gọi là cơ hội học hỏi ngoài giờ. Tối nay em ở lại nhé.\"",
+      "choices": [
+        {
+          "label": "Ở lại đến 22h",
+          "effects": {
+            "xp": 4,
+            "pin": -15,
+            "ut": 4,
+            "qh": 0
+          },
+          "addFlags": [
+            "ghi_diem_voi_sep"
+          ]
+        },
+        {
+          "label": "Ở lại đến 19h rồi xin về",
+          "effects": {
+            "xp": 2,
+            "pin": -5,
+            "ut": 1,
+            "qh": 0
+          }
+        },
+        {
+          "label": "\"Tối nay em có lịch học ạ\"",
+          "effects": {
+            "xp": 0,
+            "pin": 5,
+            "ut": -2,
+            "qh": 0
+          },
+          "comment": "Sếp: \"Học gì thế? Thôi, không cần kể.\""
+        }
+      ]
+    },
+    {
+      "id": "H1",
+      "title": "Ly trà sữa",
+      "type": "normal",
+      "phases": [
+        1
+      ],
+      "weight": 5,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "hang",
+      "room": "intern",
+      "intro": "Chị Hằng vẫy bạn lại: \"Xuống quán trà sữa với chị đi. Size L, ít đá, ít đường, nhiều trân châu. Chị đọc trước để em tập nhớ order.\"",
+      "choices": [
+        {
+          "label": "Mua luôn cho cả phòng, tự trả",
+          "effects": {
+            "xp": 0,
+            "pin": -3,
+            "ut": 0,
+            "qh": 5
+          },
+          "comment": "Ví của bạn vừa góp quỹ không tự nguyện. Chị Hằng gật đầu: \"Biết điều đấy.\""
+        },
+        {
+          "label": "Gọi đúng order của chị, không sai một chữ",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 2
+          },
+          "comment": "Chị Hằng nhướn mày: \"Nhớ dai đấy. Mai nhớ luôn giúp chị deadline nhé.\""
+        },
+        {
+          "label": "\"Em gọi nhanh rồi lên ạ, task anh Tuấn giao còn dở\"",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 1,
+            "qh": -3
+          },
+          "comment": "Chị Hằng cầm ly đi lên trước: \"Ừa. Chị nhớ rồi.\""
+        }
+      ],
+      "sceneAt": "trasua",
+      "sceneLine": "Quán trà sữa dưới tòa nhà bé xíu, đông nhất lúc 3 giờ chiều. Đến lượt gọi món, chị Hằng nhìn bạn chờ đợi. Ví của chị vẫn nằm yên trong túi."
+    },
+    {
+      "id": "TS_LINH",
+      "title": "Mười bốn ly cho buổi họp",
+      "type": "normal",
+      "phases": [
+        1,
+        2
+      ],
+      "weight": 3,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "linh",
+      "room": "intern",
+      "sceneAt": "trasua",
+      "intro": "Chị Linh: \"Xuống quán với chị chọn trà sữa cho buổi họp phòng chiều nay. Mười bốn ly, mỗi người một kiểu, chị có danh sách đây.\"",
+      "sceneLine": "Chị Linh đọc danh sách cho chị chủ quán: \"Anh Minh không đường, chị Hằng nhiều trân châu, sếp… sếp uống gì nhỉ?\" Cả hai quay sang nhìn bạn.",
+      "choices": [
+        {
+          "label": "Đoán bừa: trà đào, size to nhất",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 2,
+            "qh": 1
+          },
+          "comment": "Chiều đó sếp uống hết ly trà đào và hỏi ai chọn. Chị Linh chỉ vào bạn."
+        },
+        {
+          "label": "Nhắn hỏi thẳng anh Tuấn",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 2
+          },
+          "comment": "Sếp trả lời sau 40 phút: \"Gì cũng được.\" Chị Linh thở dài, chọn trà đào."
+        },
+        {
+          "label": "Xách hộ cả mười bốn ly lên phòng",
+          "effects": {
+            "xp": 0,
+            "pin": -5,
+            "ut": 0,
+            "qh": 4
+          },
+          "comment": "Chị Linh ghi tên bạn vào danh sách \"người được việc\". Danh sách này dài hơn bạn nghĩ."
+        }
+      ]
+    },
+    {
+      "id": "TS_TUNG",
+      "title": "Chuyện hồi anh thử việc",
+      "type": "normal",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 3,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "tung",
+      "room": "intern",
+      "sceneAt": "trasua",
+      "intro": "Anh Tùng ngả ghế sang: \"Xuống làm ly trà sữa không em? Anh bao. Có chuyện này anh muốn kể, trên này tai vách mạch rừng.\"",
+      "sceneLine": "Hai người ngồi ở chiếc bàn nhỏ sát cửa kính. Anh Tùng hạ giọng: \"Hồi anh thử việc, anh suýt trượt vì trả lời sếp đúng một chữ ok. Không có dấu chấm.\"",
+      "choices": [
+        {
+          "label": "Hỏi anh cách viết email cho sếp",
+          "effects": {
+            "xp": 2,
+            "pin": 0,
+            "ut": 0,
+            "qh": 2
+          },
+          "comment": "Anh Tùng viết lên tờ giấy lót ly ba mẫu câu. Bạn giữ tờ giấy đến tận cuối tháng."
+        },
+        {
+          "label": "Kể chuyện xui của mình cho anh cười",
+          "effects": {
+            "xp": 0,
+            "pin": 2,
+            "ut": 0,
+            "qh": 4
+          },
+          "comment": "Anh Tùng cười đến rơi cả trân châu. Lần đầu bạn thấy anh không nhìn điện thoại."
+        },
+        {
+          "label": "Hỏi năm nay có mấy suất Junior",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 1
+          },
+          "comment": "Anh Tùng im một lúc: \"Em hỏi chị Mai ấy, chị biết trước cả nhân sự.\" Rồi anh đứng dậy đi lên trước."
+        }
+      ]
+    },
+    {
+      "id": "TS_MINH",
+      "title": "Ba phút im lặng",
+      "type": "normal",
+      "phases": [
+        2,
+        3
+      ],
+      "weight": 2,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "minh",
+      "room": "intern",
+      "sceneAt": "trasua",
+      "intro": "Anh Minh tháo một bên tai nghe, nói đúng năm chữ: \"Xuống quán. Cần người cầm hộ.\"",
+      "sceneLine": "Anh Minh gọi một ly trà đen không đường, rồi đứng nhìn máy dán nắp chạy. Ba phút. Không ai nói gì. Bạn thấy mình nên làm gì đó.",
+      "choices": [
+        {
+          "label": "Đứng im cùng anh, ngắm máy dán nắp",
+          "effects": {
+            "xp": 0,
+            "pin": 2,
+            "ut": 0,
+            "qh": 3
+          },
+          "comment": "Lúc cầm ly, anh Minh nói: \"Em được.\" Chị chủ quán bảo đó là câu dài nhất anh nói trong năm."
+        },
+        {
+          "label": "Hỏi anh về cái macro chạy năm giây",
+          "effects": {
+            "xp": 2,
+            "pin": -2,
+            "ut": 0,
+            "qh": 1
+          },
+          "comment": "Anh Minh mở điện thoại giảng mười phút liền. Ly trà của anh tan hết đá."
+        },
+        {
+          "label": "Mua thêm cho cả dãy bàn của anh",
+          "effects": {
+            "xp": 0,
+            "pin": -3,
+            "ut": 0,
+            "qh": 4
+          },
+          "comment": "Anh Minh gật đầu với bạn. Theo tiêu chuẩn của anh, đó là một cái ôm."
+        }
+      ]
+    },
+    {
+      "id": "TS_TUAN",
+      "title": "Sếp không tìm thấy cà phê muối",
+      "type": "normal",
+      "phases": [
+        2,
+        3
+      ],
+      "weight": 2,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "tuan",
+      "room": "boss",
+      "sceneAt": "trasua",
+      "intro": "Sếp gọi bạn vào phòng: \"Em xuống quán dưới mua giúp anh ly cà phê muối. À mà quán đó có bán không nhỉ? Thôi, anh xuống cùng em.\"",
+      "sceneLine": "Quán không có cà phê muối. Sếp đứng trước bảng menu lâu như đọc báo cáo quý, rồi quay sang hỏi: \"Em hay uống gì?\"",
+      "choices": [
+        {
+          "label": "Gợi ý món bán chạy nhất quán",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 2,
+            "qh": 1
+          },
+          "comment": "Sếp uống một ngụm: \"Được. Từ giờ em phụ trách đồ uống cho các buổi họp.\" Bạn vừa được giao thêm một việc."
+        },
+        {
+          "label": "\"Em hay uống trà đá căng tin cho tiết kiệm ạ\"",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 3
+          },
+          "comment": "Sếp cười, trả luôn tiền ly của bạn: \"Ngày xưa anh cũng thế.\""
+        },
+        {
+          "label": "Tranh thủ báo cáo tiến độ lúc chờ",
+          "effects": {
+            "xp": 1,
+            "pin": -3,
+            "ut": 3,
+            "qh": 0
+          },
+          "comment": "Sếp nghe hết, gật đầu, rồi cầm ly đi lên trước. Bạn đứng lại một mình với ly trà chưa dán nắp."
+        }
+      ]
+    },
+    {
+      "id": "H2",
+      "title": "Báo cáo tháng",
+      "type": "normal",
+      "phases": [
+        1,
+        2
+      ],
+      "weight": 3,
+      "heavy": true,
+      "repeatable": false,
+      "npc": "hang",
+      "room": "intern",
+      "intro": "\"Báo cáo tháng này em làm nhé. Chị hướng dẫn rồi đấy, lúc em đi lấy nước ấy.\"",
+      "choices": [
+        {
+          "label": "Hỏi lại chị từng bước",
+          "effects": {
+            "xp": 4,
+            "pin": -10,
+            "ut": 0,
+            "qh": 3
+          }
+        },
+        {
+          "label": "Tự mày mò đến tối",
+          "effects": {
+            "xp": 3,
+            "pin": -15,
+            "ut": 2,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Xin anh Minh file năm ngoái để làm theo",
+          "effects": {
+            "xp": 2,
+            "pin": -5,
+            "ut": 0,
+            "qh": 2
+          },
+          "qhTarget": "minh"
+        }
+      ]
+    },
+    {
+      "id": "H3",
+      "title": "Trực điện thoại",
+      "type": "normal",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 2,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "hang",
+      "room": "intern",
+      "intro": "\"Chị nghỉ phép ba ngày, em trực điện thoại giúp chị nhé. Ai hỏi thì bảo chị đang họp.\"",
+      "choices": [
+        {
+          "label": "Nói đúng lời dặn",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 3
+          }
+        },
+        {
+          "label": "Nói thật là chị nghỉ phép",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 1,
+            "qh": -5
+          }
+        },
+        {
+          "label": "Ghi lại mọi cuộc gọi, gửi chị bảng tổng hợp",
+          "effects": {
+            "xp": 2,
+            "pin": -5,
+            "ut": 0,
+            "qh": 5
+          },
+          "addFlags": [
+            "so_tay_chi_hang"
+          ],
+          "comment": "Chị cho bạn mượn cuốn sổ tay tám năm."
+        }
+      ]
+    },
+    {
+      "id": "H4",
+      "title": "Hai việc mâu thuẫn",
+      "type": "normal",
+      "phases": [
+        2,
+        3
+      ],
+      "weight": 3,
+      "heavy": true,
+      "repeatable": false,
+      "npc": "hang",
+      "room": "meeting",
+      "intro": "9 giờ sáng, anh Tuấn giao việc X. 9 giờ 15, chị Hằng bảo \"Đừng làm X, làm Y trước đi em.\"",
+      "choices": [
+        {
+          "label": "Làm theo sếp",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 3,
+            "qh": -5
+          }
+        },
+        {
+          "label": "Làm theo chị",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": -3,
+            "qh": 3
+          }
+        },
+        {
+          "label": "Mời cả hai vào chốt chung",
+          "effects": {
+            "xp": 3,
+            "pin": -5,
+            "ut": 2,
+            "qh": 2
+          },
+          "addFlags": [
+            "ghi_diem_voi_sep"
+          ],
+          "comment": "Lần đầu phòng có cuộc họp ngắn hơn 10 phút."
+        }
+      ]
+    },
+    {
+      "id": "H5",
+      "title": "Cái cây góc phòng",
+      "type": "normal",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 1,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "hang",
+      "room": "intern",
+      "intro": "\"Em thấy cái cây góc phòng không? Nó sống lâu hơn ba đời intern rồi. Em tưới giúp chị.\"",
+      "choices": [
+        {
+          "label": "Tưới đều mỗi sáng",
+          "effects": {
+            "xp": 0,
+            "pin": -3,
+            "ut": 0,
+            "qh": 3
+          }
+        },
+        {
+          "label": "Quên mất",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Cây vẫn sống. Cây quen rồi."
+        },
+        {
+          "label": "Mua thêm một chậu cho bàn mình",
+          "effects": {
+            "xp": 0,
+            "pin": 5,
+            "ut": 0,
+            "qh": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "H6",
+      "title": "Nhớ cc sếp",
+      "type": "normal",
+      "phases": [
+        2,
+        3
+      ],
+      "weight": 2,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "hang",
+      "room": "intern",
+      "intro": "Chị dặn email nào cũng cc sếp. Bạn vừa viết email cảm ơn anh Tùng đã giúp mình.",
+      "choices": [
+        {
+          "label": "Cc sếp",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 2,
+            "qh": -2
+          },
+          "qhTarget": "tung",
+          "comment": "Anh Tùng trả lời bằng giọng rất trang trọng."
+        },
+        {
+          "label": "Không cc",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 2
+          },
+          "qhTarget": "tung"
+        },
+        {
+          "label": "Cc cả phòng",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 1,
+            "qh": -3
+          },
+          "qhTarget": null,
+          "comment": "Bạn nhận được sáu email \"Cảm ơn em\"."
+        }
+      ]
+    },
+    {
+      "id": "L1",
+      "title": "Sinh nhật sếp",
+      "type": "normal",
+      "phases": [
+        1,
+        2
+      ],
+      "weight": 5,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "linh",
+      "room": "intern",
+      "intro": "\"Chiều nay sinh nhật sếp, em góp quỹ 200 nghìn nhé. À, em đi mua bánh luôn giúp chị, vị gì cũng được miễn là sầu riêng.\"",
+      "choices": [
+        {
+          "label": "Góp và đi mua bánh",
+          "effects": {
+            "xp": 0,
+            "pin": -5,
+            "ut": 0,
+            "qh": 5
+          },
+          "addFlags": [
+            "thu_quy_bat_dac_di"
+          ]
+        },
+        {
+          "label": "Góp tiền, không đi mua",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 1
+          }
+        },
+        {
+          "label": "\"Em chưa nhận lương ạ\"",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": -3
+          },
+          "comment": "Chị Linh ghi tên bạn vào một danh sách."
+        }
+      ]
+    },
+    {
+      "id": "L2",
+      "title": "Tiết mục văn nghệ",
+      "type": "normal",
+      "phases": [
+        2,
+        3
+      ],
+      "weight": 3,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "linh",
+      "room": "intern",
+      "intro": "\"Tiệc cuối năm phòng mình thiếu một tiết mục, và chị vừa đăng ký tên em.\"",
+      "choices": [
+        {
+          "label": "Nhận lời, tập hát mỗi trưa",
+          "effects": {
+            "xp": 0,
+            "pin": -10,
+            "ut": 0,
+            "qh": 5
+          },
+          "addFlags": [
+            "ngoi_sao_karaoke"
+          ]
+        },
+        {
+          "label": "Rủ anh Tùng song ca",
+          "effects": {
+            "xp": 0,
+            "pin": -5,
+            "ut": 0,
+            "qh": 3
+          }
+        },
+        {
+          "label": "Xin làm hậu cần",
+          "effects": {
+            "xp": 0,
+            "pin": -3,
+            "ut": 0,
+            "qh": 1
+          },
+          "comment": "Bạn phụ trách bê 40 cái ghế."
+        }
+      ]
+    },
+    {
+      "id": "L3",
+      "title": "Khảo sát hạnh phúc",
+      "type": "normal",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 2,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "linh",
+      "room": "intern",
+      "intro": "\"Em điền form khảo sát mức độ hạnh phúc giúp chị. Ẩn danh, nhưng có ô ghi tên.\"",
+      "choices": [
+        {
+          "label": "Chấm 10 trên 10, ghi đủ tên",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 2,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Chấm thật lòng, bỏ trống ô tên",
+          "effects": {
+            "xp": 0,
+            "pin": 5,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Hôm sau chị Linh hỏi cả phòng: \"Ai chấm 4 điểm thế nhỉ?\""
+        },
+        {
+          "label": "Không điền",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": -2
+          }
+        }
+      ]
+    },
+    {
+      "id": "L4",
+      "title": "Giải chạy bộ",
+      "type": "normal",
+      "phases": [
+        2,
+        3
+      ],
+      "weight": 2,
+      "heavy": true,
+      "repeatable": false,
+      "npc": "linh",
+      "room": "intern",
+      "intro": "\"Năm nay công ty có giải chạy bộ 5 cây số. Phòng mình cử người trẻ nhất, tức là em.\"",
+      "choices": [
+        {
+          "label": "Chạy hết 5 cây số",
+          "effects": {
+            "xp": 0,
+            "pin": -15,
+            "ut": 2,
+            "qh": 5
+          }
+        },
+        {
+          "label": "Chạy một cây rồi đi bộ chụp ảnh",
+          "effects": {
+            "xp": 0,
+            "pin": -5,
+            "ut": 0,
+            "qh": 3
+          }
+        },
+        {
+          "label": "Xin đứng cổ vũ",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 1
+          },
+          "comment": "Bạn hô to nhất giải."
+        }
+      ]
+    },
+    {
+      "id": "L5",
+      "title": "Áo đồng phục màu cam",
+      "type": "normal",
+      "phases": [
+        1,
+        2
+      ],
+      "weight": 2,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "linh",
+      "room": "intern",
+      "intro": "\"Mai mặc áo đồng phục màu cam nhé, chụp ảnh đăng fanpage công ty.\"",
+      "choices": [
+        {
+          "label": "Mặc và cười thật tươi",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 2
+          }
+        },
+        {
+          "label": "Quên áo, đứng hàng sau",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Bạn xuất hiện trên fanpage dưới dạng một cái tai."
+        },
+        {
+          "label": "Nhận chỉnh ảnh cho fanpage",
+          "effects": {
+            "xp": 2,
+            "pin": -5,
+            "ut": 0,
+            "qh": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "L6",
+      "title": "Quỹ từ thiện",
+      "type": "normal",
+      "phases": [
+        3
+      ],
+      "weight": 2,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "linh",
+      "room": "intern",
+      "intro": "\"Đợt từ thiện này mỗi người góp 100 nghìn. Ai góp nhiều hơn chị sẽ khen trong nhóm chat.\"",
+      "choices": [
+        {
+          "label": "Góp đúng 100 nghìn",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 1
+          }
+        },
+        {
+          "label": "Góp 500 nghìn",
+          "effects": {
+            "xp": 0,
+            "pin": -3,
+            "ut": 0,
+            "qh": 3
+          },
+          "comment": "Bạn được khen trong nhóm chat. Và ăn mì gói đến cuối tháng."
+        },
+        {
+          "label": "Đề xuất cả phòng đi hiến máu thay vì góp tiền",
+          "effects": {
+            "xp": 0,
+            "pin": -5,
+            "ut": 2,
+            "qh": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "M1",
+      "title": "47 sheet tên final",
+      "type": "normal",
+      "phases": [
+        1,
+        2
+      ],
+      "weight": 3,
+      "heavy": true,
+      "repeatable": false,
+      "npc": "minh",
+      "room": "intern",
+      "intro": "\"File Excel này có 47 sheet, sheet nào cũng tên là final. Em tìm giúp anh bản đúng.\"",
+      "choices": [
+        {
+          "label": "Mở từng sheet một",
+          "effects": {
+            "xp": 3,
+            "pin": -10,
+            "ut": 0,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Nhắn tin hỏi anh Minh",
+          "effects": {
+            "xp": 2,
+            "pin": 0,
+            "ut": 0,
+            "qh": 3
+          }
+        },
+        {
+          "label": "Lập luôn mục lục cho cả file",
+          "effects": {
+            "xp": 4,
+            "pin": -10,
+            "ut": 2,
+            "qh": 0
+          },
+          "comment": "Anh Minh đặt tên file mới là final_cua_intern."
+        }
+      ]
+    },
+    {
+      "id": "M2",
+      "title": "Máy treo",
+      "type": "normal",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 3,
+      "heavy": true,
+      "repeatable": false,
+      "npc": "minh",
+      "room": "intern",
+      "intro": "Máy tính treo đúng lúc bạn bấm gửi báo cáo. Màn hình đứng yên, con trỏ xoay mãi.",
+      "choices": [
+        {
+          "label": "Tắt đi bật lại ngay",
+          "effects": {
+            "xp": 0,
+            "pin": -10,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Báo cáo đã về với cát bụi. Bạn làm lại."
+        },
+        {
+          "label": "Gọi anh Minh",
+          "effects": {
+            "xp": 0,
+            "pin": -3,
+            "ut": 0,
+            "qh": 2
+          },
+          "comment": "Anh Minh cũng tắt đi bật lại. Lần này được."
+        },
+        {
+          "label": "Gửi tạm bản nháp từ điện thoại, báo sếp sẽ gửi bản đủ sau",
+          "effects": {
+            "xp": 0,
+            "pin": -5,
+            "ut": 2,
+            "qh": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "M3",
+      "title": "Bí mật macro",
+      "type": "normal",
+      "phases": [
+        2,
+        3
+      ],
+      "weight": 2,
+      "heavy": true,
+      "repeatable": false,
+      "npc": "minh",
+      "room": "intern",
+      "intro": "Bạn phát hiện báo cáo \"làm cả ngày\" của anh Minh thật ra chạy tự động trong 3 giây. Anh nhìn bạn: \"Đừng kể với sếp nhé.\"",
+      "choices": [
+        {
+          "label": "Giữ bí mật",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 5
+          },
+          "addFlags": [
+            "giu_bi_mat_macro"
+          ],
+          "followup": {
+            "card": "M5",
+            "afterDays": 3
+          }
+        },
+        {
+          "label": "Kể với sếp",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 3,
+            "qh": -5
+          },
+          "comment": "Anh Minh được giao thêm ba báo cáo. Anh nhìn bạn rất lâu."
+        },
+        {
+          "label": "Xin anh dạy viết macro",
+          "effects": {
+            "xp": 4,
+            "pin": -5,
+            "ut": 0,
+            "qh": 3
+          },
+          "addFlags": [
+            "hoc_macro"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "M4",
+      "title": "Gửi nhầm nhóm chat",
+      "type": "normal",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 2,
+      "heavy": true,
+      "repeatable": false,
+      "npc": "minh",
+      "room": "intern",
+      "intro": "Bạn vừa gửi câu \"deadline kiểu này thì ai làm nổi\" vào nhóm chat cả phòng, thay vì cho bạn thân.",
+      "choices": [
+        {
+          "label": "Thu hồi ngay",
+          "effects": {
+            "xp": 0,
+            "pin": -5,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Đã thu hồi. Bảy người đã xem."
+        },
+        {
+          "label": "Bình tĩnh nhắn tiếp \"Ý em là deadline này thật thử thách, em sẽ cố gắng ạ!\"",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 3
+          },
+          "qhTarget": null
+        },
+        {
+          "label": "Nhờ anh Minh \"xử lý hệ thống\"",
+          "effects": {
+            "xp": 0,
+            "pin": -3,
+            "ut": 0,
+            "qh": 2
+          },
+          "comment": "Anh Minh: \"Ctrl Z không cứu được cái này đâu em.\""
+        }
+      ]
+    },
+    {
+      "id": "M5",
+      "title": "\"Sao dạo này nhanh thế?\"",
+      "type": "followup",
+      "phases": [
+        2,
+        3
+      ],
+      "weight": 0,
+      "heavy": true,
+      "repeatable": false,
+      "npc": "minh",
+      "room": "boss",
+      "intro": "Sếp: \"Báo cáo dạo này xong nhanh thế? Em có bí quyết gì à?\" Anh Minh ngồi gõ phím rất to.",
+      "choices": [
+        {
+          "label": "Nhận là mình giỏi",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 5,
+            "qh": -5
+          },
+          "addFlags": [
+            "ghi_diem_voi_sep"
+          ]
+        },
+        {
+          "label": "Khen anh Minh chỉ bảo tận tình",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 2,
+            "qh": 5
+          }
+        },
+        {
+          "label": "\"Em đang học cách làm việc thông minh hơn ạ\"",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 3,
+            "qh": 3
+          },
+          "comment": "Sếp gật gù. Anh Minh thở ra."
+        }
+      ]
+    },
+    {
+      "id": "U1",
+      "title": "Bí kíp của Junior",
+      "type": "normal",
+      "phases": [
+        1
+      ],
+      "weight": 3,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "tung",
+      "room": "canteen",
+      "intro": "Anh Tùng rủ xuống cà phê: \"Anh mới lên Junior hai tuần. Để anh truyền bí kíp.\"",
+      "choices": [
+        {
+          "label": "Nghe và ghi chép",
+          "effects": {
+            "xp": 2,
+            "pin": 0,
+            "ut": 0,
+            "qh": 3
+          }
+        },
+        {
+          "label": "Hỏi lương Junior bao nhiêu",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 1
+          },
+          "comment": "Anh Tùng nhìn quanh: \"Đủ sống. Đủ sống thôi.\""
+        },
+        {
+          "label": "Từ chối vì bận",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 1,
+            "qh": -2
+          }
+        }
+      ]
+    },
+    {
+      "id": "U2",
+      "title": "\"Làm giúp anh tí\"",
+      "type": "normal",
+      "phases": [
+        2,
+        3
+      ],
+      "weight": 3,
+      "heavy": true,
+      "repeatable": false,
+      "npc": "tung",
+      "room": "meeting",
+      "autoResolve": {
+        "ifFlags": [
+          "dong_minh_hoi_an_nhanh"
+        ],
+        "effects": {
+          "xp": 0,
+          "pin": 0,
+          "ut": 3,
+          "qh": 3
+        },
+        "comment": "Anh Tùng tự đính chính: \"Phần này là của bạn ấy làm ạ.\""
+      },
+      "intro": "Tuần trước bạn làm giúp anh Tùng một phần báo cáo. Sáng nay trong họp, anh báo cáo đó là việc của anh.",
+      "choices": [
+        {
+          "label": "Im lặng cho qua",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": -2,
+            "qh": 2
+          }
+        },
+        {
+          "label": "Sau họp nhắn riêng cho anh Tùng",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 1,
+            "qh": 0
+          },
+          "comment": "Anh Tùng khao bạn một ly trà sữa xin lỗi."
+        },
+        {
+          "label": "Nói ngay trong họp",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 3,
+            "qh": -5
+          },
+          "comment": "Phòng họp im lặng đúng 4 giây."
+        }
+      ]
+    },
+    {
+      "id": "U3",
+      "title": "Né chị Linh",
+      "type": "normal",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 2,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "tung",
+      "room": "intern",
+      "intro": "Anh Tùng thì thầm: \"Chị Linh hỏi cuối tuần rảnh không thì nói là về quê nhé.\" Chị Linh đang đi tới.",
+      "choices": [
+        {
+          "label": "\"Em về quê ạ\"",
+          "effects": {
+            "xp": 0,
+            "pin": 5,
+            "ut": 0,
+            "qh": 0
+          }
+        },
+        {
+          "label": "\"Em rảnh ạ\"",
+          "effects": {
+            "xp": 0,
+            "pin": -5,
+            "ut": 0,
+            "qh": 3
+          },
+          "qhTarget": "linh",
+          "comment": "Bạn có một cuối tuần dựng sân khấu."
+        },
+        {
+          "label": "Đẩy anh Tùng ra trước",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 1
+          },
+          "comment": "Anh Tùng có một cuối tuần đáng nhớ."
+        }
+      ]
+    },
+    {
+      "id": "U4",
+      "title": "Học thạc sĩ",
+      "type": "normal",
+      "phases": [
+        3
+      ],
+      "weight": 2,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "tung",
+      "room": "intern",
+      "intro": "\"Nghe bảo lên Middle thì cần bằng thạc sĩ. Hoặc ít nhất là cần nói là đang học. Em đăng ký cùng anh không?\"",
+      "choices": [
+        {
+          "label": "Đăng ký cùng",
+          "effects": {
+            "xp": 3,
+            "pin": -10,
+            "ut": 0,
+            "qh": 0
+          }
+        },
+        {
+          "label": "\"Em sẽ nói là em đang tìm hiểu\"",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 1,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Hỏi anh đã tìm hiểu bao lâu",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 2
+          },
+          "comment": "Anh Tùng: \"Ba năm. Sắp xong bước tìm hiểu rồi.\""
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "title": "Chỉ có một suất Junior",
+      "type": "normal",
+      "phases": [
+        1
+      ],
+      "weight": 5,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "mai",
+      "room": "lobby",
+      "intro": "Chị Mai gọi bạn lại quầy lễ tân: \"Chị nghe nói năm nay phòng em chỉ có một suất lên Junior thôi đấy.\"",
+      "choices": [
+        {
+          "label": "Hỏi dồn thêm chi tiết",
+          "effects": {
+            "xp": 0,
+            "pin": -3,
+            "ut": 0,
+            "qh": 2
+          },
+          "comment": "Chị Mai: \"Còn lại thì chị kể vào giờ ăn trưa.\""
+        },
+        {
+          "label": "Không tin, cười trừ",
+          "effects": {
+            "xp": 0,
+            "pin": 3,
+            "ut": 0,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Mời chị ly trà sữa để nghe tiếp",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 3
+          },
+          "addFlags": [
+            "quen_chi_mai"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "title": "Khách đến sớm hai tiếng",
+      "type": "normal",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 3,
+      "heavy": true,
+      "repeatable": false,
+      "npc": "mai",
+      "room": "lobby",
+      "intro": "\"Chào em, anh đến sớm hơn giờ hẹn hai tiếng. Sếp em rảnh luôn chứ?\" Sếp đang họp. Chị Mai nhìn bạn.",
+      "choices": [
+        {
+          "label": "Tiếp khách, mời nước, nói chuyện",
+          "effects": {
+            "xp": 2,
+            "pin": -5,
+            "ut": 0,
+            "qh": 2
+          },
+          "addFlags": [
+            "duoc_khach_hang_quy_men"
+          ]
+        },
+        {
+          "label": "Gõ cửa báo sếp giữa họp",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": -2,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Mời khách ngồi sảnh, đưa mật khẩu wifi",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Khách hỏi lại mật khẩu wifi ba lần."
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "title": "Diễn tập phòng cháy",
+      "type": "normal",
+      "phases": [
+        2,
+        3
+      ],
+      "weight": 2,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "mai",
+      "room": "lobby",
+      "intro": "\"Cuối tháng có diễn tập phòng cháy. Chị đã ghi tên em vào đội phản ứng nhanh.\"",
+      "choices": [
+        {
+          "label": "Tham gia nhiệt tình",
+          "effects": {
+            "xp": 0,
+            "pin": -5,
+            "ut": 2,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Nghe chuông thì đi xuống chậm rãi",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Bạn về đích sau cả đội bảo vệ."
+        },
+        {
+          "label": "Cầm bình chữa cháy tạo dáng chụp ảnh",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "title": "Trực quầy giờ trưa",
+      "type": "normal",
+      "phases": [
+        1,
+        2
+      ],
+      "weight": 2,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "mai",
+      "room": "lobby",
+      "intro": "\"Em nghe điện thoại giúp chị nhé, chị đi ăn trưa. Ai hỏi gì cứ nói là sẽ báo lại.\"",
+      "choices": [
+        {
+          "label": "Trực và ghi chép cẩn thận",
+          "effects": {
+            "xp": 0,
+            "pin": -3,
+            "ut": 0,
+            "qh": 3
+          }
+        },
+        {
+          "label": "Trực, ai hỏi cũng \"sẽ báo lại\"",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 1
+          },
+          "comment": "Bạn đã hứa báo lại cho 12 người."
+        },
+        {
+          "label": "Từ chối vì chưa ăn",
+          "effects": {
+            "xp": 0,
+            "pin": 3,
+            "ut": 0,
+            "qh": -2
+          }
+        }
+      ]
+    },
+    {
+      "id": "I5",
+      "title": "Tin mật",
+      "type": "normal",
+      "phases": [
+        3
+      ],
+      "weight": 5,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "mai",
+      "room": "lobby",
+      "requires": {
+        "flags": [
+          "quen_chi_mai"
+        ]
+      },
+      "intro": "Chị Mai thì thầm: \"Chị nghe phòng nhân sự nói buổi đánh giá sếp em sẽ hỏi một câu…\"",
+      "choices": [
+        {
+          "label": "Nghe hết",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 0
+          },
+          "addFlags": [
+            "tin_mat_chi_mai"
+          ]
+        },
+        {
+          "label": "Từ chối, muốn tự chuẩn bị",
+          "effects": {
+            "xp": 2,
+            "pin": 0,
+            "ut": 1,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Nghe rồi kể lại cho anh Tùng",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 3
+          },
+          "addFlags": [
+            "tin_mat_chi_mai"
+          ],
+          "qhTarget": "tung"
+        }
+      ]
+    },
+    {
+      "id": "K1",
+      "title": "Sửa một chút",
+      "type": "normal",
+      "phases": [
+        2,
+        3
+      ],
+      "weight": 3,
+      "heavy": true,
+      "repeatable": false,
+      "npc": "client",
+      "room": "lobby",
+      "requires": {
+        "flags": [
+          "duoc_giao_du_an"
+        ]
+      },
+      "intro": "\"Anh chỉ muốn sửa một chút thôi em. Đổi hết từ đầu.\"",
+      "choices": [
+        {
+          "label": "Làm lại từ đầu",
+          "effects": {
+            "xp": 3,
+            "pin": -15,
+            "ut": 0,
+            "qh": 0
+          },
+          "addFlags": [
+            "duoc_khach_hang_quy_men"
+          ]
+        },
+        {
+          "label": "Sửa một phần, phần còn lại gửi báo giá bổ sung",
+          "effects": {
+            "xp": 3,
+            "pin": 0,
+            "ut": 3,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Chuyển thẳng cho sếp",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": -2,
+            "qh": 0
+          },
+          "comment": "Sếp chuyển lại cho bạn, kèm chữ \"Em xử lý nhé\"."
+        }
+      ]
+    },
+    {
+      "id": "K2",
+      "title": "Xanh hơn nhưng bớt xanh",
+      "type": "normal",
+      "phases": [
+        2,
+        3
+      ],
+      "weight": 3,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "client",
+      "room": "lobby",
+      "requires": {
+        "flags": [
+          "duoc_giao_du_an"
+        ]
+      },
+      "intro": "\"Màu xanh này hơi xanh quá. Em làm xanh hơn một chút nhưng bớt xanh đi.\"",
+      "choices": [
+        {
+          "label": "Gửi năm sắc xanh để khách chọn",
+          "effects": {
+            "xp": 2,
+            "pin": -5,
+            "ut": 0,
+            "qh": 0
+          },
+          "addFlags": [
+            "duoc_khach_hang_quy_men"
+          ]
+        },
+        {
+          "label": "Gửi lại đúng bản cũ",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 1,
+            "qh": 0
+          },
+          "comment": "Khách: \"Đúng rồi, thế này mới chuẩn!\""
+        },
+        {
+          "label": "Hỏi lại khách một mã màu cụ thể",
+          "effects": {
+            "xp": 2,
+            "pin": 0,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Khách gửi ảnh chụp một cái lá cây."
+        }
+      ]
+    },
+    {
+      "id": "K3",
+      "title": "Cứ làm trước đi",
+      "type": "normal",
+      "phases": [
+        2,
+        3
+      ],
+      "weight": 2,
+      "heavy": true,
+      "repeatable": false,
+      "npc": "client",
+      "room": "lobby",
+      "requires": {
+        "flags": [
+          "duoc_giao_du_an"
+        ]
+      },
+      "intro": "\"Sếp anh chưa duyệt, nhưng em cứ làm trước đi, có gì mình sửa sau.\"",
+      "choices": [
+        {
+          "label": "Làm trước luôn",
+          "effects": {
+            "xp": 2,
+            "pin": -10,
+            "ut": 0,
+            "qh": 0
+          },
+          "followup": {
+            "card": "K6",
+            "afterDays": 2
+          }
+        },
+        {
+          "label": "Chờ khách xác nhận qua email",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 3,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Hỏi ý anh Tuấn trước",
+          "effects": {
+            "xp": 0,
+            "pin": -3,
+            "ut": 2,
+            "qh": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "K4",
+      "title": "Giảm 30% cho khách quen",
+      "type": "normal",
+      "phases": [
+        2,
+        3
+      ],
+      "weight": 2,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "client",
+      "room": "lobby",
+      "requires": {
+        "flags": [
+          "duoc_giao_du_an"
+        ]
+      },
+      "intro": "\"Em gửi anh báo giá nhé. Rồi giảm 30 phần trăm, vì anh là khách quen.\"",
+      "choices": [
+        {
+          "label": "Đồng ý luôn",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": -5,
+            "qh": 0
+          },
+          "addFlags": [
+            "duoc_khach_hang_quy_men"
+          ]
+        },
+        {
+          "label": "\"Em xin phép hỏi sếp ạ\"",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 2,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Đề xuất tặng thêm một lượt sửa thay vì giảm giá",
+          "effects": {
+            "xp": 3,
+            "pin": 0,
+            "ut": 4,
+            "qh": 0
+          },
+          "addFlags": [
+            "ghi_diem_voi_sep"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "K5",
+      "when": "night",
+      "title": "Góp ý lúc nửa đêm",
+      "type": "normal",
+      "phases": [
+        2,
+        3
+      ],
+      "weight": 3,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "client",
+      "room": null,
+      "requires": {
+        "flags": [
+          "duoc_giao_du_an"
+        ]
+      },
+      "intro": "0 giờ 12 phút, khách nhắn Zalo: \"Anh gửi góp ý rồi, em xem sớm giúp anh.\" Kèm 14 tin nhắn thoại.",
+      "choices": [
+        {
+          "label": "Trả lời ngay",
+          "effects": {
+            "xp": 0,
+            "pin": -10,
+            "ut": 0,
+            "qh": 0
+          },
+          "addFlags": [
+            "duoc_khach_hang_quy_men"
+          ]
+        },
+        {
+          "label": "Sáng mai trả lời",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 1,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Thả một cái like rồi ngủ",
+          "effects": {
+            "xp": 0,
+            "pin": 3,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Khách hiểu là em đồng ý tất cả."
+        }
+      ]
+    },
+    {
+      "id": "K6",
+      "title": "Sếp khách không duyệt",
+      "type": "followup",
+      "phases": [
+        2,
+        3
+      ],
+      "weight": 0,
+      "heavy": true,
+      "repeatable": false,
+      "npc": "client",
+      "room": "lobby",
+      "intro": "\"Sếp anh không duyệt em ạ. Mình bỏ hết làm lại nhé.\"",
+      "choices": [
+        {
+          "label": "Bình tĩnh làm lại",
+          "effects": {
+            "xp": 2,
+            "pin": -10,
+            "ut": 0,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Gửi khách bảng chi phí phát sinh",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 3,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Xuống căng tin ăn bún bò",
+          "effects": {
+            "xp": 0,
+            "pin": 10,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Bún bò không giải quyết được vấn đề. Nhưng ngon."
+        }
+      ]
+    },
+    {
+      "id": "C1",
+      "title": "Chọn hội ăn trưa",
+      "type": "normal",
+      "phases": [
+        1
+      ],
+      "weight": 5,
+      "heavy": false,
+      "repeatable": false,
+      "npc": null,
+      "room": "canteen",
+      "intro": "12 giờ trưa, phòng chia hai hội. Hội tám chuyện (chị Hằng, chị Linh) vẫy bạn. Hội ăn nhanh về ngủ (anh Minh, anh Tùng) cũng vẫy.",
+      "choices": [
+        {
+          "label": "Ngồi hội tám chuyện",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 3
+          },
+          "addFlags": [
+            "dong_minh_hoi_tam"
+          ]
+        },
+        {
+          "label": "Ngồi hội ăn nhanh",
+          "effects": {
+            "xp": 0,
+            "pin": 5,
+            "ut": 0,
+            "qh": 0
+          },
+          "addFlags": [
+            "dong_minh_hoi_an_nhanh"
+          ]
+        },
+        {
+          "label": "Ăn một mình, đọc email",
+          "effects": {
+            "xp": 1,
+            "pin": -3,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Cô Ba: \"Ăn cơm thì ngồi xuống ghế, con.\""
+        }
+      ]
+    },
+    {
+      "id": "C2",
+      "title": "Bún bò thứ Tư",
+      "type": "normal",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 2,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "coba",
+      "room": "canteen",
+      "intro": "\"Mai cô nấu bún bò. Nhớ xuống sớm, bún bò hết còn nhanh hơn deadline đến.\"",
+      "choices": [
+        {
+          "label": "Xuống lúc 11 giờ 45",
+          "effects": {
+            "xp": 0,
+            "pin": 10,
+            "ut": -1,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Nhờ cô Ba để phần",
+          "effects": {
+            "xp": 0,
+            "pin": 5,
+            "ut": 0,
+            "qh": 2
+          }
+        },
+        {
+          "label": "Xuống đúng giờ nghỉ",
+          "effects": {
+            "xp": 0,
+            "pin": 3,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Chỉ còn cơm với nước mắm."
+        }
+      ]
+    },
+    {
+      "id": "C3",
+      "title": "Miếng sườn bí mật",
+      "type": "normal",
+      "phases": [
+        2,
+        3
+      ],
+      "weight": 1,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "coba",
+      "room": "canteen",
+      "intro": "Cô Ba dúi cho bạn một miếng sườn: \"Đừng nói với ai nhé.\" Anh Minh đang nhìn.",
+      "choices": [
+        {
+          "label": "Ăn một mình",
+          "effects": {
+            "xp": 0,
+            "pin": 10,
+            "ut": 0,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Chia cho anh Minh",
+          "effects": {
+            "xp": 0,
+            "pin": 5,
+            "ut": 0,
+            "qh": 5
+          },
+          "qhTarget": "minh"
+        },
+        {
+          "label": "Mang lên biếu sếp",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 2,
+            "qh": 0
+          },
+          "comment": "Cô Ba buồn suốt một tuần."
+        }
+      ]
+    },
+    {
+      "id": "W1",
+      "title": "\"Không cần trả lời\"",
+      "type": "weekend",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 3,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "tuan",
+      "room": null,
+      "intro": "Chủ nhật, sếp nhắn năm việc: \"Em không cần trả lời đâu. Thứ Hai làm xong là được.\"",
+      "choices": [
+        {
+          "label": "Làm luôn trong Chủ nhật",
+          "effects": {
+            "xp": 0,
+            "pin": -15,
+            "ut": 4,
+            "qh": 0
+          },
+          "addFlags": [
+            "chien_binh_cuoi_tuan"
+          ]
+        },
+        {
+          "label": "Để thứ Hai làm",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Chủ nhật của bạn vẫn là Chủ nhật. Gần như vậy."
+        },
+        {
+          "label": "Trả lời \"Dạ em nhận ạ\" rồi đi chơi tiếp",
+          "effects": {
+            "xp": 0,
+            "pin": -3,
+            "ut": 1,
+            "qh": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "W2",
+      "title": "Team building Vũng Tàu",
+      "type": "weekend",
+      "phases": [
+        2,
+        3
+      ],
+      "weight": 2,
+      "heavy": true,
+      "repeatable": false,
+      "npc": "linh",
+      "room": null,
+      "intro": "\"Team building năm nay đi Vũng Tàu, thứ Bảy Chủ nhật. Không tính công em nhé.\" Tối thứ Bảy, micro karaoke được dúi vào tay bạn.",
+      "choices": [
+        {
+          "label": "Hát đầu tiên, hát hết mình",
+          "effects": {
+            "xp": 0,
+            "pin": -10,
+            "ut": 0,
+            "qh": 5
+          },
+          "addFlags": [
+            "ngoi_sao_karaoke"
+          ]
+        },
+        {
+          "label": "Đi nhưng trốn ra biển",
+          "effects": {
+            "xp": 0,
+            "pin": 5,
+            "ut": 0,
+            "qh": 1
+          }
+        },
+        {
+          "label": "Xin vắng vì \"về quê\"",
+          "effects": {
+            "xp": 0,
+            "pin": 10,
+            "ut": 0,
+            "qh": -3
+          },
+          "comment": "Ảnh team building có một chỗ trống hình bạn."
+        }
+      ]
+    },
+    {
+      "id": "E1",
+      "title": "Bữa trưa với sếp",
+      "type": "character_event",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 5,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "tuan",
+      "room": "canteen",
+      "requires": {
+        "closeness": {
+          "tuan": 40
+        }
+      },
+      "intro": "Sếp rủ ăn trưa riêng, lần đầu không mang laptop: \"Ngày trước anh làm intern còn vất vả hơn em nhiều. Muốn nghe không?\"",
+      "choices": [
+        {
+          "label": "Hỏi sếp lời khuyên thật lòng",
+          "effects": {
+            "xp": 8,
+            "pin": 0,
+            "ut": 6,
+            "qh": 0
+          },
+          "comment": "Sếp kể 40 phút. Không nhắc chữ KPI nào.",
+          "addFlags": [
+            "than_voi_tuan"
+          ]
+        },
+        {
+          "label": "Xin sếp góp ý thẳng về mình",
+          "effects": {
+            "xp": 0,
+            "pin": -10,
+            "ut": 8,
+            "qh": 0
+          },
+          "addFlags": [
+            "ghi_diem_voi_sep",
+            "than_voi_tuan"
+          ]
+        },
+        {
+          "label": "Kể chuyện cười cho sếp nghe",
+          "effects": {
+            "xp": 0,
+            "pin": 10,
+            "ut": 3,
+            "qh": 6
+          },
+          "comment": "Sếp cười. Cả quán quay lại nhìn.",
+          "addFlags": [
+            "than_voi_tuan"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E2",
+      "title": "Cuốn sổ tám năm",
+      "type": "character_event",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 5,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "hang",
+      "room": "intern",
+      "requires": {
+        "closeness": {
+          "hang": 40
+        }
+      },
+      "intro": "Chị đặt lên bàn bạn một cuốn sổ sờn nát: \"Luật ngầm của phòng, chị ghi từ hồi còn là intern. Hồi đó chị cũng tin là làm tốt thì sẽ được tăng lương.\"",
+      "choices": [
+        {
+          "label": "Đọc hết trong đêm",
+          "effects": {
+            "xp": 8,
+            "pin": -10,
+            "ut": 0,
+            "qh": 0
+          },
+          "addFlags": [
+            "so_tay_chi_hang",
+            "than_voi_hang"
+          ]
+        },
+        {
+          "label": "Mời chị trà sữa, nghe chị kể",
+          "effects": {
+            "xp": 0,
+            "pin": 10,
+            "ut": 0,
+            "qh": 8
+          },
+          "addFlags": [
+            "so_tay_chi_hang",
+            "than_voi_hang"
+          ]
+        },
+        {
+          "label": "Rủ chị viết thành tài liệu cho intern khóa sau",
+          "effects": {
+            "xp": 6,
+            "pin": 0,
+            "ut": 6,
+            "qh": 0
+          },
+          "addFlags": [
+            "ghi_diem_voi_sep",
+            "than_voi_hang"
+          ],
+          "comment": "Chị Hằng: \"Đừng ghi tên chị. Ghi tên chị thì chị phải cập nhật.\""
+        }
+      ]
+    },
+    {
+      "id": "E3",
+      "title": "Hậu trường tiệc tất niên",
+      "type": "character_event",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 5,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "linh",
+      "room": "intern",
+      "requires": {
+        "closeness": {
+          "linh": 40
+        }
+      },
+      "intro": "\"Chị tin em nhất phòng. Tiệc tất niên năm nay chị giao em một việc quan trọng, em chọn đi.\"",
+      "choices": [
+        {
+          "label": "Làm MC chính",
+          "effects": {
+            "xp": 0,
+            "pin": -20,
+            "ut": 6,
+            "qh": 8
+          },
+          "addFlags": [
+            "ngoi_sao_karaoke",
+            "than_voi_linh"
+          ]
+        },
+        {
+          "label": "Lên kịch bản chương trình",
+          "effects": {
+            "xp": 6,
+            "pin": 0,
+            "ut": 0,
+            "qh": 6
+          },
+          "addFlags": [
+            "than_voi_linh"
+          ]
+        },
+        {
+          "label": "Giữ quỹ bằng file Excel minh bạch",
+          "effects": {
+            "xp": 6,
+            "pin": 0,
+            "ut": 6,
+            "qh": 0
+          },
+          "addFlags": [
+            "thu_quy_bat_dac_di",
+            "than_voi_linh"
+          ],
+          "comment": "Quỹ phòng lần đầu khớp số."
+        }
+      ]
+    },
+    {
+      "id": "E4",
+      "title": "Thư mục \"Dùng Cái Này\"",
+      "type": "character_event",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 5,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "minh",
+      "room": "intern",
+      "requires": {
+        "closeness": {
+          "minh": 40
+        }
+      },
+      "intro": "Anh Minh nhắn (vẫn nhắn, dù ngồi cách bạn một mét): \"Anh cho em xem thư mục thật. Trong đó là mười năm macro của anh.\"",
+      "choices": [
+        {
+          "label": "Học hết bộ macro",
+          "effects": {
+            "xp": 8,
+            "pin": -10,
+            "ut": 0,
+            "qh": 0
+          },
+          "addFlags": [
+            "hoc_macro",
+            "than_voi_minh"
+          ],
+          "comment": "Mini-game Chạy deadline của bạn sẽ dễ hơn."
+        },
+        {
+          "label": "Cùng anh viết lại hướng dẫn phần mềm cũ",
+          "effects": {
+            "xp": 6,
+            "pin": 0,
+            "ut": 6,
+            "qh": 0
+          },
+          "addFlags": [
+            "than_voi_minh"
+          ]
+        },
+        {
+          "label": "Hứa giữ bí mật mãi mãi",
+          "effects": {
+            "xp": 0,
+            "pin": 10,
+            "ut": 0,
+            "qh": 8
+          },
+          "addFlags": [
+            "giu_bi_mat_macro",
+            "than_voi_minh"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E5",
+      "title": "Quán trà đá sau giờ làm",
+      "type": "character_event",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 5,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "tung",
+      "room": "lobby",
+      "requires": {
+        "closeness": {
+          "tung": 40
+        }
+      },
+      "intro": "Anh Tùng rủ ra quán trà đá: \"Anh có file tổng hợp câu hỏi đánh giá năm ngoái. Viết xong chưa ai đọc. Em đọc không?\"",
+      "choices": [
+        {
+          "label": "Ôn cùng anh đến tối",
+          "effects": {
+            "xp": 8,
+            "pin": -10,
+            "ut": 0,
+            "qh": 0
+          },
+          "addFlags": [
+            "bi_kip_anh_tung",
+            "than_voi_tung"
+          ]
+        },
+        {
+          "label": "Nghe anh tâm sự, động viên anh",
+          "effects": {
+            "xp": 0,
+            "pin": 10,
+            "ut": 0,
+            "qh": 8
+          },
+          "comment": "Anh Tùng: \"Em là người đầu tiên đọc file này.\"",
+          "addFlags": [
+            "than_voi_tung"
+          ]
+        },
+        {
+          "label": "Rủ anh cùng đề xuất cải tiến quy trình",
+          "effects": {
+            "xp": 6,
+            "pin": 0,
+            "ut": 6,
+            "qh": 0
+          },
+          "addFlags": [
+            "than_voi_tung"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E6",
+      "title": "Chiếc chìa khóa tòa nhà",
+      "type": "character_event",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 5,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "mai",
+      "room": "lobby",
+      "requires": {
+        "closeness": {
+          "mai": 40
+        }
+      },
+      "intro": "\"Em được đấy. Chiều nay chị dẫn em đi một vòng, giới thiệu với cả tòa nhà.\"",
+      "choices": [
+        {
+          "label": "Đi chào hết các phòng ban",
+          "effects": {
+            "xp": 0,
+            "pin": -10,
+            "ut": 0,
+            "qh": 8
+          },
+          "comment": "Giờ bạn biết cả bác bảo vệ ca đêm.",
+          "addFlags": [
+            "than_voi_mai"
+          ]
+        },
+        {
+          "label": "Hỏi chuyện các đời intern trước",
+          "effects": {
+            "xp": 6,
+            "pin": 0,
+            "ut": 0,
+            "qh": 6
+          },
+          "addFlags": [
+            "tin_mat_chi_mai",
+            "than_voi_mai"
+          ]
+        },
+        {
+          "label": "Giúp chị sắp lại sổ khách",
+          "effects": {
+            "xp": 6,
+            "pin": 0,
+            "ut": 6,
+            "qh": 0
+          },
+          "addFlags": [
+            "than_voi_mai"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E7",
+      "title": "Nồi canh ngọt hơn lời hứa",
+      "type": "character_event",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 5,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "coba",
+      "room": "canteen",
+      "requires": {
+        "closeness": {
+          "coba": 40
+        }
+      },
+      "intro": "Cô Ba nấu riêng một mâm: \"Mấy đứa intern năm ngoái giờ lên Junior hết, vẫn xuống ăn cơm cô. Con cũng sẽ thế.\"",
+      "choices": [
+        {
+          "label": "Ăn hết, khen không ngớt",
+          "effects": {
+            "xp": 0,
+            "pin": 20,
+            "ut": 0,
+            "qh": 6
+          },
+          "addFlags": [
+            "than_voi_coba"
+          ]
+        },
+        {
+          "label": "Phụ cô rửa bát, nghe cô kể",
+          "effects": {
+            "xp": 6,
+            "pin": 0,
+            "ut": 0,
+            "qh": 8
+          },
+          "comment": "Cô biết ai sắp nghỉ việc, và ai sắp được thăng chức.",
+          "addFlags": [
+            "than_voi_coba"
+          ]
+        },
+        {
+          "label": "Xin mang phần lên cho cả phòng",
+          "effects": {
+            "xp": 0,
+            "pin": 10,
+            "ut": 3,
+            "qh": 8
+          },
+          "qhTarget": null,
+          "addFlags": [
+            "than_voi_coba"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "L7",
+      "title": "Lời mời của chị Linh",
+      "type": "invitation",
+      "phases": [
+        3
+      ],
+      "weight": 5,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "linh",
+      "room": "canteen",
+      "requires": {
+        "closeness": {
+          "linh": 40
+        },
+        "anyFlags": [
+          "ngoi_sao_karaoke",
+          "thu_quy_bat_dac_di"
+        ],
+        "notFlags": [
+          "loi_moi_chi_linh",
+          "loi_moi_khach_hang"
+        ]
+      },
+      "intro": "Chị Linh kéo bạn ra góc pantry: \"Ban phong trào đang thiếu người có tâm. Nếu chuyện Junior không thành, em về với chị nhé?\"",
+      "choices": [
+        {
+          "label": "Nhận lời",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 3
+          },
+          "addFlags": [
+            "loi_moi_chi_linh"
+          ],
+          "comment": "Chị Linh ghi tên bạn bằng bút dạ quang."
+        },
+        {
+          "label": "\"Em muốn tập trung lên Junior ạ\"",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 2,
+            "qh": 0
+          }
+        },
+        {
+          "label": "\"Để em suy nghĩ thêm\"",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 0
+          },
+          "followup": {
+            "card": "L7",
+            "afterDays": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "K7",
+      "title": "Lời mời từ khách hàng",
+      "type": "invitation",
+      "phases": [
+        3
+      ],
+      "weight": 5,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "client",
+      "room": "lobby",
+      "requires": {
+        "stats": {
+          "qh": 40
+        },
+        "flags": [
+          "duoc_khach_hang_quy_men"
+        ],
+        "notFlags": [
+          "loi_moi_chi_linh",
+          "loi_moi_khach_hang"
+        ]
+      },
+      "intro": "Vị khách quen hẹn bạn cà phê: \"Bên anh đang cần người kiên nhẫn như em. Bên em không giữ thì sang anh.\"",
+      "choices": [
+        {
+          "label": "Nhận danh thiếp, hứa cân nhắc",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 0
+          },
+          "addFlags": [
+            "loi_moi_khach_hang"
+          ],
+          "comment": "Danh thiếp ghi chức danh: Chuyên viên sửa một chút."
+        },
+        {
+          "label": "Từ chối và kể lại với sếp",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 3,
+            "qh": 0
+          },
+          "comment": "Sếp: \"Tốt. Nhưng sao khách không mời anh?\""
+        },
+        {
+          "label": "Từ chối nhẹ nhàng, giữ quan hệ",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "MO_CANTEEN",
+      "title": "Căng tin khai trương",
+      "type": "unlock",
+      "day": 5,
+      "unlocks": "canteen",
+      "npc": "coba",
+      "room": "canteen",
+      "intro": "08:29, loa sảnh vang giọng chị Mai: \"Căng tin mở lại rồi nhé cả nhà! Cô Ba nấu canh chua mừng khai trương.\" Cô Ba đang loay hoay với nồi canh to bằng thùng nước: \"Đứa nào khỏe khỏe giúp cô cái.\"",
+      "choices": [
+        {
+          "label": "Xắn tay bê nồi canh giúp cô Ba",
+          "effects": {
+            "xp": 0,
+            "pin": -3,
+            "ut": 0,
+            "qh": 3
+          },
+          "comment": "Cô Ba: \"Cô nhớ mặt con rồi đấy.\"",
+          "scene": {
+            "kind": "queue",
+            "eyebrow": "Ngày 5 · 12:00 · Căng tin",
+            "title": "Hàng dài trước quầy cô Ba",
+            "line": "Bạn đứng cạnh cô Ba, tay cầm muôi canh. Trước quầy, mấy anh chị xếp hàng thẳng tắp, ngay ngắn hơn cả lúc xếp hàng nhận lương. Cô Ba thì thầm: \"Có con đứng đây, cô đỡ sợ hết canh.\"",
+            "open": "Xuống căng tin",
+            "button": "Vào làm thôi"
+          }
+        },
+        {
+          "label": "Chạy lên rủ cả phòng intern trưa nay xuống ăn khai trương",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 3
+          },
+          "qhTarget": null,
+          "comment": "Anh Tùng: \"Có canh chua là anh đi.\"",
+          "scene": {
+            "kind": "sitAll",
+            "eyebrow": "Ngày 5 · 12:00 · Căng tin",
+            "title": "Cả phòng ăn khai trương",
+            "line": "Cả phòng intern kéo xuống đông đủ. Anh Tùng húp canh chua, chị Hằng ngồi gắp hành ra từng cọng, anh Minh chụp nồi canh gửi nhóm chat. Cô Ba đứng sau quầy, cười như vừa trúng số.",
+            "open": "Xuống căng tin",
+            "button": "Vào làm thôi"
+          }
+        },
+        {
+          "label": "Xếp hàng đầu tiên, giữ luôn bàn cạnh quạt",
+          "effects": {
+            "xp": 0,
+            "pin": 10,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Bàn cạnh quạt là bất động sản đắt nhất công ty.",
+          "scene": {
+            "kind": "queue",
+            "eyebrow": "Ngày 5 · 12:00 · Căng tin",
+            "title": "Hàng dài trước quầy cô Ba",
+            "line": "Bạn đứng cạnh cô Ba, tay cầm muôi canh. Trước quầy, mấy anh chị xếp hàng thẳng tắp, ngay ngắn hơn cả lúc xếp hàng nhận lương. Cô Ba thì thầm: \"Có con đứng đây, cô đỡ sợ hết canh.\"",
+            "open": "Xuống căng tin",
+            "button": "Vào làm thôi"
+          }
+        }
+      ]
+    },
+    {
+      "id": "MO_MEETING",
+      "title": "Cuộc họp đầu tiên",
+      "type": "unlock",
+      "day": 10,
+      "unlocks": "meeting",
+      "npc": "tuan",
+      "room": "meeting",
+      "intro": "08:29, phòng kế toán khuân thùng hồ sơ cuối cùng ra khỏi phòng họp. Anh Tuấn đứng ở cửa: \"Có phòng rồi. 9 giờ họp 15 phút thôi. Em ghi biên bản nhé.\" (Cuộc họp kéo dài 50 phút.)",
+      "choices": [
+        {
+          "label": "Ghi đủ từng ý, kể cả ý sếp nói rồi rút lại",
+          "effects": {
+            "xp": 0,
+            "pin": -5,
+            "ut": 4,
+            "qh": 0
+          },
+          "comment": "Anh Tuấn: \"Ý này anh nói lúc nào nhỉ? À, đúng là anh nói.\""
+        },
+        {
+          "label": "Ghi gọn rồi chụp bảng trắng gửi cả phòng",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 3
+          },
+          "qhTarget": null,
+          "comment": "Chị Hằng thả một cái like. Lần đầu tiên."
+        },
+        {
+          "label": "Đặt luôn lịch phòng họp cả tuần sau cho phòng mình",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 2,
+            "qh": 0
+          },
+          "comment": "Phòng bên cạnh không vui. Phòng kế toán càng không vui."
+        }
+      ],
+      "openScene": {
+        "kind": "meetingRoom",
+        "eyebrow": "Ngày 10 · 08:29 · Phòng họp mới mở",
+        "people": [
+          "tuan",
+          "hang",
+          "linh",
+          "minh",
+          "tung",
+          "mai"
+        ],
+        "button": "Ai về chỗ nấy"
+      }
+    },
+    {
+      "id": "N1",
+      "when": "night",
+      "title": "Khóa Excel 0 đồng",
+      "type": "normal",
+      "phases": [
+        1,
+        2
+      ],
+      "weight": 3,
+      "heavy": false,
+      "repeatable": false,
+      "npc": null,
+      "room": null,
+      "intro": "21 giờ, quảng cáo hiện lên: \"Thành thạo Excel trong 7 ngày, miễn phí\". Bài 1 dài 2 tiếng.",
+      "choices": [
+        {
+          "label": "Học hết bài VLOOKUP",
+          "effects": {
+            "xp": 2,
+            "pin": -12,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Bạn hiểu VLOOKUP. Bạn quyết định không cho ai biết."
+        },
+        {
+          "label": "Xem nửa bài rồi đi ngủ",
+          "effects": {
+            "xp": 1,
+            "pin": -5,
+            "ut": 0,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Lưu vào danh sách \"học sau\"",
+          "effects": {
+            "xp": 0,
+            "pin": 4,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Danh sách \"học sau\" giờ có 38 khóa học."
+        }
+      ]
+    },
+    {
+      "id": "N2",
+      "when": "night",
+      "title": "Đọc lại tài liệu dự án",
+      "type": "normal",
+      "phases": [
+        2,
+        3
+      ],
+      "weight": 3,
+      "heavy": false,
+      "repeatable": false,
+      "npc": null,
+      "room": null,
+      "intro": "File \"Quy_trinh_noi_bo_v3_FINAL.pdf\" dài 64 trang. Ngày mai sếp có thể hỏi bất kỳ trang nào.",
+      "choices": [
+        {
+          "label": "Đọc kỹ, ghi chú bằng bút dạ",
+          "effects": {
+            "xp": 2,
+            "pin": -12,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Trang 41 mâu thuẫn với trang 12. Bạn là người đầu tiên phát hiện."
+        },
+        {
+          "label": "Đọc mục lục và phần kết luận",
+          "effects": {
+            "xp": 1,
+            "pin": -5,
+            "ut": 0,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Để file dưới gối, mong kiến thức tự thấm",
+          "effects": {
+            "xp": 0,
+            "pin": 4,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Sáng ra bạn chỉ nhớ được tên file."
+        }
+      ]
+    },
+    {
+      "id": "N3",
+      "when": "night",
+      "title": "Làm slide cho buổi thuyết trình",
+      "type": "normal",
+      "phases": [
+        3
+      ],
+      "weight": 3,
+      "heavy": false,
+      "repeatable": false,
+      "npc": null,
+      "room": null,
+      "intro": "Còn chưa tới hai tuần là đến buổi thuyết trình đánh giá. Slide hiện có đúng một trang, ghi \"Cảm ơn đã lắng nghe\".",
+      "choices": [
+        {
+          "label": "Làm tới 1 giờ sáng",
+          "effects": {
+            "xp": 3,
+            "pin": -15,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "23 slide, 4 biểu đồ, 1 ảnh mèo ở trang cuối."
+        },
+        {
+          "label": "Làm khung sườn trước",
+          "effects": {
+            "xp": 1,
+            "pin": -6,
+            "ut": 0,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Tải mẫu slide đẹp về, mai tính",
+          "effects": {
+            "xp": 0,
+            "pin": 3,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Mẫu slide có sẵn chữ \"Lorem ipsum\" rất chuyên nghiệp."
+        }
+      ]
+    },
+    {
+      "id": "N4",
+      "when": "night",
+      "title": "Podcast \"Sống sót nơi công sở\"",
+      "type": "normal",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 2,
+      "heavy": false,
+      "repeatable": false,
+      "npc": null,
+      "room": null,
+      "intro": "Tập mới: \"10 câu nói khiến sếp nghĩ bạn chăm chỉ\". Dài 58 phút.",
+      "choices": [
+        {
+          "label": "Nghe hết, chép lại ý chính",
+          "effects": {
+            "xp": 1,
+            "pin": -8,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Câu số 7: \"Để em xem lại rồi gửi anh\". Bạn đã dùng câu này từ tuần trước."
+        },
+        {
+          "label": "Nghe 2x, ghi lại một câu để nói trong họp",
+          "effects": {
+            "xp": 0,
+            "pin": -3,
+            "ut": 1,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Chuyển sang podcast kể chuyện ma",
+          "effects": {
+            "xp": 0,
+            "pin": 3,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Chuyện ma vẫn đỡ đáng sợ hơn chuyện deadline."
+        }
+      ]
+    },
+    {
+      "id": "N5",
+      "when": "night",
+      "title": "Luyện gõ mười ngón",
+      "type": "normal",
+      "phases": [
+        1,
+        2
+      ],
+      "weight": 2,
+      "heavy": false,
+      "repeatable": false,
+      "npc": null,
+      "room": null,
+      "intro": "Anh Minh bảo gõ phím nhanh thì làm việc nhanh. Anh không nói làm nhanh thì được giao thêm việc.",
+      "choices": [
+        {
+          "label": "Luyện tới 60 từ một phút",
+          "effects": {
+            "xp": 1,
+            "pin": -8,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Ngón út của bạn lần đầu tiên có việc làm."
+        },
+        {
+          "label": "Gõ lại biên bản họp cho quen tay",
+          "effects": {
+            "xp": 0,
+            "pin": -3,
+            "ut": 1,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Thôi, gõ hai ngón vẫn ổn",
+          "effects": {
+            "xp": 0,
+            "pin": 3,
+            "ut": 0,
+            "qh": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "N6",
+      "when": "night",
+      "title": "Nhật ký thử việc",
+      "type": "normal",
+      "phases": [
+        2,
+        3
+      ],
+      "weight": 2,
+      "heavy": false,
+      "repeatable": false,
+      "npc": null,
+      "room": null,
+      "intro": "Chị Hằng khuyên viết nhật ký mỗi tối: \"Viết ra để biết mình đã học được gì, và đã bị nhờ bao nhiêu việc.\"",
+      "choices": [
+        {
+          "label": "Viết thật lòng, tự rút kinh nghiệm",
+          "effects": {
+            "xp": 1,
+            "pin": -8,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Trang nhật ký hôm nay có ba bài học và một danh sách người nợ bạn trà sữa."
+        },
+        {
+          "label": "Viết danh sách việc ngày mai",
+          "effects": {
+            "xp": 0,
+            "pin": -3,
+            "ut": 1,
+            "qh": 0
+          }
+        },
+        {
+          "label": "Vẽ con mèo rồi đi ngủ",
+          "effects": {
+            "xp": 0,
+            "pin": 4,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Con mèo trong tranh trông mệt hơn bạn."
+        }
+      ]
+    },
+    {
+      "id": "V_HANG",
+      "when": "night",
+      "title": "Chị Hằng ghé phòng",
+      "type": "visit",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 3,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "hang",
+      "room": null,
+      "requires": {
+        "stats": {
+          "qh": 70
+        }
+      },
+      "intro": "Chị Hằng nhắn: \"Nhà chị mất điện, chị qua chỗ em làm nốt báo cáo nhé. Chị mang cả cuốn sổ luật ngầm theo.\"",
+      "choices": [
+        {
+          "label": "Làm cùng chị tới khuya",
+          "effects": {
+            "xp": 4,
+            "pin": -12,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Chị Hằng chỉ cho bạn cách đặt tên file để không bao giờ phải đi tìm nữa."
+        },
+        {
+          "label": "Làm một tiếng rồi nấu mì mời chị",
+          "effects": {
+            "xp": 3,
+            "pin": -5,
+            "ut": 0,
+            "qh": 3
+          },
+          "comment": "Chị Hằng: \"Mì em nấu ngon hơn lương tháng này của chị.\""
+        },
+        {
+          "label": "Nghe chị kể chuyện tám năm ở công ty",
+          "effects": {
+            "xp": 2,
+            "pin": 0,
+            "ut": 0,
+            "qh": 5
+          },
+          "comment": "Chuyện thứ ba là về một intern từng ngồi đúng chỗ của bạn."
+        }
+      ]
+    },
+    {
+      "id": "V_LINH",
+      "when": "night",
+      "title": "Chị Linh ghé phòng",
+      "type": "visit",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 3,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "linh",
+      "room": null,
+      "requires": {
+        "stats": {
+          "qh": 70
+        }
+      },
+      "intro": "Chị Linh nhắn: \"Em ơi, chị qua phòng em lên kế hoạch tiệc cuối năm nhé. Chị mang file ngân sách, em mang não.\"",
+      "choices": [
+        {
+          "label": "Cùng chị làm bảng ngân sách",
+          "effects": {
+            "xp": 4,
+            "pin": -12,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Ngân sách cân đối lần đầu tiên sau ba năm. Chị Linh suýt khóc."
+        },
+        {
+          "label": "Làm phần chính, phần trang trí để chị lo",
+          "effects": {
+            "xp": 3,
+            "pin": -5,
+            "ut": 0,
+            "qh": 3
+          }
+        },
+        {
+          "label": "Ngồi nghe chị kể ai sẽ hát bài gì",
+          "effects": {
+            "xp": 2,
+            "pin": 0,
+            "ut": 0,
+            "qh": 5
+          },
+          "comment": "Bạn được xếp hát song ca. Không ai hỏi ý bạn."
+        }
+      ]
+    },
+    {
+      "id": "V_MINH",
+      "when": "night",
+      "title": "Anh Minh ghé phòng",
+      "type": "visit",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 3,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "minh",
+      "room": null,
+      "requires": {
+        "stats": {
+          "qh": 70
+        }
+      },
+      "intro": "Anh Minh nhắn: \"Nhà anh mất wifi. Qua chỗ em làm nốt cái file nhé. Anh không nói chuyện nhiều đâu.\"",
+      "choices": [
+        {
+          "label": "Ngồi học anh viết macro",
+          "effects": {
+            "xp": 4,
+            "pin": -12,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Anh Minh nói đúng 11 câu cả tối. Câu nào cũng đáng giá."
+        },
+        {
+          "label": "Làm việc của mình, thỉnh thoảng hỏi anh",
+          "effects": {
+            "xp": 3,
+            "pin": -5,
+            "ut": 0,
+            "qh": 3
+          }
+        },
+        {
+          "label": "Mời anh chơi với mèo cho đỡ căng",
+          "effects": {
+            "xp": 2,
+            "pin": 0,
+            "ut": 0,
+            "qh": 5
+          },
+          "comment": "Anh Minh tháo tai nghe lần đầu tiên. Con mèo là người thắng."
+        }
+      ]
+    },
+    {
+      "id": "V_TUNG",
+      "when": "night",
+      "title": "Anh Tùng ghé phòng",
+      "type": "visit",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 3,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "tung",
+      "room": null,
+      "requires": {
+        "stats": {
+          "qh": 70
+        }
+      },
+      "intro": "Anh Tùng nhắn: \"Mai anh thuyết trình mà slide chưa xong. Qua phòng em làm cùng nhé, anh mua bánh tráng trộn.\"",
+      "choices": [
+        {
+          "label": "Làm slide với anh tới nửa đêm",
+          "effects": {
+            "xp": 4,
+            "pin": -12,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Anh Tùng hứa nếu được khen sẽ nói tên bạn. Anh nói thật."
+        },
+        {
+          "label": "Chia nhau mỗi người một nửa",
+          "effects": {
+            "xp": 3,
+            "pin": -5,
+            "ut": 0,
+            "qh": 3
+          }
+        },
+        {
+          "label": "Vừa làm vừa nghe anh kể bí kíp lên Junior",
+          "effects": {
+            "xp": 2,
+            "pin": 0,
+            "ut": 0,
+            "qh": 5
+          },
+          "comment": "Bí kíp số 4: luôn có bánh tráng trộn trong tủ lạnh."
+        }
+      ]
+    },
+    {
+      "id": "V_MAI",
+      "when": "night",
+      "title": "Chị Mai ghé phòng",
+      "type": "visit",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 3,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "mai",
+      "room": null,
+      "requires": {
+        "stats": {
+          "qh": 70
+        },
+        "closeness": {
+          "mai": 80
+        }
+      },
+      "intro": "Chị Mai nhắn: \"Chị ở gần đây, qua phòng em một lát nhé. Chị mang sổ khách ra vào cả năm, em giúp chị nhập lên máy.\"",
+      "choices": [
+        {
+          "label": "Nhập sổ với chị tới khuya",
+          "effects": {
+            "xp": 4,
+            "pin": -12,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Bạn biết hết ai đi muộn nhất tòa nhà. Chị Mai dặn: \"Biết thôi, đừng nói.\""
+        },
+        {
+          "label": "Làm một nửa, nửa còn lại nghe chị kể chuyện",
+          "effects": {
+            "xp": 3,
+            "pin": -5,
+            "ut": 0,
+            "qh": 3
+          },
+          "comment": "Chị Mai: \"Chị chỉ kể cho người chị quý thôi đấy.\""
+        },
+        {
+          "label": "Pha trà, nghe chị kể chuyện cả tòa nhà",
+          "effects": {
+            "xp": 2,
+            "pin": 0,
+            "ut": 0,
+            "qh": 5
+          },
+          "comment": "Bạn giờ biết vì sao thang máy số hai hay hỏng. Lý do không liên quan đến kỹ thuật."
+        }
+      ]
+    },
+    {
+      "id": "V_TUAN",
+      "when": "night",
+      "title": "Sếp ghé phòng",
+      "type": "visit",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 3,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "tuan",
+      "room": null,
+      "requires": {
+        "stats": {
+          "qh": 70
+        },
+        "closeness": {
+          "tuan": 80
+        }
+      },
+      "intro": "22 giờ, sếp nhắn: \"Anh đi ngang qua khu nhà em. Anh lên năm phút bàn kế hoạch quý sau nhé.\" Năm phút của sếp, bạn đã biết dài bao nhiêu.",
+      "choices": [
+        {
+          "label": "Ngồi bàn kế hoạch với sếp tới nửa đêm",
+          "effects": {
+            "xp": 5,
+            "pin": -15,
+            "ut": 3,
+            "qh": 0
+          },
+          "comment": "Sếp gật đầu bốn lần. Kỷ lục mới."
+        },
+        {
+          "label": "Trình bày ý tưởng, rồi khéo mời sếp về sớm",
+          "effects": {
+            "xp": 4,
+            "pin": -8,
+            "ut": 0,
+            "qh": 3
+          },
+          "comment": "Sếp: \"Em nói ít mà trúng. Anh thích.\""
+        },
+        {
+          "label": "Mời sếp ăn mì, nghe sếp kể hồi làm intern",
+          "effects": {
+            "xp": 2,
+            "pin": 0,
+            "ut": 0,
+            "qh": 5
+          },
+          "comment": "Hóa ra hồi intern sếp cũng từng gửi nhầm email cho cả công ty."
+        }
+      ]
+    }
+  ],
+  "rooms": {
+    "start": [
+      "lobby",
+      "intern",
+      "boss"
+    ],
+    "lockedSigns": {
+      "canteen": "Bếp đang sửa, thứ Sáu khai trương lại. Cô Ba.",
+      "meeting": "Phòng kế toán mượn làm kho quyết toán đến hết thứ Tư tuần sau."
+    }
+  }
+}

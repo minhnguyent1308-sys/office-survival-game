@@ -1,0 +1,530 @@
+{
+  "version": 1,
+  "note": "Kho mini-game tầng 1. Nguồn: doc Kịch bản MVP tầng 1, tab Nội dung 4 ngày mốc. Mỗi ngày trong `days` là một ngày mốc: sáng hôm đó không rút lá mà rút ngẫu nhiên (theo weight) một game trong `games` có ngày đó trong `days` của game, chưa chơi trong ván. Thêm game cùng kiểu chơi (kind: sort | schedule | quiz) = thêm một object, không sửa code. Kiểu chơi mới cần thêm một hàm vào minigames.js. Hướng dẫn chi tiết: kich-ban/huong-dan-minigame.md.",
+  "days": [
+    12,
+    26,
+    40
+  ],
+  "grades": [
+    [
+      "xuat_sac",
+      "Xuất sắc"
+    ],
+    [
+      "dat",
+      "Đạt"
+    ],
+    [
+      "truot",
+      "Trượt"
+    ]
+  ],
+  "games": [
+    {
+      "id": "don_inbox",
+      "kind": "sort",
+      "name": "Dọn inbox",
+      "days": [
+        12
+      ],
+      "weight": 1,
+      "npc": "tuan",
+      "intro": "Anh Tuấn: \"Inbox chung của phòng đang có 200 email chưa đọc. Em dọn giúp anh trước giờ họp nhé.\"",
+      "howto": "Bấm vào email rồi bấm giỏ đúng (hoặc kéo email thả vào giỏ). Hết giờ mà email chưa phân loại thì tính là sai.",
+      "seconds": 60,
+      "shuffle": true,
+      "bins": [
+        {
+          "id": "gap",
+          "label": "Gấp",
+          "key": "1"
+        },
+        {
+          "id": "de_sau",
+          "label": "Để sau",
+          "key": "2"
+        },
+        {
+          "id": "rac",
+          "label": "Rác",
+          "key": "3"
+        }
+      ],
+      "items": [
+        {
+          "from": "Anh Tuấn",
+          "text": "GẤP: số liệu cho cuộc họp 10h sáng nay",
+          "bin": "gap"
+        },
+        {
+          "from": "Khách hàng",
+          "text": "Re: Re: Re: Fwd: sửa logo (bản cuối) (bản cuối thật)",
+          "bin": "gap"
+        },
+        {
+          "from": "Phòng nhân sự",
+          "text": "Hạn chót nộp hồ sơ thử việc: hôm nay",
+          "bin": "gap"
+        },
+        {
+          "from": "Anh Minh",
+          "text": "Mật khẩu ổ chung sẽ đổi lúc 12h trưa",
+          "bin": "gap"
+        },
+        {
+          "from": "Chị Mai",
+          "text": "Khách của anh Tuấn đang đợi ở sảnh",
+          "bin": "gap"
+        },
+        {
+          "from": "Chị Linh",
+          "text": "Khảo sát mức độ hạnh phúc quý 4 (ẩn danh, có ô ghi tên)",
+          "bin": "de_sau"
+        },
+        {
+          "from": "Chị Hằng",
+          "text": "Báo cáo tháng: mẫu mới, em xem trước nhé",
+          "bin": "de_sau"
+        },
+        {
+          "from": "Phòng hành chính",
+          "text": "Lịch diễn tập phòng cháy cuối tháng",
+          "bin": "de_sau"
+        },
+        {
+          "from": "Anh Tùng",
+          "text": "File tổng hợp câu intern hay hỏi (viết năm ngoái, chưa ai đọc)",
+          "bin": "de_sau"
+        },
+        {
+          "from": "Công ty",
+          "text": "Bản tin nội bộ số 47: \"Chúng ta là một gia đình\"",
+          "bin": "de_sau"
+        },
+        {
+          "from": "Không rõ",
+          "text": "Bạn đã trúng thưởng một chiếc iPhone, bấm vào đây",
+          "bin": "rac"
+        },
+        {
+          "from": "Chị Linh",
+          "text": "Fwd: Fwd: Fwd: câu chuyện cảm động về chú chó trung thành",
+          "bin": "rac"
+        },
+        {
+          "from": "Phần mềm chấm công",
+          "text": "Hôm nay bạn đi muộn (hệ thống lỗi, ai cũng đi muộn)",
+          "bin": "rac"
+        },
+        {
+          "from": "Không rõ",
+          "text": "Khóa học \"Lên Senior trong 7 ngày\" giảm 90%",
+          "bin": "rac"
+        },
+        {
+          "from": "Anh Tuấn",
+          "text": "(Không có tiêu đề, nội dung: \"?\")",
+          "bin": "gap"
+        }
+      ],
+      "scoreLabel": "email đúng giỏ",
+      "thresholds": {
+        "xuat_sac": 12,
+        "dat": 8
+      },
+      "cost": {
+        "pin": -10
+      },
+      "rewards": {
+        "xuat_sac": {
+          "xp": 15,
+          "ut": 3
+        },
+        "dat": {
+          "xp": 8
+        },
+        "truot": {
+          "ut": -3
+        }
+      },
+      "lines": {
+        "xuat_sac": "Inbox về 0. Anh Tuấn nhìn màn hình rất lâu, như nhìn một con kỳ lân.",
+        "dat": "Inbox gọn hơn. Vẫn còn một email \"?\" của sếp nhìn bạn từ xa.",
+        "truot": "Bạn lỡ xóa email của sếp. Sếp gửi lại, lần này có ba dấu hỏi."
+      }
+    },
+    {
+      "id": "chay_deadline",
+      "kind": "schedule",
+      "name": "Chạy deadline",
+      "days": [
+        26
+      ],
+      "weight": 1,
+      "npc": "tung",
+      "intro": "Sáng thứ Sáu, ai cũng nhớ ra mình có việc cần intern giúp. Anh Tùng thì thầm: \"Chiều thứ Sáu là lúc nguy hiểm nhất tuần.\"",
+      "howto": "Bấm task trong khay rồi bấm ô giờ để xếp (hoặc kéo thả). Task phải xong trước hạn. Không đủ giờ cho tất cả: hãy bỏ đúng việc. Bấm \"Nộp\" khi xong.",
+      "seconds": 90,
+      "startHour": 9,
+      "slots": 8,
+      "bonusSlot": {
+        "flag": "hoc_macro",
+        "slots": 1,
+        "label": "Macro của anh Minh: thêm 1 ô giờ"
+      },
+      "dropEvery": 4,
+      "boss": {
+        "every": 20,
+        "penalty": 5,
+        "line": "Xong chưa em?",
+        "from": "Anh Tuấn"
+      },
+      "tasks": [
+        {
+          "from": "Chị Mai",
+          "text": "Tiếp khách đến sớm ở sảnh",
+          "size": 1,
+          "due": 9,
+          "points": 1
+        },
+        {
+          "from": "Chị Hằng",
+          "text": "In và đóng dấu hợp đồng",
+          "size": 1,
+          "due": 12,
+          "points": 2
+        },
+        {
+          "from": "Anh Tuấn",
+          "text": "Số liệu cho cuộc gọi với khách",
+          "size": 2,
+          "due": 11,
+          "points": 3,
+          "boss": true
+        },
+        {
+          "from": "Chị Linh",
+          "text": "Chọn màu bóng bay cho sinh nhật chiều nay",
+          "size": 1,
+          "due": 12,
+          "points": 0,
+          "effects": {
+            "qh": 2
+          },
+          "npc": "linh"
+        },
+        {
+          "from": "Anh Tùng",
+          "text": "\"Làm giúp anh tí\"",
+          "size": 2,
+          "due": 14,
+          "points": 0,
+          "effects": {
+            "qh": 2
+          },
+          "npc": "tung"
+        },
+        {
+          "from": "Anh Tuấn",
+          "text": "Sửa slide \"một chút\"",
+          "size": 1,
+          "due": 15,
+          "points": 2,
+          "boss": true
+        },
+        {
+          "from": "Anh Minh",
+          "text": "Kiểm tra file 47 sheet",
+          "size": 2,
+          "due": 16,
+          "points": 1
+        },
+        {
+          "from": "Khách hàng",
+          "text": "Báo giá bản mới",
+          "size": 2,
+          "due": 17,
+          "points": 3
+        },
+        {
+          "from": "Chị Hằng",
+          "text": "Báo cáo tháng",
+          "size": 3,
+          "due": 17,
+          "points": 3
+        },
+        {
+          "from": "Anh Tuấn",
+          "text": "\"Việc gấp, bỏ hết đấy làm cái này\"",
+          "size": 2,
+          "due": 17,
+          "points": 3,
+          "boss": true,
+          "arriveAt": 40
+        }
+      ],
+      "scoreLabel": "điểm task xong kịp hạn",
+      "thresholds": {
+        "xuat_sac": 11,
+        "dat": 7
+      },
+      "cost": {
+        "pin": -10
+      },
+      "rewards": {
+        "xuat_sac": {
+          "xp": 15,
+          "ut": 3
+        },
+        "dat": {
+          "xp": 8
+        },
+        "truot": {
+          "ut": -3
+        }
+      },
+      "lines": {
+        "xuat_sac": "17:00 đúng. Mọi việc quan trọng đã xong. Anh Tùng vỗ vai: \"Em biết bỏ đúng việc rồi đấy.\"",
+        "dat": "Phần lớn đã xong. Phần còn lại được gọi là \"tuần sau em làm tiếp ạ\".",
+        "truot": "Thứ Sáu thắng. Bạn mang laptop về nhà, laptop cũng mệt."
+      }
+    },
+    {
+      "id": "thuyet_trinh",
+      "kind": "quiz",
+      "name": "Thuyết trình",
+      "days": [
+        40
+      ],
+      "weight": 1,
+      "npc": "tuan",
+      "intro": "Anh Tuấn: \"Chủ đề thuyết trình anh gửi sáng nay rồi. Giờ anh hỏi em vài câu.\" (Email gửi lúc 8 giờ 59.)",
+      "howto": "Mỗi câu 7 giây, bấm một đáp án (hoặc phím 1–4). Hết giờ là 0 điểm. Huy hiệu phù hợp sẽ mở thêm một đáp án khéo.",
+      "secondsPerQuestion": 7,
+      "shuffle": true,
+      "questions": [
+        {
+          "q": "\"Em tự chấm mình mấy điểm?\"",
+          "answers": [
+            {
+              "text": "\"Bảy ạ. Em làm tốt phần báo cáo, còn phần làm việc với khách em cần học thêm.\"",
+              "points": 2
+            },
+            {
+              "text": "\"Mười ạ.\"",
+              "points": 1
+            },
+            {
+              "text": "\"Tùy anh ạ.\"",
+              "points": 0
+            }
+          ]
+        },
+        {
+          "q": "\"Điểm yếu lớn nhất của em là gì?\"",
+          "answers": [
+            {
+              "text": "\"Em hay nhận việc quá sức. Giờ thấy không kịp là em báo sớm ạ.\"",
+              "points": 2
+            },
+            {
+              "text": "\"Em hơi cầu toàn ạ.\"",
+              "points": 1
+            },
+            {
+              "text": "\"Em nghĩ em không có điểm yếu.\"",
+              "points": 0
+            },
+            {
+              "text": "\"Em hay nói là em rảnh. Chị Hằng dặn em bỏ từ ngày đầu, em đang bỏ dần.\"",
+              "points": 3,
+              "needFlag": "so_tay_chi_hang"
+            }
+          ]
+        },
+        {
+          "q": "\"Khách đòi sửa lần thứ năm thì em làm gì?\"",
+          "answers": [
+            {
+              "text": "\"Em hỏi lại mục tiêu của khách, rồi chốt phạm vi sửa bằng email ạ.\"",
+              "points": 2
+            },
+            {
+              "text": "\"Em sửa tiếp ạ.\"",
+              "points": 1
+            },
+            {
+              "text": "\"Em chặn Zalo khách ạ.\"",
+              "points": 0
+            }
+          ]
+        },
+        {
+          "q": "\"Theo em, phòng mình cần cải thiện điều gì?\"",
+          "answers": [
+            {
+              "text": "\"Mình thử họp đứng 15 phút mỗi sáng, em xin ghi biên bản ạ.\"",
+              "points": 2
+            },
+            {
+              "text": "\"Mọi thứ đều tốt rồi ạ.\"",
+              "points": 1
+            },
+            {
+              "text": "\"Bớt họp ạ.\" (nói trong lúc đang họp)",
+              "points": 0
+            },
+            {
+              "text": "\"Em đã chuẩn bị ba ý, kèm số liệu, anh xem slide này ạ.\"",
+              "points": 3,
+              "needFlag": "tin_mat_chi_mai"
+            }
+          ]
+        },
+        {
+          "q": "\"Năm năm nữa em thấy mình ở đâu?\"",
+          "answers": [
+            {
+              "text": "\"Em muốn phụ trách mảng khách hàng của phòng, bắt đầu từ những khách nhỏ ạ.\"",
+              "points": 2
+            },
+            {
+              "text": "\"Em sẽ nói là em đang học thạc sĩ ạ.\"",
+              "points": 1
+            },
+            {
+              "text": "\"Ở công ty khác ạ.\"",
+              "points": 0
+            },
+            {
+              "text": "\"Em học được rất nhiều, và em muốn học tiếp ở đây ạ.\"",
+              "points": 3,
+              "needFlag": "bi_kip_anh_tung"
+            }
+          ]
+        },
+        {
+          "q": "\"Có hai việc gấp cùng lúc, em làm việc nào trước?\"",
+          "answers": [
+            {
+              "text": "\"Em hỏi anh việc nào ưu tiên, rồi báo người còn lại giờ em xong ạ.\"",
+              "points": 2
+            },
+            {
+              "text": "\"Em làm cả hai, chắc đến khuya ạ.\"",
+              "points": 1
+            },
+            {
+              "text": "\"Em làm việc dễ trước ạ.\"",
+              "points": 0
+            }
+          ]
+        },
+        {
+          "q": "\"Em nhận một việc mới mà không ai chỉ cách làm, em làm gì?\"",
+          "answers": [
+            {
+              "text": "\"Em đọc tài liệu cũ, viết ra những gì em hiểu, rồi nhờ người từng làm kiểm tra giúp ạ.\"",
+              "points": 2
+            },
+            {
+              "text": "\"Em chờ anh giao rõ rồi mới làm ạ.\"",
+              "points": 1
+            },
+            {
+              "text": "\"Em làm theo cách em nghĩ, xong mới báo ạ.\"",
+              "points": 0
+            }
+          ]
+        },
+        {
+          "q": "\"Em làm sai và khách đã nhìn thấy. Em nói gì với khách?\"",
+          "answers": [
+            {
+              "text": "\"Em xin lỗi ngắn gọn, nói rõ cách sửa và giờ gửi lại ạ.\"",
+              "points": 2
+            },
+            {
+              "text": "\"Em sửa thật nhanh, hy vọng khách không để ý ạ.\"",
+              "points": 1
+            },
+            {
+              "text": "\"Do file gốc bị lỗi ạ.\"",
+              "points": 0
+            },
+            {
+              "text": "\"Em đã giữ quan hệ tốt với khách này, nên em gọi xin lỗi trực tiếp và hẹn giờ sửa ạ.\"",
+              "points": 3,
+              "needFlag": "duoc_khach_hang_quy_men"
+            }
+          ]
+        },
+        {
+          "q": "\"Đồng nghiệp nhờ giúp lúc em đang bận. Em trả lời sao?\"",
+          "answers": [
+            {
+              "text": "\"Em kẹt đến 3 giờ, sau đó em giúp được ạ.\"",
+              "points": 2
+            },
+            {
+              "text": "\"Em giúp luôn ạ.\"",
+              "points": 1
+            },
+            {
+              "text": "\"Em bận ạ.\"",
+              "points": 0
+            },
+            {
+              "text": "\"Chị Linh nhờ em quen rồi: em xin chị chút, xong việc em làm giúp chị ngay ạ.\"",
+              "points": 3,
+              "needFlag": "than_voi_linh"
+            }
+          ]
+        },
+        {
+          "q": "\"Em có muốn nói thêm gì trước khi anh quyết định không?\"",
+          "answers": [
+            {
+              "text": "\"Em cảm ơn anh và cả phòng. Em ghi lại ba điều em học được, nếu cần em gửi anh ạ.\"",
+              "points": 2
+            },
+            {
+              "text": "\"Dạ không ạ.\"",
+              "points": 1
+            },
+            {
+              "text": "\"Anh nhớ tăng lương cho em ạ.\"",
+              "points": 0
+            }
+          ]
+        }
+      ],
+      "scoreLabel": "điểm trả lời",
+      "thresholds": {
+        "xuat_sac": 16,
+        "dat": 10
+      },
+      "cost": {
+        "pin": -10
+      },
+      "rewards": {
+        "xuat_sac": {
+          "xp": 20,
+          "ut": 5
+        },
+        "dat": {
+          "xp": 10
+        },
+        "truot": {
+          "ut": -5
+        }
+      },
+      "lines": {
+        "xuat_sac": "Anh Tuấn gập laptop: \"Anh hết câu hỏi rồi.\" Đây là lần đầu anh hết câu hỏi.",
+        "dat": "Anh Tuấn gật đầu hai lần. Không phải ba, nhưng cũng không phải một.",
+        "truot": "Anh Tuấn: \"Cảm ơn em. Anh sẽ trao đổi với nhân sự.\" Câu này không có dấu chấm than."
+      }
+    }
+  ]
+}

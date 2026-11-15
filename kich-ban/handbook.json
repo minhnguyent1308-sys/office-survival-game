@@ -1,0 +1,153 @@
+{
+  "version": 1,
+  "rewardOnAll": {
+    "addFlags": [
+      "nhan_vien_moi_guong_mau"
+    ]
+  },
+  "missions": [
+    {
+      "id": 1,
+      "title": "Chào hỏi cả công ty",
+      "difficulty": "de",
+      "goal": {
+        "type": "talk_all_npcs",
+        "npcs": [
+          "tuan",
+          "hang",
+          "linh",
+          "minh",
+          "tung",
+          "mai",
+          "coba"
+        ]
+      },
+      "reward": {
+        "qh": 3
+      }
+    },
+    {
+      "id": 2,
+      "title": "Thuộc đường trong công ty",
+      "difficulty": "de",
+      "goal": {
+        "type": "visit_all_rooms",
+        "rooms": [
+          "lobby",
+          "intern",
+          "boss",
+          "canteen",
+          "meeting"
+        ]
+      },
+      "reward": {
+        "xp": 2
+      }
+    },
+    {
+      "id": 3,
+      "title": "Biết ăn biết nghỉ",
+      "difficulty": "de",
+      "goal": {
+        "type": "action_count",
+        "action": "an_trua_co_ba",
+        "count": 3
+      },
+      "reward": {
+        "pin": 5
+      }
+    },
+    {
+      "id": 4,
+      "title": "Tay quen việc",
+      "difficulty": "vua",
+      "goal": {
+        "type": "action_count",
+        "action": "lam_task",
+        "count": 5
+      },
+      "reward": {
+        "xp": 3
+      }
+    },
+    {
+      "id": 5,
+      "title": "Báo cáo đúng hẹn",
+      "difficulty": "vua",
+      "goal": {
+        "type": "action_count",
+        "action": "bao_cao_sep",
+        "count": 3
+      },
+      "reward": {
+        "ut": 3
+      }
+    },
+    {
+      "id": 6,
+      "title": "Hòa nhập",
+      "difficulty": "vua",
+      "goal": {
+        "type": "gossip_distinct_npcs",
+        "count": 3
+      },
+      "reward": {
+        "qh": 3
+      }
+    },
+    {
+      "id": 7,
+      "title": "Cánh tay phải của lễ tân",
+      "difficulty": "vua",
+      "goal": {
+        "type": "action_count",
+        "action": "giup_chi_mai",
+        "count": 2
+      },
+      "reward": {
+        "qh": 3
+      }
+    },
+    {
+      "id": 8,
+      "title": "Vượt qua thử thách đầu tiên",
+      "difficulty": "kho",
+      "goal": {
+        "type": "minigame_result",
+        "days": [
+          12,
+          26
+        ],
+        "minResult": "dat",
+        "anyOf": true
+      },
+      "reward": {
+        "xp": 3
+      }
+    },
+    {
+      "id": 9,
+      "title": "Có một người bạn thân",
+      "difficulty": "kho",
+      "goal": {
+        "type": "closeness_any",
+        "min": 40
+      },
+      "reward": {
+        "qh": 3
+      }
+    },
+    {
+      "id": 10,
+      "title": "Được sếp ghi nhận",
+      "difficulty": "kho",
+      "goal": {
+        "type": "has_flag",
+        "flag": "ghi_diem_voi_sep"
+      },
+      "reward": {
+        "ut": 3
+      }
+    }
+  ]
+}

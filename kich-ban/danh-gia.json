@@ -1,0 +1,201 @@
+{
+  "version": 1,
+  "note": "Buổi đánh giá ngày 40. Nguồn: doc Kịch bản MVP tầng 1 (tab chính: bảng kết cục; tab Nội dung 4 ngày mốc: lật hồ sơ, màn kết). Kết cục xét từ trên xuống, khớp điều kiện đầu tiên thì dừng. Thêm kết cục = thêm một object vào `endings`. Điều kiện `when` dùng cùng cú pháp `requires` của lá (flags, anyFlags, notFlags, stats, closeness) cộng thêm: missionsAll (đủ nhiệm vụ sổ tay), notJunior, anyOf (danh sách điều kiện, chỉ cần một). `gather`: trước phán quyết, những người trong `people` (id kịch bản) vào phòng họp (mọi người trừ cô Ba, Lily chốt 14/11); anh Tuấn và người chơi đứng đầu phòng.",
+  "qhBonus": {
+    "qh": 70,
+    "effects": {
+      "ut": 5
+    },
+    "line": "Đồng nghiệp nói tốt về bạn với sếp."
+  },
+  "dossier": {
+    "intro": "Phòng sếp, 9 giờ sáng. Anh Tuấn mở một tập hồ sơ dày bất ngờ: \"Anh có theo dõi em đấy. Không phải lúc nào cũng, nhưng đủ.\"",
+    "pick": 3,
+    "always": "nhan_vien_moi_guong_mau",
+    "thin": "\"Hồ sơ của em… khá gọn. Anh đọc nhanh thôi.\""
+  },
+  "badges": {
+    "nhan_vien_moi_guong_mau": {
+      "name": "Nhân viên mới gương mẫu",
+      "line": "\"Sổ tay đủ 10 ô. Năm nào anh cũng phát, năm nay mới có người điền hết.\""
+    },
+    "chien_binh_cuoi_tuan": {
+      "name": "Chiến binh cuối tuần",
+      "line": "\"Anh thấy em online cả Chủ nhật. Anh rất cảm động. Và hơi lo.\""
+    },
+    "seen_tin_nhan_sep": {
+      "name": "Seen tin nhắn sếp",
+      "line": "\"Hôm thứ Sáu đó em seen tin nhắn của anh. Anh trân trọng sự tự tin đó.\""
+    },
+    "ghi_diem_voi_sep": {
+      "name": "Ghi điểm với sếp",
+      "line": "\"Có một lần em làm anh bất ngờ. Anh không nói lần nào, để em tự nghĩ.\""
+    },
+    "thu_quy_bat_dac_di": {
+      "name": "Thủ quỹ bất đắc dĩ",
+      "line": "\"Chị Linh bảo em góp quỹ đều nhất phòng. Anh ghi nhận. Quỹ cũng ghi nhận.\""
+    },
+    "ngoi_sao_karaoke": {
+      "name": "Ngôi sao karaoke",
+      "line": "\"Anh vẫn nhớ bài em hát ở Vũng Tàu. Cả phòng vẫn nhớ. Không ai quên được.\""
+    },
+    "duoc_khach_hang_quy_men": {
+      "name": "Được khách hàng quý mến",
+      "line": "\"Khách gọi cho anh khen em. Lần đầu khách gọi mà không đòi sửa gì.\""
+    },
+    "so_tay_chi_hang": {
+      "name": "Sổ tay chị Hằng",
+      "line": "\"Chị Hằng cho em mượn sổ à? Tám năm nay anh xin còn không được.\""
+    },
+    "tin_mat_chi_mai": {
+      "name": "Tin mật từ chị Mai",
+      "line": "\"Anh đoán em đã biết anh sẽ hỏi gì. Chị Mai biết hết mọi thứ trong tòa nhà này.\""
+    },
+    "bi_kip_anh_tung": {
+      "name": "Bí kíp của anh Tùng",
+      "line": "\"File câu hỏi của Tùng à? Hay đấy. Năm nay anh đổi câu hỏi rồi. Đùa thôi.\""
+    },
+    "than_voi_tuan": {
+      "name": "Thân với anh Tuấn",
+      "line": "\"Bữa trưa hôm đó anh nói hơi nhiều. Em quên đi nhé. Trừ phần lời khuyên.\""
+    },
+    "than_voi_hang": {
+      "name": "Thân với chị Hằng",
+      "line": "\"Chị Hằng bảo em 'cũng được'. Đó là lời khen cao nhất chị từng nói.\""
+    },
+    "than_voi_linh": {
+      "name": "Thân với chị Linh",
+      "line": "\"Chị Linh đề cử em vào ban tổ chức tất niên. Anh coi đó là lời khen.\""
+    },
+    "than_voi_minh": {
+      "name": "Thân với anh Minh",
+      "line": "\"Minh nhắn cho anh một câu về em. Minh chưa bao giờ nhắn cho anh về ai.\""
+    },
+    "than_voi_tung": {
+      "name": "Thân với anh Tùng",
+      "line": "\"Tùng bảo em giúp Tùng nhiều. Anh hơi ngạc nhiên, vì Tùng bảo Tùng giúp em.\""
+    },
+    "than_voi_mai": {
+      "name": "Thân với chị Mai",
+      "line": "\"Chị Mai bảo em là intern đầu tiên biết tên bác bảo vệ ca đêm.\""
+    },
+    "than_voi_coba": {
+      "name": "Thân với cô Ba",
+      "line": "\"Cô Ba dặn anh phải giữ em lại. Cô Ba chưa dặn anh việc gì bao giờ.\""
+    }
+  },
+  "endings": [
+    {
+      "id": "junior",
+      "title": "JUNIOR. LƯƠNG SAU TẾT.",
+      "when": {
+        "stats": {
+          "xp": 100,
+          "ut": 60,
+          "qh": 50
+        },
+        "missionsAll": true
+      },
+      "verdict": "\"Chúc mừng em lên Junior. Lương mới áp dụng sau Tết.\"",
+      "scene": "Căng tin buổi trưa. Cô Ba múc thêm một miếng sườn: \"Cô biết mà.\" Anh Tùng nghiêng đầu: \"Giờ em có intern để nhờ rồi đấy.\""
+    },
+    {
+      "id": "van_nghe",
+      "title": "TRƯỞNG BAN VĂN NGHỆ (KHÔNG LƯƠNG)",
+      "secret": true,
+      "when": {
+        "notJunior": true,
+        "flags": [
+          "loi_moi_chi_linh"
+        ]
+      },
+      "verdict": "Chị Linh giành bạn về ban phong trào, sếp đành đồng ý.",
+      "scene": "Chị Linh trao bạn một chiếc micro và một cuốn sổ quỹ còn 37 nghìn. \"Tết này mình diễn kịch nhé em.\""
+    },
+    {
+      "id": "khach_hang",
+      "title": "CHUYÊN VIÊN SỬA MỘT CHÚT",
+      "secret": true,
+      "when": {
+        "notJunior": true,
+        "stats": {
+          "qh": 40
+        },
+        "flags": [
+          "loi_moi_khach_hang"
+        ]
+      },
+      "verdict": "Khách mời bạn về công ty họ, lương cao hơn, yêu cầu cũng \"cao hơn\".",
+      "scene": "Ngày đầu ở công ty mới. Sếp mới, tức vị khách cũ, nhắn lúc 17:55: \"Em xem giúp anh file này nhé, không gấp đâu.\""
+    },
+    {
+      "id": "gia_han",
+      "title": "THÊM 30 NGÀY",
+      "when": {
+        "anyOf": [
+          {
+            "stats": {
+              "xp": 70
+            }
+          },
+          {
+            "stats": {
+              "ut": 40
+            }
+          }
+        ]
+      },
+      "verdict": "\"Em có tiềm năng. Anh muốn thấy tiềm năng đó thêm 30 ngày.\"",
+      "verdictMissions": "\"Sổ tay của em còn trống {n} ô. Anh không ký được, quy trình là quy trình.\"",
+      "verdictQh": "\"Chuyên môn em tốt. Nhưng cả tháng nay anh chưa thấy em ăn trưa với ai.\"",
+      "scene": "Chị Mai: \"Thẻ ra vào của em vẫn chưa xong. Thôi, để thêm 30 ngày nữa cho khớp.\""
+    },
+    {
+      "id": "cam_on",
+      "title": "CẢM ƠN EM ĐÃ ĐỒNG HÀNH",
+      "when": {},
+      "verdict": "\"Công ty luôn chào đón em… với tư cách khách hàng.\"",
+      "scene": "Bạn ôm thùng giấy đi ra sảnh. Cái cây góc phòng vẫn sống. Nó đã tiễn biệt intern thứ tư."
+    }
+  ],
+  "early": {
+    "burnout": {
+      "title": "VỀ QUÊ NUÔI GÀ",
+      "verdict": "\"Bạn đã xin nghỉ để về quê nuôi gà.\"",
+      "scene": "Một buổi sáng yên bình, gà gáy. Điện thoại rung: anh Tuấn gửi một sticker. Bạn không mở.",
+      "faint": {
+        "line": "Bạn đứng dậy khỏi ghế, nói \"em đi lấy nước\", đi được ba bước thì nằm xuống sàn. Cả phòng chạy tới, đứng thành vòng tròn, không ai dám chạm vào. Anh Minh gõ vào nhóm chat: \"Có ai biết sơ cứu không? Mà em ấy nghỉ phép chưa?\"",
+        "eyebrow": "Pin về 0 · 17:55",
+        "title": "Bạn xỉu giữa văn phòng",
+        "button": "Xem kết cục",
+        "people": [
+          "tuan",
+          "hang",
+          "linh",
+          "minh",
+          "tung",
+          "mai"
+        ]
+      }
+    },
+    "fired": {
+      "title": "MẠNH DẠN Ở CHỖ KHÁC",
+      "verdict": "\"Em mạnh dạn, nhưng mạnh dạn ở chỗ khác nhé.\"",
+      "scene": "Chị Mai thu lại thẻ ra vào, cái thẻ chưa từng được làm xong."
+    }
+  },
+  "gather": {
+    "people": [
+      "tuan",
+      "hang",
+      "linh",
+      "minh",
+      "tung",
+      "mai"
+    ],
+    "eyebrow": "Ngày 40 · 17:55 · Phòng họp",
+    "title": "Cả phòng đã có mặt",
+    "line": "Anh Tuấn đứng ở đầu phòng, cạnh bạn, hắng giọng: \"Cả phòng đủ rồi, chị Mai cũng lên tận đây. Cô Ba ở lại bếp, cô bảo canh không chờ ai.\" Không ai nhìn điện thoại. Lần đầu tiên.",
+    "button": "Nghe phán quyết"
+  }
+}
