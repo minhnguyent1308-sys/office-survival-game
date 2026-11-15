@@ -29,16 +29,16 @@ Bot mua trà sữa một lần mỗi ngày sau việc chiều, khi quán đã m�
 Bot đọc `../nhip-choi.json`. Ngày đặc biệt: chọn lựa chọn như lá thường; luật của ngày (việc bị đóng, việc được nhân đôi) áp lên việc chiều, việc bị đóng thì bot thử việc kế tiếp. Sự kiện giữa buổi được xử lý trước việc chiều. KPI dạng "làm việc X n lần" được bot ưu tiên khi còn thiếu. Kết quả (N=2000 mỗi lần): chăm chỉ lên Junior **45,4%** (SEED=0) và **45,1%** (SEED=77). Mỗi ván có khoảng 5 sự kiện giữa buổi, 4,3 ngày đặc biệt; bot chăm chỉ đạt 79% số KPI, 83% ván có huy hiệu "Nhân viên KPI"; bot lo quan hệ đạt 40%, 12% có huy hiệu. Để giữ cân bằng, KPI không thưởng XP, và vài lựa chọn sự kiện XP 2 được hạ còn 1.
 
 ## Nhận hoặc Làm lơ KPI tuần (15/11)
-Sáng thứ Hai có KPI, người chơi chọn **Nhận việc** (như cũ: đạt thì thưởng, trượt không sao) hoặc **Làm lơ**: tuần đó không có KPI (tối thứ Sáu không chấm) và mất ngay 2–5 (ngẫu nhiên) của một chỉ số ngẫu nhiên trong Pin, Uy tín, Quan hệ. XP không nằm trong danh sách vì luật chung "XP không bao giờ bị trừ" (`applyEffects`).
+Sáng thứ Hai có KPI, người chơi chọn **Nhận việc** (như cũ: đạt thì thưởng, trượt không sao) hoặc **Làm lơ**: tuần đó không có KPI (tối thứ Sáu không chấm) và mất ngay 2–5 (ngẫu nhiên) của một chỉ số ngẫu nhiên trong XP, Pin, Uy tín, Quan hệ. Đây là ngoại lệ duy nhất của luật "XP không bao giờ bị trừ" (`applyEffects(..., {xpLoss: true})`, Lily duyệt 15/11).
 
 Vì Nhận không bao giờ thiệt, lựa chọn tốt nhất của bot luôn là Nhận. Giống cách bot chọn lá, với xác suất `NOISE` = 0,65 bot trả lời ngẫu nhiên (50/50), nên làm lơ khoảng 1,3 trong 4 KPI mỗi ván (`KPI=smart`, mặc định). `KPI=nhan` luôn nhận, `KPI=lo` luôn làm lơ.
 
 | N=2500, chăm chỉ lên Junior | SEED=0 | SEED=77 |
 |---|---|---|
-| `smart` (mặc định) | **43,0%** | **43,2%** |
+| `smart` (mặc định) | **40,6%** | **39,7%** |
 | `nhan` (luôn nhận, như trước 15/11) | 45,4% | 45,1% |
-| `lo` (luôn làm lơ) | 39,4% | 40,0% |
+| `lo` (luôn làm lơ) | 32,7% | 33,1% |
 
-Với `smart`: bot chăm chỉ đạt 79% số KPI đã nhận, nhưng huy hiệu "Nhân viên KPI" (cần đạt 3 KPI) giảm từ 83% xuống 36% số ván vì ít KPI được nhận hơn. Bot lo quan hệ: đạt 39%, huy hiệu 4%.
+Khi chưa tính XP (chỉ trừ Pin/Uy tín/Quan hệ) `smart` là 43,0% / 43,2%; tính cả XP thì tụt dưới khoảng 42–49% vì XP trung bình cuối ván chỉ quanh 101, sát mốc 100. Với `smart`: bot chăm chỉ đạt 79% số KPI đã nhận, nhưng huy hiệu "Nhân viên KPI" (cần đạt 3 KPI) giảm từ 83% xuống 36% số ván vì ít KPI được nhận hơn. Bot lo quan hệ: đạt 39%, huy hiệu 4%.
 
 `choi-thu-mot-van.mjs` (in nhật ký một ván) chưa nạp nhịp chơi, nên ván mẫu chưa có các sự kiện này.
