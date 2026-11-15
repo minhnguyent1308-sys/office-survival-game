@@ -8,6 +8,7 @@ const DATA = JSON.parse(fs.readFileSync(new URL(process.env.CARDS || '../cards.j
 if (process.env.TASKXP) G.ACTIONS.lam_task.effects.xp = +process.env.TASKXP;
 const PF = +(process.env.PF||1), XF = +(process.env.XF||1);
 for (const c of CARDS) if (c.when==='night' && /^[NV]/.test(c.id)) for (const ch of c.choices) { if (ch.effects.pin<0) ch.effects.pin = Math.round(ch.effects.pin*PF); ch.effects.xp = Math.round(ch.effects.xp*XF); }
+const REVIEW = JSON.parse(fs.readFileSync(new URL('../danh-gia.json', import.meta.url)));
 const HB = JSON.parse(fs.readFileSync(new URL('../handbook.json', import.meta.url)));
 // mini-game library: milestone days and rewards come from minigames.json; the grade a player gets is drawn from MG="Xuất sắc,Đạt,Trượt" (%)
 G.useMinigames(JSON.parse(fs.readFileSync(new URL('../minigames.json', import.meta.url))));
@@ -15,7 +16,7 @@ G.useMinigames(JSON.parse(fs.readFileSync(new URL('../minigames.json', import.me
 if (process.env.RHYTHM !== '0') G.useRhythm(JSON.parse(fs.readFileSync(new URL('../nhip-choi.json', import.meta.url))));
 const MGR = (process.env.MG || '25,50,25').split(',').map(x => +x / 100);
 function rngOf(seed){ let x = seed >>> 0 || 1; return () => { x ^= x << 13; x >>>= 0; x ^= x >>> 17; x ^= x << 5; x >>>= 0; return x / 2**32; }; }
-const W = {chamchi:{xp:3, ut:1.6, qh:.6, pin:.25}, xahoi:{xp:1, ut:1, qh:3, pin:.3}};
+const W = {chamchi:{xp:3, ut:1.6, qh:.6, pin:.25}, xahoi:{xp:1, ut:1, qh:3, pin:.3}, coba:{xp:1, ut:1, qh:3, pin:.3}}; // coba: the same, but every afternoon is lunch with cô Ba (to check the secret ending is reachable)
 const TEA = process.env.TEA || 'smart'; // quán trà sữa: off | self | colleague | smart (the bot's own weights)
 let NOISE = +(process.env.NOISE ?? 0.65); let RNG = Math.random;
 function pick(s, c, w){ if (RNG() < NOISE) return Math.floor(RNG()*c.choices.length); let b=0,bv=-1e9; c.choices.forEach((ch,i)=>{ const e=ch.effects||{}; const v=(e.xp||0)*w.xp+(e.ut||0)*w.ut+(e.qh||0)*w.qh+(e.pin||0)*w.pin*(s.stats.pin<35?4:1)+((ch.addFlags||[]).includes('ghi_diem_voi_sep')?4:0); if(v>bv){bv=v;b=i;} }); return b; }
@@ -25,6 +26,7 @@ const KPI_MODE = process.env.KPI || 'smart';
 function answerKpi(s){ const lo = KPI_MODE === 'lo' || (KPI_MODE === 'smart' && RNG() < NOISE && RNG() < 0.5); if (lo) G.kpiIgnore(s, RNG); else G.kpiSeen(s); }
 function afternoon(s, kind, sitting){
   const A = s.counters.actions, can = G.roomOpen(s,'canteen');
+  if (kind === 'coba' && can) return 'an_trua_co_ba';
   if (s.stats.pin < 30 && can) return 'an_trua_co_ba';
   const left = 40 - s.day; 
   const need = [];
@@ -73,15 +75,16 @@ export function run(kind, seed){
       continue;
     }
   }
+  if (s.ending === 'review') G.review(s, HB, REVIEW);   // s.endingId: which of the verdict endings
   const ut = s.stats.ut + (s.stats.qh >= 70 ? 5 : 0);
   const junior = s.ending==='review' && s.stats.xp>=100 && ut>=60 && s.stats.qh>=50 && s.missionsDone.length===HB.missions.length;
   return {s, junior, visits, nights, firstVisit, teaDay, events, specials};
 }
 const N = +(process.env.N ?? 2000);
 if (N > 0)
-for (const kind of ['chamchi','xahoi']) {
+for (const kind of (process.env.KINDS || 'chamchi,xahoi').split(',')) {
   let td=[], jr=0, xp=0, end={}, v=0, vr=0, ni=0, fails={xp:0,ut:0,qh:0,mis:0}, minPin=0, qh70=0, ev=0, sd=0, kpiOk=0, kpiN=0, kpiBadge=0, kpiIg=0;
-  for (let i=1;i<=N;i++){ const r = run(kind, i*2654435761 + (+process.env.SEED || 0)); const s=r.s; jr+=r.junior; xp+=s.stats.xp; end[s.ending]=(end[s.ending]||0)+1; v+=r.visits; vr+=r.visits>0; ni+=r.nights; qh70+=s.stats.qh>=70; ev+=r.events; sd+=r.specials; kpiN+=(s.kpiLog||[]).filter(k=>!k.ignored).length; kpiIg+=(s.kpiLog||[]).filter(k=>k.ignored).length; kpiOk+=(s.kpiLog||[]).filter(k=>k.ok).length; kpiBadge+=s.flags.includes('nhan_vien_kpi'); td.push(r.teaDay ?? 99);
+  for (let i=1;i<=N;i++){ const r = run(kind, i*2654435761 + (+process.env.SEED || 0)); const s=r.s; jr+=r.junior; xp+=s.stats.xp; end[s.endingId||s.ending]=(end[s.endingId||s.ending]||0)+1; v+=r.visits; vr+=r.visits>0; ni+=r.nights; qh70+=s.stats.qh>=70; ev+=r.events; sd+=r.specials; kpiN+=(s.kpiLog||[]).filter(k=>!k.ignored).length; kpiIg+=(s.kpiLog||[]).filter(k=>k.ignored).length; kpiOk+=(s.kpiLog||[]).filter(k=>k.ok).length; kpiBadge+=s.flags.includes('nhan_vien_kpi'); td.push(r.teaDay ?? 99);
     if (s.stats.xp<100) fails.xp++; if (s.stats.ut+(s.stats.qh>=70?5:0)<60) fails.ut++; if (s.stats.qh<50) fails.qh++; if (s.missionsDone.length<10) fails.mis++; }
   console.log(kind.padEnd(8), 'Junior', (100*jr/N).toFixed(1)+'%', 'XP', (xp/N).toFixed(1), JSON.stringify(end), 'thiếu', JSON.stringify(fails), 'qh70', (100*qh70/N).toFixed(0)+'%', 'visit/ván', (v/N).toFixed(2), 'có visit', (100*vr/N).toFixed(0)+'%', 'lá tối/ván', (ni/N).toFixed(1), 'mở quán: trung vị ngày', td.sort((a,b)=>a-b)[N>>1], 'chưa mở', (100*td.filter(x=>x===99).length/N).toFixed(0)+'%', 'sự kiện giữa buổi/ván', (ev/N).toFixed(1), 'ngày đặc biệt/ván', (sd/N).toFixed(1), 'KPI đạt', kpiN ? (100*kpiOk/kpiN).toFixed(0)+'%' : '-', 'huy hiệu KPI', (100*kpiBadge/N).toFixed(0)+'%', 'KPI làm lơ/ván', (kpiIg/N).toFixed(2));
 }

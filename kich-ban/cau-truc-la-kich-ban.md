@@ -118,3 +118,9 @@ Mỗi lá là một object trong file `cards.json` (mảng). Thêm lá mới = t
 - Ngoại hình chỉ đổi hình, không đổi chỉ số: kiểu tóc, màu tóc, phụ kiện (`LOOKS` trong world.js). Áo sơ mi trắng và dây thẻ intern cố định. Ván lưu `name` và `look`; ván cũ chỉ có `female` thì tự đổi sang tóc dài/ngắn. Nút Nam/Nữ trên HUD đã bỏ ở cả 3 trang.
 - Tên: viết `{ten}` (hoặc `{TEN}` viết hoa) trong bất kỳ câu nào của lá, câu thoại, KPI, đánh giá; game tự thay bằng tên người chơi (`G.fillName`). Đang dùng ở lá D1, câu Sổ tay, lời giới thiệu lần đầu của anh Tuấn, giấy nhớ KPI, lật hồ sơ ngày 40, nút chia sẻ kết cục và dòng "Intern · tên" trên HUD.
 - Tutorial Ngày 1 do chị Mai dẫn, chỉ hiện khi không có hộp thoại nào đang mở; tắt được ở bước đầu. Chỉ chạy một lần mỗi trình duyệt (`localStorage` khóa `ssns-huong-dan`), bước cuối ở phòng trọ tối ngày 1. Mẹo lần đầu (căng tin, quán trà sữa, KPI, ngày đặc biệt, Pin dưới 20, thân thiết 40) mỗi mẹo hiện một lần.
+
+## Đợt 1 của plan "ván thứ hai" (16/11)
+- `danh-gia.json` → `endings[].when` thêm hai điều kiện: `closeCount: {min, count}` (ít nhất `count` người có độ thân ≥ `min`) và `actions: {id: n}` (đã làm việc chiều đó ≥ n lần). Kết cục mới: `phu_bep`, `ca_phong`.
+- `danh-gia.json` → `collection.hints`: câu gợi ý cho mục chưa mở trong Bộ sưu tập, khóa theo id kết cục / cờ huy hiệu / id lá. Thêm kết cục, huy hiệu hay sự kiện mới thì thêm một dòng gợi ý ở đây.
+- `danh-gia.json` → `share.url`: địa chỉ in ở chân thẻ chia sẻ (để trống đến khi deploy).
+- Hồ sơ người chơi nằm ở `ho-so.js`, lưu ở khóa riêng `ssns-profile` (ván mới không xóa nó). Save một ván thêm `played` (các lá đã trả lời) và `dayLog` (mỗi ngày: có tăng không, Pin cuối ngày dưới 20 không).

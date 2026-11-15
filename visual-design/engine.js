@@ -156,6 +156,8 @@ export function requiresOk(s, req) {
   if (req.notFlags && req.notFlags.some(f => hasFlag(s, f))) return false;
   if (req.stats && !Object.entries(req.stats).every(([k, v]) => s.stats[k] >= v)) return false;
   if (req.closeness && !Object.entries(req.closeness).every(([k, v]) => (s.close[k] ?? 0) >= v)) return false;
+  if (req.closeCount && Object.values(s.close).filter(v => v >= req.closeCount.min).length < req.closeCount.count) return false;   // "at least N people at closeness >= min"
+  if (req.actions && !Object.entries(req.actions).every(([k, v]) => (s.counters.actions[k] || 0) >= v)) return false;            // "did this afternoon action at least n times"
   return true;
 }
 const DRAWABLE = new Set(['normal', 'invitation', 'character_event']);
@@ -325,6 +327,7 @@ export function chooseOption(s, c, index) {
     }
     comment = ch.comment || null; label = ch.label;
   }
+  addUnique(s.played ||= [...(s.used || [])], c.id);                       // every card ever answered: the collection (ho-so.js) lists events, special days and character events from it
   if (c.sceneAt) addUnique(s.rooms ||= [...ROOM_IDS], c.sceneAt); // (a save with no rooms list had every room open)           // the event took you there: from now on you know the way
   if (c.type === 'unlock') { s.today.unlockDone = true; addUnique(s.rooms, c.unlocks); recordRoom(s, c.unlocks); } // the morning card still follows
   else if (isSpecialDay(c)) { s.today.specialDone = true; if (c.rules?.skipMorningCard) { s.today.cardDone = true; s.part = 'afternoon'; } }
@@ -394,6 +397,8 @@ export function buyTea(s, kind) {
 // 17:55: the only moment burnout and early dismissal are checked (the afternoon can still save you).
 export function endOfDay(s) {
   if (s.week) for (const k of STATS) s.week.low[k] = Math.min(s.week.low[k], s.stats[k]);   // KPI "giữ Pin từ 30" looks at 17:55
+  const d = s.today.delta, net = d.xp + d.ut + d.qh;   // the day strip on the share card: g = a day that gained, r = ended with Pin under 20
+  (s.dayLog ||= {})[s.day] = {g: net > 0 ? 1 : 0, r: s.stats.pin < 20 ? 1 : 0};
   if (s.stats.pin <= 0) s.ending = 'burnout';
   else if (s.stats.ut < 10) s.ending = 'fired';
   else if (s.day >= TOTAL_DAYS) s.ending = 'review';   // day 40 evaluation arrives in step 3

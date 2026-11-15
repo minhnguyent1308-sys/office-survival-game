@@ -133,6 +133,38 @@
       "scene": "Ngày đầu ở công ty mới. Sếp mới, tức vị khách cũ, nhắn lúc 17:55: \"Em xem giúp anh file này nhé, không gấp đâu.\""
     },
     {
+      "id": "phu_bep",
+      "title": "PHỤ BẾP DANH DỰ",
+      "secret": true,
+      "when": {
+        "notJunior": true,
+        "closeness": {
+          "coba": 60
+        },
+        "actions": {
+          "an_trua_co_ba": 12
+        }
+      },
+      "verdict": "Cô Ba xin sếp cho bạn xuống căng tin, không phải làm gì, chỉ cần ngồi ăn cho cô vui.",
+      "scene": "Cô Ba đứng ở cửa phòng anh Tuấn, tay còn cầm vá: \"Thằng bé gầy quá, cho nó xuống dưới cô.\" Anh Tuấn nhìn vá, nhìn bạn, rồi ký."
+    },
+    {
+      "id": "ca_phong",
+      "title": "ĐƯỢC CẢ PHÒNG GIỮ LẠI",
+      "when": {
+        "notJunior": true,
+        "stats": {
+          "qh": 80
+        },
+        "closeCount": {
+          "min": 60,
+          "count": 2
+        }
+      },
+      "verdict": "\"Anh nhận được một lá đơn có chữ ký cả phòng. Anh chưa nhận được lá đơn nào như vậy.\"",
+      "scene": "Chị Hằng ký bằng bút đỏ, anh Tùng ký to nhất, chị Mai đóng dấu dù chẳng ai cần dấu. Anh Tuấn đọc xong, gấp lại: \"Thêm một ghế nữa nhé.\""
+    },
+    {
       "id": "gia_han",
       "title": "THÊM 30 NGÀY",
       "when": {
@@ -201,5 +233,66 @@
     "title": "Cả phòng đã có mặt",
     "line": "Anh Tuấn đứng ở đầu phòng, cạnh bạn, hắng giọng: \"Cả phòng đủ rồi, chị Mai cũng lên tận đây. Cô Ba ở lại bếp, cô bảo canh không chờ ai.\" Không ai nhìn điện thoại. Lần đầu tiên.",
     "button": "Nghe phán quyết"
+  },
+  "collection": {
+    "note": "Bộ sưu tập: mục chưa mở hiện '???' kèm một câu gợi ý (hints, theo id kết cục, cờ huy hiệu hoặc id lá). Lưu trên trình duyệt này.",
+    "hints": {
+      "junior": "Điền đủ 10 ô Sổ tay, giữ Kinh nghiệm, Uy tín và Quan hệ ở mức cao đến ngày 40.",
+      "van_nghe": "Chị Linh đang tìm người cho ban phong trào. Thân với chị ấy, rồi nhận lời.",
+      "khach_hang": "Có một vị khách để ý đến bạn. Giữ Quan hệ tốt và nhận lời mời của họ.",
+      "phu_bep": "Có một người ngày nào cũng múc thêm cho bạn một miếng. Ăn trưa với cô ấy thật nhiều bữa.",
+      "ca_phong": "Chưa lên Junior vẫn có thể được giữ lại, nếu có nhiều người trong phòng thật lòng quý bạn.",
+      "gia_han": "Gần đủ rồi, nhưng chưa đủ để sếp ký.",
+      "cam_on": "Kết cục của một tháng làm cho có.",
+      "burnout": "Đừng để Pin về 0.",
+      "fired": "Uy tín thấp quá thì chẳng ai giữ nổi bạn.",
+      "nhan_vien_moi_guong_mau": "Điền đủ 10 ô Sổ tay nhân viên mới.",
+      "chien_binh_cuoi_tuan": "Nhận việc vào cuối tuần khi sếp nhắn.",
+      "seen_tin_nhan_sep": "Seen tin nhắn của sếp lúc 17:55 rồi tắt máy.",
+      "ghi_diem_voi_sep": "Nói một ý tưởng thật, hoặc xin sếp góp ý thẳng.",
+      "thu_quy_bat_dac_di": "Góp quỹ cho các hoạt động của phòng.",
+      "ngoi_sao_karaoke": "Hát một bài khi cả phòng đang cần người hát.",
+      "duoc_khach_hang_quy_men": "Làm khách hàng hài lòng ở một cuộc gặp.",
+      "so_tay_chi_hang": "Giúp chị Hằng một việc mà chị ấy sẽ nhớ.",
+      "tin_mat_chi_mai": "Chị Mai biết nhiều thứ. Nghe chị ấy kể.",
+      "bi_kip_anh_tung": "Ôn bài cùng anh Tùng đến tối.",
+      "than_voi_tuan": "Thân với anh Tuấn tới mức anh ấy kể chuyện riêng.",
+      "than_voi_hang": "Thân với chị Hằng tới mức chị ấy mở sổ cho bạn xem.",
+      "than_voi_linh": "Thân với chị Linh tới mức chị ấy giao việc tổ chức tất niên.",
+      "than_voi_minh": "Thân với anh Minh tới mức anh ấy chia sẻ thư mục macro.",
+      "than_voi_tung": "Thân với anh Tùng tới mức anh ấy tâm sự với bạn.",
+      "than_voi_mai": "Thân với chị Mai tới mức chị ấy đưa bạn đi chào cả tòa nhà.",
+      "than_voi_coba": "Thân với cô Ba tới mức cô ấy mời bạn vào bếp.",
+      "nhan_vien_kpi": "Làm đủ KPI tuần anh Tuấn giao.",
+      "EN_DIEN": "Buổi tối ở phòng trọ, chủ trọ gõ cửa.",
+      "EN_ME": "Buổi tối ở phòng trọ, nằm trên giường thì điện thoại rung.",
+      "EN_KARAOKE": "Buổi tối muộn, hàng xóm bắt đầu hát.",
+      "EN_SHIPPER": "Buổi tối, có người bấm chuông cửa phòng trọ.",
+      "EN_MEO": "Buổi tối, trong bếp có tiếng động lạ.",
+      "EN_CUP_DIEN": "Buổi tối, cả dãy trọ bỗng tối om.",
+      "EO_THANG_MAY": "Buổi sáng ở công ty, thang máy đứng giữa chừng.",
+      "EO_MAY_IN": "Sát giờ họp, chiếc máy in có chuyện.",
+      "EO_BAO_CHAY": "Gần trưa, một tiếng chuông vang lên khắp tầng.",
+      "EO_SINH_NHAT": "Gần trưa ở căng tin, có người sắp được bất ngờ.",
+      "EO_KHACH_LAC": "Sáng ở phòng sếp, một người lạ đẩy cửa bước vào.",
+      "EO_MON_MOI": "Trưa ở căng tin, cô Ba có món chưa ai thử.",
+      "SD_LUONG": "Một ngày trong tháng, cả tòa nhà vui hẳn lên.",
+      "SD_MAT_DIEN": "Một buổi chiều, máy tính chợt tắt.",
+      "SD_SEP_TONG": "Một ngày sếp tổng ghé thăm phòng mình.",
+      "SD_AO_CAM": "Một ngày thứ Sáu, cả phòng mặc cùng một màu.",
+      "SD_MUA_NGAP": "Một ngày mưa to, đường ngập.",
+      "SD_KIEM_TOAN": "Một ngày kiểm toán, chị Mai bận hơn mọi khi.",
+      "E1": "Thân với anh Tuấn đến 40 để mở.",
+      "E2": "Thân với chị Hằng đến 40 để mở.",
+      "E3": "Thân với chị Linh đến 40 để mở.",
+      "E4": "Thân với anh Minh đến 40 để mở.",
+      "E5": "Thân với anh Tùng đến 40 để mở.",
+      "E6": "Thân với chị Mai đến 40 để mở.",
+      "E7": "Thân với cô Ba đến 40 để mở."
+    }
+  },
+  "share": {
+    "url": "",
+    "note": "url: địa chỉ in ở chân thẻ chia sẻ. Để trống đến khi có địa chỉ chơi thật."
   }
 }

@@ -146,6 +146,7 @@ body.opening .hud,body.opening #tags,body.opening .hint,body.opening .toast{disp
 <div class="hud tr">
   <button class="card tool" id="open-handbook" hidden>Sổ tay</button>
   <button class="card tool" id="open-friends">Thân thiết</button>
+  <button class="card tool" id="open-collection">Bộ sưu tập</button>
   <button class="card tool" id="open-minigames">Mini-game</button>
 </div>
 <div class="hud br"><button class="card tool primary" id="leave-work" hidden>Tan làm →</button></div>
@@ -165,6 +166,7 @@ import * as T from 'three';
 import * as G from './engine.js'; // rules of the 40-day loop (no 3D inside)
 import * as Wd from './world.js';
 import * as Op from './mo-dau.js';      // opening screens, Day-1 tutorial, first-time tips (text: mo-dau.json)
+import * as Ho from './ho-so.js';      // player profile across runs: collection, gifts, share card, counters
 import * as Pl from './placements.js'; // partner slots (affiliate): declared, empty for now
 import {runMinigame, validateMinigames} from './minigames.js'; // mini-game screens; content in minigames.json  // palette, builders, characters, walk grid shared with the rented room
 
@@ -831,6 +833,7 @@ const HOT_PLACE = {desk:'desk', chef:'canteen', boss:'boss', letan:'lobby'};    
 const TASK_TAG = {desk:'Làm việc', chef:'Ăn trưa · tám', boss:'Báo cáo sếp', letan:'Giúp chị Mai'};
 const TIME = {morning:'08:29', afternoon:'13:30', evening:'17:55', weekend:'Cuối tuần', over:'17:55'};
 const store = new G.BrowserSaveStore();
+const PROFILE = await Ho.open({badges: CARD_DATA.flagsBadges});   // survives "Chơi lại"; filled from whatever save is in hand
 // the run comes back from the rented room in storage; the URL carries a copy for browsers that block storage
 const fromHash = () => { try { const m = location.hash.match(/s=([^&]+)/); return m ? JSON.parse(decodeURIComponent(m[1])) : null; } catch { return null; } };
 let S = (await store.load()) || fromHash();
@@ -915,7 +918,7 @@ const effectText = e => G.STATS.filter(k => e[k]).map(k => `${G.STAT_NAME[k]} ${
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = G.fillName(text, S); return e; };
 let toastQueue = [];
 const notify = msg => { toastQueue.push(msg); };
-function afterChange(){ for (const f of G.checkMissions(S, HANDBOOK)) notify(`Xong nhiệm vụ: ${f.mission.title}`); renderHUD(); save(); }
+function afterChange(){ for (const f of G.checkMissions(S, HANDBOOK)) notify(`Xong nhiệm vụ: ${f.mission.title}`); renderHUD(); save(); if (!standIn) PROFILE.sync(S); }
 
 /* -- modal (17:55, weekend, mini-game, handbook, closeness, end) -- */
 const modalWrap = document.getElementById('modal-wrap'), modalEl = document.getElementById('modal');
@@ -1338,7 +1341,7 @@ async function showFaintScene(){
 // day 40, part 3 (or an early ending): the verdict, the closing scene, then the run's collection and fun numbers
 function showEnd(){
   const early = REVIEW.early[S.ending], r = early ? null : G.review(S, HANDBOOK, REVIEW); save(); renderHUD();
-  const end = early || r.ending, nodes = [];
+  const end = early || r.ending, nodes = []; PROFILE.finish(S, early ? S.ending : r.ending.id);
   if (r?.bonusLine) nodes.push(el('p', 'note', r.bonusLine), deltaChips(r.bonus));
   nodes.push(el('p', null, early ? end.verdict : r.verdict), el('p', 'comment', end.scene));
   const stats = el('div', 'deltas'); for (const k of G.STATS) stats.insertAdjacentHTML('beforeend', `<span class="delta">${G.STAT_NAME[k]} ${S.stats[k]}</span>`);
@@ -1348,6 +1351,7 @@ function showEnd(){
   nodes.push(stats,
     el('p', 'note', `Huy hiệu (${badges.length}): ${badges.join(', ') || 'chưa có'}`),
     el('p', 'note', `Sổ tay: ${S.missionsDone.length}/${HANDBOOK.missions.length} nhiệm vụ · Mini-game: ${mg.join(' · ') || 'chưa chơi'}`),
+    el('p', 'note', Ho.summaryLine(PROFILE.p, REVIEW, CARDS, S)),
     el('p', 'note', `${S.counters.actions.an_trua_co_ba || 0} bữa cơm cô Ba · ${S.counters.gossipWith.length} người cùng tám chuyện · thân nhất: ${G.NPC_NAME[closest]} (${S.close[closest]})` + (early ? ` · dừng ở ngày ${S.day}` : '')));
   const share = async e => { const text = `${G.playerName(S)} vừa chơi "Sống sót nơi công sở": ${end.title}. ${early ? end.verdict : r.verdict}`;
     try { if (navigator.share) await navigator.share({text}); else { await navigator.clipboard.writeText(text); e.target.textContent = 'Đã chép, dán cho bạn bè nhé'; } } catch { e.target.textContent = 'Không chia sẻ được'; } };
@@ -1359,7 +1363,7 @@ const restart = () => { closeModal(); closeSheet(); return runOpening(); };
 async function newRun({look, name}){
   cutscene = false; camFocus = null; fainted = false; sceneSit = null; pendingHot = null; focusHalf = [6, 5.6]; document.getElementById('sheet-close').hidden = false;
   arriveByElevator();                          // the old run may have ended in a room the new run starts with closed (the meeting room)
-  standIn = false; await store.clear(); S = G.newGame({look, name, startRooms: CARD_DATA.rooms?.start}); G.startMorning(S, CARDS); applyRooms(); wearLook(look);
+  standIn = false; PROFILE.count('runsStarted'); if (PROFILE.p.counters.runsStarted > 1) PROFILE.count('secondRuns'); await store.clear(); S = G.newGame({look, name, startRooms: CARD_DATA.rooms?.start}); G.startMorning(S, CARDS); applyRooms(); wearLook(look);
   for (const id of Object.keys(NPCS)) if (NPCS[id].quest) release(id);
   if (questId === 'client') release('client');
   met.clear(); elapsed = 0; tut.reset();       // everyone introduces themselves again; the desk label bounces again
@@ -1499,6 +1503,7 @@ document.getElementById('open-friends').onclick = () => {
     row.innerHTML = `<span></span><span class="bar"><i style="width:${v}%"></i><s></s></span><span class="val">${v}</span>`; row.querySelector('span').textContent = G.NPC_NAME[n]; list.appendChild(row); }
   modal({eyebrow:'Đạt 40 điểm thì mở chuyện riêng của người đó', title:'Thân thiết', nodes:[list], actions:[{label:'Đóng', onClick:closeModal}]});
 };
+document.getElementById('open-collection').onclick = () => modal({eyebrow:'Mở thêm qua mỗi ván chơi', title:'Bộ sưu tập', nodes:[Ho.collectionNode(PROFILE.p, REVIEW, CARDS, S.runId)], actions:[{label:'Đóng', onClick:closeModal}]});
 modalWrap.addEventListener('keydown', e => { if (e.key === 'Escape' && modalEl.querySelector('.row .btn:last-child')?.textContent === 'Đóng') closeModal(); });
 
 // talking: today's card first; every talk counts for "Chào hỏi cả công ty"

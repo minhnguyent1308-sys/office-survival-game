@@ -116,6 +116,7 @@ body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--font-b
 <script type="module">
 import * as T from 'three';
 import * as G from './engine.js'; // same rules as tầng Intern; buying tea is G.buyTea, the opening event is a card with sceneAt "trasua"
+import * as Ho from './ho-so.js';  // player profile across runs
 import * as Wd from './world.js';  // palette, builders, characters, walk grid shared with every map
 
 const P = Wd.P; // one palette for every map
@@ -356,6 +357,7 @@ const CARDS = CARD_DATA.cards;
 G.useMinigames(MINIGAMES);
 { const bad = G.validateCards(CARD_DATA); if (bad.length) console.warn('cards.json:', bad); }
 const store = new G.BrowserSaveStore();
+const PROFILE = await Ho.open({badges: CARD_DATA.flagsBadges});
 const fromHash = () => { try { const m = location.hash.match(/s=([^&]+)/); return m ? JSON.parse(decodeURIComponent(m[1])) : null; } catch { return null; } };
 let S = (await store.load()) || fromHash();
 const save = () => store.save(S);
@@ -383,7 +385,7 @@ const deltaChips = got => { const d = document.createElement('div'); d.className
   for (const [n, v] of Object.entries(got.close || {})) d.insertAdjacentHTML('beforeend', `<span class="delta ${v < 0 ? 'down' : ''}">Thân với ${G.NPC_NAME[n]} ${v > 0 ? '+' : '−'}${Math.abs(v)}</span>`);
   return d; };
 const effectText = e => G.STATS.filter(k => e[k]).map(k => `${G.STAT_NAME[k]} ${e[k] > 0 ? '+' : '−'}${Math.abs(e[k])}`).join(' · ');
-function afterChange(){ for (const f of G.checkMissions(S, HANDBOOK)) toast(`Xong nhiệm vụ: ${f.mission.title}`); renderHUD(); save(); }
+function afterChange(){ for (const f of G.checkMissions(S, HANDBOOK)) toast(`Xong nhiệm vụ: ${f.mission.title}`); renderHUD(); save(); PROFILE.sync(S); }
 const modalWrap = document.getElementById('modal-wrap');
 function choiceList(c, onPick){
   const box = el('div', 'choices');

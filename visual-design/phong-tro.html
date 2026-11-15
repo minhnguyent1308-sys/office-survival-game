@@ -102,6 +102,7 @@ body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--font-b
   <div class="card stats" id="stats" aria-label="Chỉ số"></div>
 </div>
 <div class="hud tr">
+  <button class="card tool" id="open-collection">Bộ sưu tập</button>
 </div>
 <div class="toast" id="toast" hidden role="status"></div>
 <div class="hint" id="hint">Chạm vào sàn để đi · WASD / phím mũi tên · E để tương tác</div>
@@ -122,6 +123,7 @@ import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
 import * as G from './engine.js'; // same rules as tầng Intern; the room is where evenings and weekends happen
 import * as Wd from './world.js';  // palette, builders, characters, walk grid shared with tầng Intern
 import * as Op from './mo-dau.js';      // Day-1 tutorial: the last tip, the first night
+import * as Ho from './ho-so.js';      // player profile across runs (the collection)
 import * as Pl from './placements.js'; // partner slots (affiliate): declared, empty for now
 
 const P = Wd.P; // one palette for every map (home tokens included)
@@ -463,7 +465,7 @@ const toastEl = document.getElementById('toast'); let toastT = 0;
 const toast = msg => { toastEl.textContent = msg; toastEl.hidden = false; toastT = 3.5; };
 
 /* ---------- Game: the evening at home. Rules live in engine.js, content in cards.json ---------- */
-const [CARD_DATA, HANDBOOK, MINIGAMES, RHYTHM, PLACEMENTS, OPENING] = await Promise.all(['cards.json', 'handbook.json', 'minigames.json', 'nhip-choi.json', 'placements.json', 'mo-dau.json'].map(u => fetch(u).then(r => r.json())));
+const [CARD_DATA, HANDBOOK, MINIGAMES, RHYTHM, PLACEMENTS, OPENING, REVIEW] = await Promise.all(['cards.json', 'handbook.json', 'minigames.json', 'nhip-choi.json', 'placements.json', 'mo-dau.json', 'danh-gia.json'].map(u => fetch(u).then(r => r.json())));
 const CARDS = CARD_DATA.cards;
 G.useMinigames(MINIGAMES); // the next morning may be a mini-game day (nextDay/endWeekend draw it)
 G.useRhythm(RHYTHM);       // tonight's odds, and the next morning's special day / KPI / midday event (nhip-choi.json)
@@ -471,6 +473,7 @@ Pl.usePlacements(PLACEMENTS);
 { const bad = G.validateCards(CARD_DATA); if (bad.length) console.warn('cards.json:', bad); }
 // one save for the whole game: the office page wrote it just before "Về phòng trọ"
 const store = new G.BrowserSaveStore();
+const PROFILE = await Ho.open({badges: CARD_DATA.flagsBadges});
 const fromHash = () => { try { const m = location.hash.match(/s=([^&]+)/); return m ? JSON.parse(decodeURIComponent(m[1])) : null; } catch { return null; } }; // fallback when storage is blocked
 let S = (await store.load()) || fromHash();
 const save = () => store.save(S);
@@ -531,6 +534,7 @@ function modal({eyebrow = '', title, nodes = [], actions = [], docked = false}){
   modalWrap.hidden = false; closeSheet(); modalEl.querySelector('.choice,.btn')?.focus();
 }
 const closeModal = () => { modalWrap.hidden = true; };
+document.getElementById('open-collection').onclick = () => modal({eyebrow:'Mở thêm qua mỗi ván chơi', title:'Bộ sưu tập', nodes:[Ho.collectionNode(PROFILE.p, REVIEW, CARDS, S.runId)], actions:[{label:'Đóng', onClick:closeModal}]});
 function choiceList(c, onPick){
   const box = el('div', 'choices');
   if (G.autoResolves(S, c)) { const b = el('button', 'choice', 'Tiếp'); b.onclick = () => onPick(0); box.appendChild(b); return box; }
@@ -574,7 +578,7 @@ function arriveHome(){ player.g.position.set(DOOR_IN[0], 0, DOOR_IN[1]); player.
 function lightsFor(){ laptopScreen.material[4] = laptopCard() ? mat(P.screen, {emissive:P.screen, emissiveIntensity:.9}) : screenMat; }
 
 const laptopToast = () => { const c = laptopCard(); if (c) toast(c.npc === 'tuan' ? 'Laptop sáng lên: sếp vừa nhắn' : 'Laptop sáng lên: có tin nhắn mới'); };
-function afterChange(){ for (const f of G.checkMissions(S, HANDBOOK)) toast(`Xong nhiệm vụ: ${f.mission.title}`); renderHUD(); save(); }
+function afterChange(){ for (const f of G.checkMissions(S, HANDBOOK)) toast(`Xong nhiệm vụ: ${f.mission.title}`); renderHUD(); save(); PROFILE.sync(S); }
 // bed: a weekday night goes back to the office in the morning; Friday night becomes the weekend here; the weekend ends on Monday morning at the office
 async function sleep(){
   closeSheet();
