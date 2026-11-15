@@ -39,6 +39,6 @@ Vì Nhận không bao giờ thiệt, lựa chọn tốt nhất của bot luôn l
 | `nhan` (luôn nhận, như trước 15/11) | 45,4% | 45,1% |
 | `lo` (luôn làm lơ) | 32,7% | 33,1% |
 
-Khi chưa tính XP (chỉ trừ Pin/Uy tín/Quan hệ) `smart` là 43,0% / 43,2%; tính cả XP thì tụt dưới khoảng 42–49% vì XP trung bình cuối ván chỉ quanh 101, sát mốc 100. Với `smart`: bot chăm chỉ đạt 79% số KPI đã nhận, nhưng huy hiệu "Nhân viên KPI" (cần đạt 3 KPI) giảm từ 83% xuống 36% số ván vì ít KPI được nhận hơn. Bot lo quan hệ: đạt 39%, huy hiệu 4%.
+Khi chưa tính XP (chỉ trừ Pin/Uy tín/Quan hệ) `smart` là 43,0% / 43,2%; tính cả XP thì tụt dưới khoảng 42–49% vì XP trung bình cuối ván chỉ quanh 101, sát mốc 100. Lily chọn giữ nguyên mốc XP 100 và chấp nhận ~40% (15/11): làm lơ KPI phải có hậu quả thật. Với `smart`: bot chăm chỉ đạt 79% số KPI đã nhận, nhưng huy hiệu "Nhân viên KPI" (cần đạt 3 KPI) giảm từ 83% xuống 36% số ván vì ít KPI được nhận hơn. Bot lo quan hệ: đạt 39%, huy hiệu 4%.
 
 `choi-thu-mot-van.mjs` (in nhật ký một ván) chưa nạp nhịp chơi, nên ván mẫu chưa có các sự kiện này.
