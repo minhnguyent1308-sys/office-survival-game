@@ -123,7 +123,7 @@ body{background:var(--ground);color:var(--ink);font-family:var(--font-body);over
 .fade small{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--yellow);font-weight:600}
 .fade b{font:800 40px/1.05 var(--font-display)}
 .fade span{font-size:15px;opacity:.8;max-width:360px}
-/* opening (mo-dau.js): the 3D floor stays behind the screens, the game HUD waits */
+/* opening (mo-dau.js): full-page screens over the floor, the game HUD waits */
 body.opening .hud,body.opening #tags,body.opening .hint,body.opening .toast{display:none!important}
 .stats[data-focus] > span{opacity:.35}
 .stats[data-focus] > span.on{opacity:1}
@@ -1367,41 +1367,54 @@ async function newRun({look, name}){
 }
 
 /* -- opening (mo-dau.js): welcome -> Ảnh thẻ hồ sơ -> Phiếu nhân viên mới -> 4 story cards -> Day 1 by the elevator -- */
-let opening = null, dragX = null, lookSpin = 0;    // 'welcome' | 'look' | null: what the camera shows behind the opening screens
-const LOBBY_VIEW = new T.Vector3(13.2, 0, 3.4), FRONT = Math.PI / 4;                     // facing the camera
+let opening = null;                                 // 'welcome' | 'look' | null: an opening screen covers the page, the 3D floor waits
 function openingMode(mode){
   opening = mode; document.body.classList.toggle('opening', !!mode); cutscene = !!mode;
   if (mode) { closeSheet(); coach.hide(); }
-  if (mode === 'welcome') { focusHalf = [9, 6.5]; camFocus = LOBBY_VIEW.clone(); }
-  else if (mode === 'look') {
-    fainted = false; sceneSit = null; arriveByElevator(); player.g.rotation.set(0, FRONT, 0); lookSpin = 0;
-    focusHalf = [1.7, 1.75]; camFocus = lookFocus();
-  } else { camFocus = null; focusHalf = [6, 5.6]; }
+  camFocus = null; focusHalf = [6, 5.6];
 }
-// the character fills the left of the screen (panel on the right), or the top on a phone (panel below)
-function lookFocus(){
-  const p = player.g.position, c = new T.Vector3(p.x, .95, p.z), phone = innerWidth <= 640;
-  const half = (phone ? cam.top : cam.right) / Math.max(1, Math.min(cam.right / focusHalf[0], cam.top / focusHalf[1]));
-  return phone ? c.add(new T.Vector3(1, 0, 1).normalize().multiplyScalar(half * .8)) : c.add(new T.Vector3(1, 0, -1).normalize().multiplyScalar(half * .38));
-}
-renderer.domElement.addEventListener('pointerdown', e => { if (opening === 'look') { dragX = e.clientX; renderer.domElement.setPointerCapture(e.pointerId); } });
-renderer.domElement.addEventListener('pointermove', e => { if (opening === 'look' && dragX != null) { player.g.rotation.y += (e.clientX - dragX) * .012; dragX = e.clientX; lookSpin = 1.5; } });
-addEventListener('pointerup', () => { dragX = null; });
-// the photo for the form: the head and shoulders, cropped from the frame just drawn
-function shootPhoto(){
-  player.g.rotation.y = FRONT; animateWalk(player, false, 0); renderer.render(scene, cam);
-  try {
-    const src = renderer.domElement, k = src.width / innerWidth, p = player.g.position;
-    const at = y => { const v = new T.Vector3(p.x, y, p.z).project(cam); return [(v.x + 1) / 2 * innerWidth * k, (1 - v.y) / 2 * innerHeight * k]; };
-    const [cx, top] = at(2.15), [, bottom] = at(.75), h = bottom - top, w = h * .8;
-    const out = document.createElement('canvas'); out.width = 160; out.height = 200;
-    out.getContext('2d').drawImage(src, cx - w / 2, top, w, h, 0, 0, 160, 200);
-    return out.toDataURL('image/jpeg', .85);
-  } catch { return null; }
+// the elevator mirror on "Ảnh thẻ hồ sơ": its own small view with only you in it (no floor behind), drag to turn,
+// then you ease back to face the mirror. shoot(): head and shoulders on the photo backdrop, for the form.
+function makeMirror(host){
+  const r = new T.WebGLRenderer({antialias:true, alpha:true});
+  r.setPixelRatio(Math.min(devicePixelRatio, 2)); r.outputColorSpace = T.SRGBColorSpace;
+  const sc = new T.Scene(), kit = Wd.makeKit(sc), cm = new T.PerspectiveCamera(26, 1, .1, 50);
+  sc.add(new T.HemisphereLight('#ffffff', '#c9b89b', 1.6));
+  const key = new T.DirectionalLight('#fff5e3', 1.8); key.position.set(3, 6, 8); sc.add(key);
+  const fit = () => { const w = host.clientWidth || 1, h = host.clientHeight || 1; r.setSize(w, h, false); cm.aspect = w / h; cm.updateProjectionMatrix(); };
+  const frame = () => { cm.position.set(0, 1.4, 5.3); cm.lookAt(0, 1.1, 0); };
+  host.prepend(r.domElement); frame(); fit();
+  const ro = new ResizeObserver(fit); ro.observe(host);
+  let me = null, dragX = null, hold = 0, raf = 0, t0 = performance.now();
+  const wrapPi = a => ((a + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
+  const loop = now => {
+    const dt = Math.min(.05, (now - t0) / 1000); t0 = now;
+    if (me && dragX == null && (hold -= dt) <= 0) { const want = reduce ? 0 : Math.sin(now / 1400) * .35, ry = me.g.rotation;
+      ry.y = want + wrapPi(ry.y - want); ry.y += (want - ry.y) * Math.min(1, dt * 3); }   // the shortest way back to the front
+    r.render(sc, cm); raf = requestAnimationFrame(loop);
+  };
+  const cv = r.domElement;
+  cv.addEventListener('pointerdown', e => { dragX = e.clientX; cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener('pointermove', e => { if (dragX == null || !me) return; me.g.rotation.y += (e.clientX - dragX) * .012; dragX = e.clientX; hold = 1.5; });
+  const up = () => { dragX = null; }; cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  raf = requestAnimationFrame(loop);
+  return {
+    wear(look){ const ry = me ? me.g.rotation.y : 0; if (me) sc.remove(me.g); me = kit.makeChar(Wd.playerLook(look)); me.g.rotation.y = ry; },
+    shoot(){
+      if (!me) return null;
+      try {
+        me.g.rotation.y = 0; sc.background = new T.Color('#fff2c4');
+        r.setPixelRatio(1); r.setSize(320, 400, false); cm.aspect = .8; cm.updateProjectionMatrix();
+        cm.position.set(0, 1.72, 3.6); cm.lookAt(0, 1.52, 0); r.render(sc, cm);
+        return cv.toDataURL('image/jpeg', .85);
+      } catch { return null; }
+    },
+    close(){ cancelAnimationFrame(raf); ro.disconnect(); r.dispose(); r.forceContextLoss(); cv.remove(); },
+  };
 }
 async function runOpening(){
   openingMode('look');
-  const {look, photo} = await Op.lookPicker(OPENING, G.lookOf(S), {onChange: l => { wearLook(l); player.g.rotation.set(0, player.g.rotation.y, 0); }, shoot: shootPhoto});
+  const {look, photo} = await Op.lookPicker(OPENING, G.lookOf(S), makeMirror);
   const name = await Op.nameForm(OPENING, {name: S.name || '', photo});
   const close = await Op.prologue(OPENING, name);
   await newRun({look, name}); openingMode(null);
@@ -1564,12 +1577,6 @@ function tick(now){
   const ev = !staging && !cutscene && !mgRunning && sheet.hidden && modalWrap.hidden && !fadeEl.classList.contains('on') ? G.todaysEvent(S, CARDS) : null;
   if (ev) { evIdle += dt; if (evIdle > 1.2) { evIdle = 0; runStage(ev); } } else evIdle = 0;
   updateSlots();
-  if (opening === 'welcome' && camFocus && !reduce) camFocus.x = LOBBY_VIEW.x + Math.sin(now / 5000) * 1.6; // slow drift across the lobby
-  if (opening === 'look') {                                                    // faces you; a drag turns it, then it eases back to the front
-    if (dragX == null && (lookSpin -= dt) <= 0) { const want = FRONT + (reduce ? 0 : Math.sin(now / 1400) * .35), r = player.g.rotation;
-      r.y = want + ((((r.y - want + Math.PI) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)) - Math.PI; // shortest way back
-      r.y += (want - r.y) * Math.min(1, dt * 3); }
-    camFocus = lookFocus(); }
   updateCoach();
   if (meBubble > 0) { meBubble -= dt; meBubbleEl.hidden = !place(meBubbleEl, pos.x, 2.25 + pos.y, pos.z); } else meBubbleEl.hidden = true;
   // HUD room name
@@ -1598,7 +1605,7 @@ function tick(now){
     if (cutscene) el.hidden = true;                                                     // verdict scene: no prompts over the meeting
   }
   leaveBtn.hidden = !(S.part === 'evening' && sheet.hidden && modalWrap.hidden);
-  renderer.render(scene, cam);
+  if (!opening) renderer.render(scene, cam);                                  // an opening screen covers the floor
   requestAnimationFrame(tick);
 }
 requestAnimationFrame(tick);
