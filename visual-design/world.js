@@ -189,6 +189,17 @@ export const NPC_LOOKS = {
 };
 
 /* ---------- Scene change office → room: one quote per day, every trip a different line ---------- */
+/* ---------- The player's look (opening "Ảnh thẻ hồ sơ", mo-dau.js): looks only, no stats (Lily 15/11) ----------
+   White shirt + intern lanyard stay fixed so you always spot yourself; hair styles and accessories avoid every NPC's signature look. */
+export const LOOKS = {
+  hair:  [{id:'short', label:'Ngắn'}, {id:'long', label:'Dài'}],
+  color: [{id:'den', label:'Đen', hex:'#2b1d16'}, {id:'hatde', label:'Nâu hạt dẻ', hex:'#6b3a22'}, {id:'nausang', label:'Nâu sáng', hex:'#a8703f'}],
+  extra: [{id:'none', label:'Không'}, {id:'glasses', label:'Kính gọng vàng', set:{glasses:'#c9a227'}}, {id:'bag', label:'Cặp tài liệu', set:{bag:true}}, {id:'clip', label:'Kẹp tóc', set:{clip:'#f7d046'}}],
+};
+const pick = (list, id) => list.find(o => o.id === id) || list[0];
+// makeChar options for a look; base = what the page dresses you in (pyjamas at home)
+export const playerLook = (look = {}, base = {}) => ({lanyard:true, ...base, style:pick(LOOKS.hair, look.hair).id, hair:pick(LOOKS.color, look.color).hex, ...pick(LOOKS.extra, look.extra).set});
+
 export const HOME_QUOTES = [
   "Xe buýt đông, nhưng ít ra không ai giao việc trên xe.",
   "Hết giờ làm rồi. Điện thoại vẫn rung, nhưng mình quyết định không nghe thấy.",

@@ -110,3 +110,10 @@ Mỗi lá là một object trong file `cards.json` (mảng). Thêm lá mới = t
 **KPI tuần** (`nhip-choi.json kpi`): giao sáng thứ Hai các tuần trong `kpi.weeks` (2–5; 40 ngày chỉ có 6 tuần làm việc), chấm tối thứ Sáu. Ba dạng `goal`: `action_count` (làm việc X n lần), `stat_min` (chỉ số không xuống dưới n cả tuần), `stat_gain` (chỉ số tăng thêm n). Đạt thì nhận `reward` (không bao giờ có XP) và câu `lineOk`; trượt chỉ nghe `lineFail`, không bị phạt. Đạt `badge.min` tuần thì có huy hiệu `nhan_vien_kpi` (danh-gia.json).
 
 **Chỗ đặt đối tác** (`placements.json`, chưa bật): `slots` là các chỗ có thể hiện liên kết (bảng tin sảnh, màn hình laptop), `items` để trống. Luật cố định trong `placements.js`: luôn ghi nhãn "Liên kết đối tác", lưu game trước khi mở tab mới, và không bao giờ thưởng gì trong game cho việc bấm.
+
+## Phần mở đầu và tutorial (Lily duyệt 15/11/2026)
+- Nội dung chữ: `mo-dau.json` (welcome, Ảnh thẻ hồ sơ, Phiếu thông tin nhân viên mới, 4 thẻ dẫn truyện, tutorial Ngày 1, mẹo lần đầu). Code: `visual-design/mo-dau.js`.
+- Trang mở mới (không phải từ phòng trọ hay quán trà sữa về) hiện welcome: chưa có ván thì "Bắt đầu thử việc", có ván thì "Đi làm tiếp" kèm "Ván mới" (bấm hai lần). Chơi lại từ màn kết hoặc Sổ tay đi lại Ảnh thẻ, Phiếu (giữ lựa chọn cũ) và dẫn truyện.
+- Ngoại hình chỉ đổi hình, không đổi chỉ số: kiểu tóc, màu tóc, phụ kiện (`LOOKS` trong world.js). Áo sơ mi trắng và dây thẻ intern cố định. Ván lưu `name` và `look`; ván cũ chỉ có `female` thì tự đổi sang tóc dài/ngắn. Nút Nam/Nữ trên HUD đã bỏ ở cả 3 trang.
+- Tên: viết `{ten}` (hoặc `{TEN}` viết hoa) trong bất kỳ câu nào của lá, câu thoại, KPI, đánh giá; game tự thay bằng tên người chơi (`G.fillName`). Đang dùng ở lá D1, câu Sổ tay, lời giới thiệu lần đầu của anh Tuấn, giấy nhớ KPI, lật hồ sơ ngày 40, nút chia sẻ kết cục và dòng "Intern · tên" trên HUD.
+- Tutorial Ngày 1 do chị Mai dẫn, chỉ hiện khi không có hộp thoại nào đang mở; tắt được ở bước đầu. Chỉ chạy một lần mỗi trình duyệt (`localStorage` khóa `ssns-huong-dan`), bước cuối ở phòng trọ tối ngày 1. Mẹo lần đầu (căng tin, quán trà sữa, KPI, ngày đặc biệt, Pin dưới 20, thân thiết 40) mỗi mẹo hiện một lần.

@@ -9,7 +9,7 @@
     "line": "Đồng nghiệp nói tốt về bạn với sếp."
   },
   "dossier": {
-    "intro": "Phòng sếp, 9 giờ sáng. Anh Tuấn mở một tập hồ sơ dày bất ngờ: \"Anh có theo dõi em đấy. Không phải lúc nào cũng, nhưng đủ.\"",
+    "intro": "Phòng sếp, 9 giờ sáng. Anh Tuấn mở tập hồ sơ ghi \"{TEN} · THỰC TẬP SINH\", dày bất ngờ: \"Anh có theo dõi em đấy. Không phải lúc nào cũng, nhưng đủ.\"",
     "pick": 3,
     "always": "nhan_vien_moi_guong_mau",
     "thin": "\"Hồ sơ của em… khá gọn. Anh đọc nhanh thôi.\""
