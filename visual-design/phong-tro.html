@@ -477,6 +477,7 @@ const save = () => store.save(S);
 const OFFICE = 'index.html';
 async function goTo(url){ await save(); location.href = url + '#from=home&s=' + encodeURIComponent(JSON.stringify(S)); }
 if (!S || !G.isAtHome(S)) { location.replace(OFFICE); await new Promise(() => {}); } // nothing to do here before 17:55
+G.catchUpWeek(S, CARDS);             // saves made before the weekly KPI existed (same as tầng Intern)
 
 // what is waiting on the laptop right now: tonight's message, or the weekend card
 function laptopCard(){

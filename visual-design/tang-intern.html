@@ -835,6 +835,7 @@ const fromHome = location.hash.includes('from=home'), fromShop = location.hash.i
 if (location.hash) history.replaceState(null, '', location.pathname + location.search);
 if (!S) { S = G.newGame({startRooms: CARD_DATA.rooms?.start}); G.startMorning(S, CARDS); }
 S.today.canteen ||= G.rollCanteen(); // saves made before the canteen roll existed
+G.catchUpWeek(S, CARDS);             // saves made before the weekly KPI existed
 const save = () => store.save(S);
 let staging = false, stageTime = null; // a staged event is playing (runStage); the clock shows the event's time
 let questId = null; // hotspot that carries today's "!" (a person, or a place for cards with no person)

@@ -225,6 +225,11 @@ function drawMidday(s, cards, rng) {
 export const todaysEvent = (s, cards) => (s.today.eventId && !s.today.eventDone && s.today.cardDone && s.part === 'afternoon' && !s.today.action ? cardById(cards, s.today.eventId) : null);
 
 /* ---------- Week: a special day (maybe) and a KPI from anh Tuấn (nhip-choi.json) ---------- */
+// saves from before 15/11 have no week: start it where the run stands, so the KPI shows today instead of next Monday
+export function catchUpWeek(s, cards, rng = Math.random) {
+  s.kpiLog ||= []; if (s.week?.n === weekOf(s.day) || isWeekend(s.day)) return;
+  startWeek(s, cards, rng); if (weekday(s.day) > 2) s.week.kpi = null;   // from Thursday a week's KPI cannot be met: it starts next Monday
+}
 function startWeek(s, cards, rng) {
   const n = weekOf(s.day);
   s.week = {n, base: {actions: {...s.counters.actions}, stats: {...s.stats}}, low: {...s.stats}, kpi: null, kpiSeen: false, specialDay: null, specialId: null};
