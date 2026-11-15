@@ -113,6 +113,7 @@ Mỗi lá là một object trong file `cards.json` (mảng). Thêm lá mới = t
 
 ## Phần mở đầu và tutorial (Lily duyệt 15/11/2026)
 - Nội dung chữ: `mo-dau.json` (welcome, Ảnh thẻ hồ sơ, Phiếu thông tin nhân viên mới, 4 thẻ dẫn truyện, tutorial Ngày 1, mẹo lần đầu). Code: `visual-design/mo-dau.js`.
+- Giao diện theo hướng B "Tòa nhà bảy tầng" (Lily chọn 15/11): màn chào là tòa nhà 7 tầng, Ảnh thẻ là gương trong thang máy (một khung 3D nhỏ chỉ có nhân vật, kéo để xoay), Phiếu là bìa kẹp hồ sơ trên quầy lễ tân, chị Mai phản ứng với tên trong bong bóng thoại. Mỗi màn phủ kín trang, map 3D không hiện phía sau. Máy tính xếp hai cột, điện thoại xếp một cột.
 - Trang mở mới (không phải từ phòng trọ hay quán trà sữa về) hiện welcome: chưa có ván thì "Bắt đầu thử việc", có ván thì "Đi làm tiếp" kèm "Ván mới" (bấm hai lần). Chơi lại từ màn kết hoặc Sổ tay đi lại Ảnh thẻ, Phiếu (giữ lựa chọn cũ) và dẫn truyện.
 - Ngoại hình chỉ đổi hình, không đổi chỉ số: kiểu tóc, màu tóc, phụ kiện (`LOOKS` trong world.js). Áo sơ mi trắng và dây thẻ intern cố định. Ván lưu `name` và `look`; ván cũ chỉ có `female` thì tự đổi sang tóc dài/ngắn. Nút Nam/Nữ trên HUD đã bỏ ở cả 3 trang.
 - Tên: viết `{ten}` (hoặc `{TEN}` viết hoa) trong bất kỳ câu nào của lá, câu thoại, KPI, đánh giá; game tự thay bằng tên người chơi (`G.fillName`). Đang dùng ở lá D1, câu Sổ tay, lời giới thiệu lần đầu của anh Tuấn, giấy nhớ KPI, lật hồ sơ ngày 40, nút chia sẻ kết cục và dòng "Intern · tên" trên HUD.
