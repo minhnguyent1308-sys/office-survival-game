@@ -102,9 +102,6 @@ body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--font-b
   <div class="card stats" id="stats" aria-label="Chỉ số"></div>
 </div>
 <div class="hud tr">
-  <div class="card seg" role="group" aria-label="Chọn nhân vật">
-    <button id="g-m" aria-pressed="true">Nam</button><button id="g-f" aria-pressed="false">Nữ</button>
-  </div>
 </div>
 <div class="toast" id="toast" hidden role="status"></div>
 <div class="hint" id="hint">Chạm vào sàn để đi · WASD / phím mũi tên · E để tương tác</div>
@@ -124,6 +121,7 @@ import * as T from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import * as G from './engine.js'; // same rules as tầng Intern; the room is where evenings and weekends happen
 import * as Wd from './world.js';  // palette, builders, characters, walk grid shared with tầng Intern
+import * as Op from './mo-dau.js';      // Day-1 tutorial: the last tip, the first night
 import * as Pl from './placements.js'; // partner slots (affiliate): declared, empty for now
 
 const P = Wd.P; // one palette for every map (home tokens included)
@@ -293,7 +291,8 @@ const CUSHION = [3.55, 4.55]; // the cat's favourite nap spot: the red floor cus
 
 /* ---------- Characters: same builder as tầng Intern (world.js) ---------- */
 // at home the player wears pajamas: matching top and trousers, white collar and buttons, no work lanyard
-const player = makeChar({shirt:P.pajama, pants:P.pajama});
+const PLAYER_BASE = {shirt:P.pajama, pants:P.pajama, lanyard:false}; // what you wear here
+let player = makeChar(Wd.playerLook(G.DEFAULT_LOOK, PLAYER_BASE));
 { const add = (w, h, d, x, y, z) => { const m = new T.Mesh(new T.BoxGeometry(w, h, d), mat(P.pajamaTrim)); m.position.set(x, y, z); player.g.add(m); };
   add(.34, .06, .04, 0, 1.25, .16);                                     // collar
   [1.12, .98, .84].forEach(y => add(.05, .05, .02, 0, y, .17)); }       // buttons
@@ -430,9 +429,11 @@ addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
 addEventListener('blur', () => keys.clear());
 
 /* ---------- Gender toggle ---------- */
-const gm = document.getElementById('g-m'), gf = document.getElementById('g-f');
-function setGender(f){ player.parts.setHair(f ? 'long' : 'short'); gm.setAttribute('aria-pressed', !f); gf.setAttribute('aria-pressed', f); if (S && S.female !== f) { S.female = f; save(); } }
-gm.onclick = () => setGender(false); gf.onclick = () => setGender(true);
+// the look from "Ảnh thẻ hồ sơ" (tầng Intern's opening), kept in the save: rebuild the character in place
+function wearLook(look){
+  const old = player; player = makeChar(Wd.playerLook(look, PLAYER_BASE));
+  player.g.position.copy(old.g.position); player.g.rotation.copy(old.g.rotation); player.path = old.path; scene.remove(old.g);
+}
 
 /* ---------- Tags + sheet (same components as tầng Intern) ---------- */
 const tagsEl = document.getElementById('tags'), tagEls = {};
@@ -443,7 +444,7 @@ for (const [id, h] of Object.entries(HOT)) {
 const sheet = document.getElementById('sheet');
 let talkId = null;
 const nextLine = Wd.makeLineBag(); // shuffle bag (world.js)
-const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = G.fillName(text, S); return e; };
 function sheetAction(label, onClick){
   const close = document.getElementById('sheet-close'); close.parentElement.querySelector('.sheet-main')?.remove();
   close.classList.toggle('ghost', !!label); if (!label) return;
@@ -462,7 +463,7 @@ const toastEl = document.getElementById('toast'); let toastT = 0;
 const toast = msg => { toastEl.textContent = msg; toastEl.hidden = false; toastT = 3.5; };
 
 /* ---------- Game: the evening at home. Rules live in engine.js, content in cards.json ---------- */
-const [CARD_DATA, HANDBOOK, MINIGAMES, RHYTHM, PLACEMENTS] = await Promise.all(['cards.json', 'handbook.json', 'minigames.json', 'nhip-choi.json', 'placements.json'].map(u => fetch(u).then(r => r.json())));
+const [CARD_DATA, HANDBOOK, MINIGAMES, RHYTHM, PLACEMENTS, OPENING] = await Promise.all(['cards.json', 'handbook.json', 'minigames.json', 'nhip-choi.json', 'placements.json', 'mo-dau.json'].map(u => fetch(u).then(r => r.json())));
 const CARDS = CARD_DATA.cards;
 G.useMinigames(MINIGAMES); // the next morning may be a mini-game day (nextDay/endWeekend draw it)
 G.useRhythm(RHYTHM);       // tonight's odds, and the next morning's special day / KPI / midday event (nhip-choi.json)
@@ -650,7 +651,7 @@ const updateSlots = Pl.mountSlots({map:'home', anchorOf:id => SPOTS[id]?.anchor,
 { const bad = [...G.validateRhythm(RHYTHM, CARD_DATA), ...Pl.validatePlacements(PLACEMENTS, 'home', Object.keys(SPOTS))]; if (bad.length) console.warn('nhip-choi.json / placements.json:', bad); }
 
 /* ---------- Arrival: the scene-change card from the office fades out on the room ---------- */
-setGender(!!S.female);
+wearLook(G.lookOf(S));
 if (S.part === 'evening') {
   Wd.paintFade(Wd.homeCard(G.weekdayName(S.day), S.day));
   arriveHome(); G.drawNight(S, CARDS);
@@ -715,8 +716,16 @@ function tick(now){
       e.innerHTML = (quest ? ICON.alert : HOT[id].act) + (near && !quest ? '<kbd> · E / chạm</kbd>' : ''); }
     if (!near && !quest && !task) e.hidden = true;
   }
+  updateCoach();
   renderer.render(scene, cam);
   requestAnimationFrame(tick);
+}
+// Day-1 tutorial, last step: the first evening at home (mo-dau.json tutorial.steps.home); done for this browser once read
+const coach = Op.makeCoach();
+function updateCoach(){
+  const h = OPENING.tutorial.steps.home, want = Op.tutorialOn(S) && S.part === 'evening' && !busy() && !staging && sheet.hidden && !laptopCard();
+  if (!want) { if (coach.shown) coach.hide(); return; }
+  coach.show({key:'home', who:h.who, text:G.fillName(h.line, S), buttons:[{label:OPENING.tutorial.ok, onClick:() => { Op.setGuide({done:true}); coach.hide(); }}]});
 }
 requestAnimationFrame(tick);
 window.__ready = true;

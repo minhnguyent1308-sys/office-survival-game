@@ -123,6 +123,10 @@ body{background:var(--ground);color:var(--ink);font-family:var(--font-body);over
 .fade small{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--yellow);font-weight:600}
 .fade b{font:800 40px/1.05 var(--font-display)}
 .fade span{font-size:15px;opacity:.8;max-width:360px}
+/* opening (mo-dau.js): the 3D floor stays behind the screens, the game HUD waits */
+body.opening .hud,body.opening #tags,body.opening .hint,body.opening .toast{display:none!important}
+.stats[data-focus] > span{opacity:.35}
+.stats[data-focus] > span.on{opacity:1}
 @media (prefers-reduced-motion:reduce){.chip{transition:none}.chip.intro,.chip.quest,.stats .warn,.tool.flash,.tool.primary{animation:none}.fade{transition:none}}
 @media (max-width:640px){.hud.tl{top:calc(62px + env(safe-area-inset-top,0px))}} /* phone: day card sits under the top-right buttons */
 /* HUD layout: day card + stats stacked top-left, buttons top-right, Tan làm bottom-right; the hint, sheet and toast keep clear of all of them */
@@ -136,13 +140,10 @@ body{background:var(--ground);color:var(--ink);font-family:var(--font-body);over
 <div id="stage"></div>
 <div id="tags"></div>
 <div class="hud tl">
-  <div class="card where"><b id="room-name">Tầng 1 · Hành lang</b><span id="day-line">Ngày 1 / 40 · Thứ Hai, 08:29</span><span class="today" id="day-note" hidden></span><span class="goal" id="goal"></span><span class="kpi" id="kpi-line" hidden></span></div>
+  <div class="card where"><b id="room-name">Tầng 1 · Hành lang</b><span id="day-line">Ngày 1 / 40 · Thứ Hai, 08:29</span><span id="who-line"></span><span class="today" id="day-note" hidden></span><span class="goal" id="goal"></span><span class="kpi" id="kpi-line" hidden></span></div>
   <div class="card stats" id="stats" aria-label="Chỉ số"></div>
 </div>
 <div class="hud tr">
-  <div class="card seg" role="group" aria-label="Chọn nhân vật">
-    <button id="g-m" aria-pressed="true">Nam</button><button id="g-f" aria-pressed="false">Nữ</button>
-  </div>
   <button class="card tool" id="open-handbook" hidden>Sổ tay</button>
   <button class="card tool" id="open-friends">Thân thiết</button>
   <button class="card tool" id="open-minigames">Mini-game</button>
@@ -163,6 +164,7 @@ body{background:var(--ground);color:var(--ink);font-family:var(--font-body);over
 import * as T from 'three';
 import * as G from './engine.js'; // rules of the 40-day loop (no 3D inside)
 import * as Wd from './world.js';
+import * as Op from './mo-dau.js';      // opening screens, Day-1 tutorial, first-time tips (text: mo-dau.json)
 import * as Pl from './placements.js'; // partner slots (affiliate): declared, empty for now
 import {runMinigame, validateMinigames} from './minigames.js'; // mini-game screens; content in minigames.json  // palette, builders, characters, walk grid shared with the rented room
 
@@ -370,7 +372,12 @@ plant(27.3, .3, .8);
 
 /* ---------- Characters: one builder for player and every NPC ---------- */
 // makeChar + tagHot come from world.js
-const player = makeChar({lanyard:true});
+let player = makeChar(Wd.playerLook(G.DEFAULT_LOOK));
+// the look from "Ảnh thẻ hồ sơ" (or an old save's Nam/Nữ): rebuild the character in place
+function wearLook(look){
+  const old = player; player = makeChar(Wd.playerLook(look));
+  player.g.position.copy(old.g.position); player.g.rotation.copy(old.g.rotation); player.path = old.path; scene.remove(old.g);
+}
 // every new day and every new run starts here: just out of the elevator, facing the floor (Lily 15/11).
 // Also clears a scene pose (fainted, seated) so nothing from the last scene follows you.
 const ARRIVE = {x:11.3, z:1.6, rot:0};
@@ -579,7 +586,7 @@ const HOT = {
   linh:     {at:[6.1,16.6],  tag:'Chị Linh', eyebrow:'Senior', title:'Chị Linh, Senior', intro:'"Chị là Linh, Senior, kiêm lo sự kiện nội bộ. Nên sinh nhật ai em cũng sẽ phải góp quỹ nhé."'},
   minh:     {at:[9.5,16.6],  tag:'Anh Minh', eyebrow:'Senior', title:'Anh Minh, Senior', intro:'"Anh là Minh, Senior. Anh đeo tai nghe cả ngày, nhưng thật ra không bật nhạc đâu."'},
   tung:     {at:[6.9,12.8],  tag:'Anh Tùng', eyebrow:'Junior · ngồi cạnh bạn', title:'Anh Tùng, Junior', intro:'"Anh là Tùng, Junior, mới lên chức được hai tuần. Mình ngồi cạnh nhau, có gì giúp nhau nhé."'},
-  boss:     {at:[2.8,4.2],   tag:'Sếp', eyebrow:'Trưởng phòng', title:'Anh Tuấn, Trưởng phòng', intro:'"Anh là Tuấn, Trưởng phòng. Anh tin em sẽ làm tốt, vì anh đã giao hơi nhiều việc."'},
+  boss:     {at:[2.8,4.2],   tag:'Sếp', eyebrow:'Trưởng phòng', title:'Anh Tuấn, Trưởng phòng', intro:'"{ten} hả? Anh là Tuấn, Trưởng phòng. Anh tin em sẽ làm tốt, vì anh đã giao hơi nhiều việc."'},
   elevator: {at:[11.3,1.2],  tag:'Thang máy', act:'Đi thang máy', eyebrow:'Di chuyển giữa các tầng', title:'Thang máy', elevator:true},
   letan:    {at:[15.75,4.3], tag:'Chị Mai lễ tân', eyebrow:'Lễ tân', title:'Chị Mai, lễ tân', intro:'"Chị là Mai, lễ tân. Ai ra vào tòa nhà chị đều biết, kể cả giờ em đi làm muộn."'},
   chef:     {at:[20.0,10.4],  tag:'Quầy cơm', act:'Ăn trưa', later:'Quầy cơm · hoạt động: ăn trưa', eyebrow:'Quầy cơm · hoạt động: ăn trưa', title:'Cô Ba, đầu bếp', intro:'"Cô là cô Ba, đầu bếp căng tin. Cơm ngon hay không thì tùy, nhưng phải ăn đúng giờ."'},
@@ -632,10 +639,6 @@ addEventListener('keydown', e => {
 addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
 addEventListener('blur', () => keys.clear());
 
-/* ---------- Gender toggle: same body, swap hair (why 3D blocks are cheap) ---------- */
-const gm = document.getElementById('g-m'), gf = document.getElementById('g-f');
-function setGender(f){ player.parts.setHair(f ? 'long' : 'short'); gm.setAttribute('aria-pressed', !f); gf.setAttribute('aria-pressed', f); }
-gm.onclick = () => setGender(false); gf.onclick = () => setGender(true);
 
 /* ---------- Tags, room labels, dialog ---------- */
 const tagsEl = document.getElementById('tags'), tagEls = {};
@@ -678,7 +681,7 @@ function openSheet(id){
       const first = !met.has(id); met.add(id);
       document.getElementById('sheet-eyebrow').textContent = first ? 'Lần đầu gặp mặt' : (h.later || '');
       document.getElementById('sheet-title').textContent = h.title; // speaker name always shows in the dialog box
-      p.textContent = first ? h.intro + ' ' + line : line;
+      p.textContent = G.fillName(first ? h.intro + ' ' + line : line, S);
     } else p.textContent = line;
     body.appendChild(p);
     if (isGossip(id)) { document.getElementById('sheet-eyebrow').textContent = 'Chế độ tám chuyện'; NPCS[id].wander.timer = Math.max(NPCS[id].wander.timer, 6); }
@@ -813,7 +816,7 @@ function updateSeniors(dt){
 }
 
 /* ---------- Game: the 40-day loop. Rules live in engine.js, content in cards.json + handbook.json ---------- */
-const [CARD_DATA, HANDBOOK, MINIGAMES, REVIEW, RHYTHM, PLACEMENTS] = await Promise.all(['cards.json', 'handbook.json', 'minigames.json', 'danh-gia.json', 'nhip-choi.json', 'placements.json'].map(u => fetch(u).then(r => r.json())));
+const [CARD_DATA, HANDBOOK, MINIGAMES, REVIEW, RHYTHM, PLACEMENTS, OPENING] = await Promise.all(['cards.json', 'handbook.json', 'minigames.json', 'danh-gia.json', 'nhip-choi.json', 'placements.json', 'mo-dau.json'].map(u => fetch(u).then(r => r.json())));
 const CARDS = CARD_DATA.cards;
 G.useMinigames(MINIGAMES); G.useRhythm(RHYTHM); Pl.usePlacements(PLACEMENTS);
 { const bad = [...G.validateCards(CARD_DATA), ...validateMinigames(MINIGAMES), ...G.validateRhythm(RHYTHM, CARD_DATA)]; if (bad.length) console.warn('cards.json / minigames.json / nhip-choi.json:', bad); }
@@ -833,10 +836,13 @@ const fromHash = () => { try { const m = location.hash.match(/s=([^&]+)/); retur
 let S = (await store.load()) || fromHash();
 const fromHome = location.hash.includes('from=home'), fromShop = location.hash.includes('from=trasua');
 if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+const hadSave = !!S;
+// no save yet: a stand-in run keeps the floor alive behind the welcome screen; it is never saved (the opening starts the real one)
+let standIn = !S;
 if (!S) { S = G.newGame({startRooms: CARD_DATA.rooms?.start}); G.startMorning(S, CARDS); }
 S.today.canteen ||= G.rollCanteen(); // saves made before the canteen roll existed
 G.catchUpWeek(S, CARDS);             // saves made before the weekly KPI existed
-const save = () => store.save(S);
+const save = () => standIn ? null : store.save(S);
 let staging = false, stageTime = null; // a staged event is playing (runStage); the clock shows the event's time
 let questId = null; // hotspot that carries today's "!" (a person, or a place for cards with no person)
 
@@ -876,8 +882,10 @@ const hbBtn = document.getElementById('open-handbook');
 function renderHUD(){
   document.getElementById('day-line').textContent = `Ngày ${S.day} / ${G.TOTAL_DAYS} · ${G.weekdayName(S.day)}, ${stageTime || TIME[S.part]}`;
   const row = (k, max, extra = '') => { const v = S.stats[k], warn = k === 'pin' && v < 20;
-    return `<span class="${warn ? 'warn' : ''}">${G.STAT_NAME[k]}</span><span class="bar" style="--c:var(--${k})"><i style="width:${v / max * 100}%"></i>${extra}</span><span class="val ${warn ? 'warn' : ''}">${v}</span>`; };
+    const on = statsEl.dataset.focus === k ? ' on' : '';                                  // tutorial points at one bar
+    return `<span class="${warn ? 'warn' : ''}${on}">${G.STAT_NAME[k]}</span><span class="bar${on}" style="--c:var(--${k})"><i style="width:${v / max * 100}%"></i>${extra}</span><span class="val ${warn ? 'warn' : ''}${on}">${v}</span>`; };
   statsEl.innerHTML = row('xp', 150, `<s style="left:${G.JUNIOR_XP / 150 * 100}%"></s>`) + row('pin', 100) + row('ut', 100) + row('qh', 100);
+  document.getElementById('who-line').textContent = 'Intern · ' + G.playerName(S);
   hbBtn.hidden = !G.hasFlag(S, 'co_so_tay');
   hbBtn.textContent = `Sổ tay ${S.missionsDone.length}/${HANDBOOK.missions.length}`;
   hbBtn.classList.toggle('flash', S.day >= 30 && S.missionsDone.length < HANDBOOK.missions.length);
@@ -904,7 +912,7 @@ const deltaChips = got => { const d = document.createElement('div'); d.className
   for (const [n, v] of Object.entries(got.close || {})) d.insertAdjacentHTML('beforeend', `<span class="delta ${v < 0 ? 'down' : ''}">Thân với ${G.NPC_NAME[n]} ${v > 0 ? '+' : '−'}${Math.abs(v)}</span>`);
   return d; };
 const effectText = e => G.STATS.filter(k => e[k]).map(k => `${G.STAT_NAME[k]} ${e[k] > 0 ? '+' : '−'}${Math.abs(e[k])}`).join(' · ');
-const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = G.fillName(text, S); return e; };
 let toastQueue = [];
 const notify = msg => { toastQueue.push(msg); };
 function afterChange(){ for (const f of G.checkMissions(S, HANDBOOK)) notify(`Xong nhiệm vụ: ${f.mission.title}`); renderHUD(); save(); }
@@ -1341,22 +1349,129 @@ function showEnd(){
     el('p', 'note', `Huy hiệu (${badges.length}): ${badges.join(', ') || 'chưa có'}`),
     el('p', 'note', `Sổ tay: ${S.missionsDone.length}/${HANDBOOK.missions.length} nhiệm vụ · Mini-game: ${mg.join(' · ') || 'chưa chơi'}`),
     el('p', 'note', `${S.counters.actions.an_trua_co_ba || 0} bữa cơm cô Ba · ${S.counters.gossipWith.length} người cùng tám chuyện · thân nhất: ${G.NPC_NAME[closest]} (${S.close[closest]})` + (early ? ` · dừng ở ngày ${S.day}` : '')));
-  const share = async e => { const text = `Mình vừa chơi "Sống sót nơi công sở": ${end.title}. ${early ? end.verdict : r.verdict}`;
+  const share = async e => { const text = `${G.playerName(S)} vừa chơi "Sống sót nơi công sở": ${end.title}. ${early ? end.verdict : r.verdict}`;
     try { if (navigator.share) await navigator.share({text}); else { await navigator.clipboard.writeText(text); e.target.textContent = 'Đã chép, dán cho bạn bè nhé'; } } catch { e.target.textContent = 'Không chia sẻ được'; } };
   modal({eyebrow: early ? 'Kết thúc sớm' : `Ngày ${G.TOTAL_DAYS} · Phán quyết` + (end.secret ? ' · Kết cục bí mật' : ''), title:end.title, nodes,
     actions:[{label:'Chia sẻ kết cục', ghost:true, onClick:share}, {label:'Chơi lại', onClick:restart}]});
 }
-async function restart(){
+// "Chơi lại" (end screen, Sổ tay): Ảnh thẻ and Phiếu keep the last choices, then the story (Bỏ qua on every card)
+const restart = () => { closeModal(); closeSheet(); return runOpening(); };
+async function newRun({look, name}){
   cutscene = false; camFocus = null; fainted = false; sceneSit = null; pendingHot = null; focusHalf = [6, 5.6]; document.getElementById('sheet-close').hidden = false;
   arriveByElevator();                          // the old run may have ended in a room the new run starts with closed (the meeting room)
-  await store.clear(); S = G.newGame({female: gf.getAttribute('aria-pressed') === 'true', startRooms: CARD_DATA.rooms?.start}); G.startMorning(S, CARDS); applyRooms();
+  standIn = false; await store.clear(); S = G.newGame({look, name, startRooms: CARD_DATA.rooms?.start}); G.startMorning(S, CARDS); applyRooms(); wearLook(look);
   for (const id of Object.keys(NPCS)) if (NPCS[id].quest) release(id);
   if (questId === 'client') release('client');
+  met.clear(); elapsed = 0; tut.reset();       // everyone introduces themselves again; the desk label bounces again
   closeModal(); afterChange(); setupMorning();
 }
 
+/* -- opening (mo-dau.js): welcome -> Ảnh thẻ hồ sơ -> Phiếu nhân viên mới -> 4 story cards -> Day 1 by the elevator -- */
+let opening = null, dragX = null, lookSpin = 0;    // 'welcome' | 'look' | null: what the camera shows behind the opening screens
+const LOBBY_VIEW = new T.Vector3(13.2, 0, 3.4), FRONT = Math.PI / 4;                     // facing the camera
+const backdrop = new T.Mesh(new T.PlaneGeometry(5, 4.4), new T.MeshBasicMaterial({color:'#3c83ec'})); // ID-photo blue
+backdrop.visible = false; scene.add(backdrop);
+function openingMode(mode){
+  opening = mode; document.body.classList.toggle('opening', !!mode); cutscene = !!mode; backdrop.visible = mode === 'look';
+  if (mode) { closeSheet(); coach.hide(); }
+  if (mode === 'welcome') { focusHalf = [9, 6.5]; camFocus = LOBBY_VIEW.clone(); }
+  else if (mode === 'look') {
+    fainted = false; sceneSit = null; arriveByElevator(); player.g.rotation.set(0, FRONT, 0); lookSpin = 0;
+    const p = player.g.position, toCam = camOffset.clone().normalize();
+    backdrop.position.set(p.x, 2, p.z).addScaledVector(new T.Vector3(toCam.x, 0, toCam.z).normalize(), -1.1); backdrop.lookAt(backdrop.position.clone().add(camOffset));
+    focusHalf = [1.7, 1.75]; camFocus = lookFocus();
+  } else { camFocus = null; focusHalf = [6, 5.6]; }
+}
+// the character fills the left of the screen (panel on the right), or the top on a phone (panel below)
+function lookFocus(){
+  const p = player.g.position, c = new T.Vector3(p.x, .95, p.z), phone = innerWidth <= 640;
+  const half = (phone ? cam.top : cam.right) / Math.max(1, Math.min(cam.right / focusHalf[0], cam.top / focusHalf[1]));
+  return phone ? c.add(new T.Vector3(1, 0, 1).normalize().multiplyScalar(half * .8)) : c.add(new T.Vector3(1, 0, -1).normalize().multiplyScalar(half * .38));
+}
+renderer.domElement.addEventListener('pointerdown', e => { if (opening === 'look') { dragX = e.clientX; renderer.domElement.setPointerCapture(e.pointerId); } });
+renderer.domElement.addEventListener('pointermove', e => { if (opening === 'look' && dragX != null) { player.g.rotation.y += (e.clientX - dragX) * .012; dragX = e.clientX; lookSpin = 2.5; } });
+addEventListener('pointerup', () => { dragX = null; });
+// the photo for the form: the head and shoulders, cropped from the frame just drawn
+function shootPhoto(){
+  player.g.rotation.y = FRONT; animateWalk(player, false, 0); renderer.render(scene, cam);
+  try {
+    const src = renderer.domElement, k = src.width / innerWidth, p = player.g.position;
+    const at = y => { const v = new T.Vector3(p.x, y, p.z).project(cam); return [(v.x + 1) / 2 * innerWidth * k, (1 - v.y) / 2 * innerHeight * k]; };
+    const [cx, top] = at(2.15), [, bottom] = at(.75), h = bottom - top, w = h * .8;
+    const out = document.createElement('canvas'); out.width = 160; out.height = 200;
+    out.getContext('2d').drawImage(src, cx - w / 2, top, w, h, 0, 0, 160, 200);
+    return out.toDataURL('image/jpeg', .85);
+  } catch { return null; }
+}
+async function runOpening(){
+  openingMode('look');
+  const {look, photo} = await Op.lookPicker(OPENING, G.lookOf(S), {onChange: l => { wearLook(l); player.g.rotation.set(0, player.g.rotation.y, 0); }, shoot: shootPhoto});
+  const name = await Op.nameForm(OPENING, {name: S.name || '', photo});
+  const close = await Op.prologue(OPENING, name);
+  await newRun({look, name}); openingMode(null);
+  await close();
+}
+// a fresh page (not back from the rented room or the shop): the welcome screen first
+async function welcomeScreen(){
+  openingMode('welcome');
+  const resume = hadSave ? `Ngày ${S.day} · ${G.weekdayName(S.day)}${S.name ? ' · ' + S.name : ''}` : null;
+  if (await Op.welcome(OPENING, resume) === 'new') return runOpening();
+  if (!S.name) { S.name = await Op.nameForm(OPENING); save(); }  // saves from before the opening have no name yet
+  openingMode(null); resumeRun();
+}
+
+/* -- Day-1 tutorial (chị Mai) and first-time tips: one coach bubble, shown only while nothing else is open -- */
+const coach = Op.makeCoach(), TUT = OPENING.tutorial;
+const tut = {done:new Set(), stat:0, ringed:[], reset(){ this.done.clear(); this.stat = 0; }};
+const hideCoach = () => { coach.hide(); ring([]); };
+function ring(els, stat = null){
+  for (const e of tut.ringed) e.classList.remove('coach-ring'); tut.ringed = els; for (const e of els) e.classList.add('coach-ring');
+  if ((statsEl.dataset.focus || null) !== stat) { if (stat) statsEl.dataset.focus = stat; else delete statsEl.dataset.focus; renderHUD(); }
+}
+const say = line => G.fillName(line, S);
+const offBtn = {label:TUT.off, ghost:true, onClick:() => { Op.setGuide({off:true}); hideCoach(); }};
+function tutorialStep(){
+  const st = TUT.steps, d = tut.done;
+  if (S.today.cardId === 'D1' && !S.today.cardDone)
+    return nearId === 'letan' ? {key:'talk', text:say(st.talk), buttons:[offBtn]} : {key:'walk', text:say(st.walk), ring:[goalEl], buttons:[offBtn]};
+  if (G.hasFlag(S, 'co_so_tay') && !d.has('stats')) { const s = st.stats[tut.stat], last = tut.stat === st.stats.length - 1;
+    return {key:'stats' + tut.stat, text:say(s.line), ring:[statsEl], stat:s.stat, buttons:[{label:TUT.next, onClick:() => { if (last) d.add('stats'); else tut.stat++; }}]}; }
+  if (G.hasFlag(S, 'co_so_tay') && !d.has('handbook')) return {key:'handbook', text:say(st.handbook), ring:[hbBtn]};
+  if (nearId && PEOPLE.has(nearId) && nearId !== 'letan' && !met.has(nearId) && !d.has('meet')) return {key:'meet', text:say(st.meet)};
+  if (S.part === 'afternoon' && !S.today.action) return {key:'afternoon', text:say(st.afternoon)};
+  if (S.part === 'evening') return {key:'evening', text:say(st.evening), ring:[leaveBtn]};
+  return null;
+}
+const TIPS = [
+  ['canteen', () => G.roomOpen(S, 'canteen') && S.day > 1],
+  ['trasua', () => S.rooms?.includes('trasua')],
+  ['kpi', () => S.week?.kpi && S.week.kpiSeen],
+  ['special', () => !!S.today.specialId && S.today.specialDone],
+  ['lowPin', () => S.stats.pin < 20],
+  ['close', () => G.NPC_IDS.some(n => S.close[n] >= G.CLOSE_UNLOCK)],
+];
+function tipStep(){
+  if (Op.guide().off) return null;
+  const seen = Op.guide().tips || [], hit = TIPS.find(([id, when]) => !seen.includes(id) && when());
+  if (!hit) return null;
+  const id = hit[0], t = OPENING.tips[id], n = id === 'close' ? G.NPC_IDS.find(x => S.close[x] >= G.CLOSE_UNLOCK) : null;
+  const who = n ? G.NPC_NAME[n] : t.who, text = n ? t.line.replace('{toi}', G.NPC_NAME[n].split(' ')[0].toLowerCase()) : t.line;
+  return {key:'tip:' + id, who, text:say(text), buttons:[{label:TUT.ok, onClick:() => { Op.tipOnce(id); hideCoach(); }}]};
+}
+function updateCoach(){
+  const busy = opening || cutscene || staging || mgRunning || !sheet.hidden || !modalWrap.hidden || fadeEl.classList.contains('on');
+  if (busy) { if (coach.shown) hideCoach(); return; }
+  if (S.day > 1 && Op.guide().started && !Op.guide().done) Op.setGuide({done:true});   // the first day is behind you
+  const on = Op.tutorialOn(S), step = on ? tutorialStep() : tipStep();
+  if (!step) { if (coach.shown) hideCoach(); return; }
+  if (on && !Op.guide().started) Op.setGuide({started:true});
+  if (coach.key !== step.key) { coach.show({key:step.key, who:step.who || TUT.who, text:step.text, buttons:step.buttons}); ring(step.ring || [], step.stat || null); }
+}
+
+
 /* -- handbook + closeness panels -- */
 hbBtn.onclick = () => {
+  tut.done.add('handbook');
   const list = el('div');
   for (const m of HANDBOOK.missions) {
     const done = S.missionsDone.includes(m.id), [a, b] = G.missionProgress(S, m.goal);
@@ -1379,19 +1494,22 @@ modalWrap.addEventListener('keydown', e => { if (e.key === 'Escape' && modalEl.q
 
 // talking: today's card first; every talk counts for "Chào hỏi cả công ty"
 function gameTalk(id){
+  if (PEOPLE.has(id) && id !== 'letan') tut.done.add('meet');
   if (PEOPLE.has(id) || id === 'chef') { G.recordTalk(S, storyId(id)); afterChange(); }
   if (id === questId && S.part === 'morning' && !S.today.cardDone) { openCard(id); return true; }
   return false;
 }
-setGender(S.female);
+wearLook(G.lookOf(S));
 for (const id of ['lock_canteen', 'lock_canteen2', 'lock_meeting']) HOT[id].text = CARD_DATA.rooms?.lockedSigns?.[HOT[id].lock] || 'Phòng này chưa mở.';
 applyRooms(); dressForToday();
-gm.addEventListener('click', () => { S.female = false; save(); }); gf.addEventListener('click', () => { S.female = true; save(); });
 // resume exactly where the save left off
-if (G.isAtHome(S)) goHome();                  // evening after 17:55 or the weekend: that happens in the rented room
-else if (S.part === 'evening' && !fromShop) showEvening(); // back from the shop after the afternoon: "Tan làm" waits on its button
-else if (S.part === 'over') showFinale();
-else setupMorning();
+function resumeRun(){
+  if (G.isAtHome(S)) goHome();                  // evening after 17:55 or the weekend: that happens in the rented room
+  else if (S.part === 'evening' && !fromShop) showEvening(); // back from the shop after the afternoon: "Tan làm" waits on its button
+  else if (S.part === 'over') showFinale();
+  else setupMorning();
+}
+if (fromHome || fromShop) resumeRun(); else welcomeScreen();
 afterChange();
 if (S.today.wake?.pin && !S.today.wakeShown) { S.today.wakeShown = true; notify(`Ngủ dậy: Pin +${S.today.wake.pin}`); save(); } // the room sent us here the morning after
 // arriving from the rented room: the room's "Sáng hôm sau" card (already on screen) fades out on the office
@@ -1450,6 +1568,9 @@ function tick(now){
   const ev = !staging && !cutscene && !mgRunning && sheet.hidden && modalWrap.hidden && !fadeEl.classList.contains('on') ? G.todaysEvent(S, CARDS) : null;
   if (ev) { evIdle += dt; if (evIdle > 1.2) { evIdle = 0; runStage(ev); } } else evIdle = 0;
   updateSlots();
+  if (opening === 'welcome' && camFocus && !reduce) camFocus.x = LOBBY_VIEW.x + Math.sin(now / 5000) * 1.6; // slow drift across the lobby
+  if (opening === 'look') { if (dragX == null && (lookSpin -= dt) <= 0 && !reduce) player.g.rotation.y += dt * .5; camFocus = lookFocus(); }
+  updateCoach();
   if (meBubble > 0) { meBubble -= dt; meBubbleEl.hidden = !place(meBubbleEl, pos.x, 2.25 + pos.y, pos.z); } else meBubbleEl.hidden = true;
   // HUD room name
   const room = roomAt(pos.x, pos.z), rn = room ? room.name : 'Hành lang';

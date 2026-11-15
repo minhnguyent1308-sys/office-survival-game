@@ -26,7 +26,7 @@
       "flag": "nhan_vien_kpi",
       "min": 3
     },
-    "intro": "Anh Tuấn dán một tờ giấy nhớ lên màn hình của bạn:",
+    "intro": "Anh Tuấn dán một tờ giấy nhớ lên màn hình của bạn, góc trên ghi \"Gửi {ten}\":",
     "ignoreLine": "Bạn gỡ tờ giấy nhớ, gấp làm tư và nhét vào ngăn kéo. Anh Tuấn nhìn thấy. Anh không nói gì, và đó mới là điều đáng lo.",
     "pool": [
       {

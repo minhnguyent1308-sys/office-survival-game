@@ -1,0 +1,93 @@
+{
+  "version": 1,
+  "note": "Phần mở đầu game (Lily duyệt 15/11/2026, doc 'Kịch bản mở đầu game Tầng Intern'). Welcome, Ảnh thẻ (chọn ngoại hình, không đổi chỉ số), Phiếu nhân viên mới (đặt tên), 4 thẻ dẫn truyện, tutorial Ngày 1 và mẹo lần đầu. {ten} = tên người chơi, {TEN} = tên viết hoa. Lựa chọn ngoại hình (màu, phụ kiện) nằm ở world.js LOOKS vì ba trang đều cần để dựng nhân vật. Code: visual-design/mo-dau.js.",
+  "welcome": {
+    "title": "Sống sót nơi công sở",
+    "sub": "40 ngày thử việc. Một suất Junior.",
+    "quotes": [
+      "\"Phòng mình có ba loại deadline: gấp, rất gấp, và hôm qua.\" (chị Hằng)",
+      "\"Thử việc có 40 ngày thôi mà. Chị thử việc ở đây tám năm rồi đây.\" (chị Hằng)",
+      "\"Ai hỏi em có bận không thì đừng trả lời ngay.\" (chị Hằng)",
+      "\"Lỗi này không phải do em. Nhưng người sửa thì là em.\" (anh Minh)"
+    ],
+    "start": "Bắt đầu thử việc",
+    "continue": "Đi làm tiếp",
+    "newRun": "Ván mới",
+    "newRunConfirm": "Bấm lần nữa để xóa ván đang chơi",
+    "footer": "Game tự lưu sau mỗi lựa chọn."
+  },
+  "look": {
+    "eyebrow": "Phòng Nhân sự",
+    "title": "Ảnh thẻ hồ sơ",
+    "lead": "Phòng Nhân sự cần một tấm ảnh thẻ. Tấm ảnh này sẽ đi theo bạn suốt 40 ngày, và có thể lâu hơn nếu bạn được ký hợp đồng.",
+    "rows": {"hair": "Kiểu tóc", "color": "Màu tóc", "extra": "Phụ kiện"},
+    "hint": "Kéo nhân vật để xoay",
+    "random": "Ngẫu nhiên",
+    "shoot": "Chụp ảnh"
+  },
+  "name": {
+    "eyebrow": "Hồ sơ thử việc",
+    "title": "Phiếu thông tin nhân viên mới",
+    "stamp": "THỬ VIỆC",
+    "label": "Tên gọi",
+    "placeholder": "Tên đồng nghiệp sẽ gọi bạn",
+    "rows": [
+      ["Vị trí", "Thực tập sinh · Tầng 1"],
+      ["Thời gian thử việc", "40 ngày"],
+      ["Mức lương", "Sẽ trao đổi sau"],
+      ["Người hướng dẫn", "Chị Mai (lễ tân) · được giao tạm"]
+    ],
+    "max": 12,
+    "suggest": "Gợi ý tên",
+    "suggestions": ["An", "Bình", "Chi", "Dũng", "Giang", "Hà", "Khánh", "Lam", "Ngân", "Nhi", "Quân", "Trang", "Vy", "Yến"],
+    "invalid": "Chỉ dùng chữ cái và khoảng trắng nhé.",
+    "sign": "Ký tên",
+    "who": "Chị Mai",
+    "special": {
+      "phong": "\"Phong à… Em đừng giới thiệu tên với sếp vội nhé. Chuyện dài.\"",
+      "tuấn": "\"Trùng tên sếp. Em sẽ được nhớ tên rất nhanh, theo cả hai hướng.\""
+    },
+    "taken": {"hằng": "chị Hằng", "linh": "chị Linh", "minh": "anh Minh", "tùng": "anh Tùng", "mai": "chị Mai", "ba": "cô Ba", "thu": "chị Thu"},
+    "takenLine": "\"Phòng mình có {npc} rồi. Thôi không sao, gọi em là {ten} nhỏ.\""
+  },
+  "prologue": {
+    "skip": "Bỏ qua",
+    "next": "Chạm để tiếp tục",
+    "cards": [
+      {"eyebrow": "Ba tuần trước · 23:47", "title": "Email lúc nửa đêm", "sub": "Hộp thư báo có thư mới: \"Chúc mừng {ten} đã trúng tuyển vị trí Thực tập sinh. Thời gian thử việc: 40 ngày. Mức lương: sẽ trao đổi sau.\" Bạn đọc lại ba lần. Đến lần thứ ba mới để ý chữ \"sau\"."},
+      {"eyebrow": "Chủ nhật · 21:00 · Phòng trọ", "title": "Đêm trước ngày đầu", "sub": "Phòng trọ mười hai mét vuông, cửa sổ nhìn thẳng vào tường nhà bên. Cô chủ trọ nhắn: \"Tiền điện tính giá kinh doanh nhé con.\" Bạn ủi phẳng chiếc sơ mi trắng, treo lên móc, đặt ba cái báo thức cách nhau năm phút."},
+      {"eyebrow": "Thứ Hai · 08:24 · Thang máy", "title": "Bảy tầng", "sub": "Bảng trong thang máy ghi: Tầng 7, Giám đốc bộ phận, có bể cá. Tầng 2, Junior. Tầng 1, Sảnh, Căng tin, Intern. Người đàn ông vest xám đứng cạnh bạn bấm tầng 7, liếc thẻ của bạn rồi gật đầu: \"Tầng 1 à. Cố lên em.\" Ông không nói cố lên để làm gì."},
+      {"eyebrow": "Thứ Hai · 08:29 · Tầng 1", "title": "Bốn mươi ngày", "sub": "Cửa thang máy mở. Ở tầng này có một suất Junior, bốn mươi ngày thử việc, và một cái cây góc phòng đã sống lâu hơn ba đời intern. Mục tiêu chính: sống sót. Mục tiêu phụ: thăng tiến."}
+    ]
+  },
+  "tutorial": {
+    "who": "Chị Mai",
+    "off": "Tắt hướng dẫn",
+    "next": "Tiếp",
+    "ok": "Đã hiểu",
+    "steps": {
+      "walk": "\"{ten}! Bên này em. Chạm xuống sàn để đi, máy tính thì dùng WASD.\"",
+      "talk": "\"Mỗi sáng sẽ có một người đợi em như chị bây giờ. Nói chuyện là biết hôm nay có chuyện gì.\"",
+      "stats": [
+        {"stat": null, "line": "\"Bốn thanh này là mạng sống của em ở đây. Chị nói nhanh thôi.\""},
+        {"stat": "xp", "line": "\"XP: kinh nghiệm. Qua vạch 100 mới đủ lên Junior. XP chỉ có lên.\""},
+        {"stat": "pin", "line": "\"Pin: sức của em. 17:55 mà Pin về 0 là em xỉu, rồi về quê nuôi gà. Ngủ một đêm được cộng 5.\""},
+        {"stat": "ut", "line": "\"Uy tín: sếp nhìn em thế nào. 17:55 mà dưới 10 là được mời nghỉ sớm.\""},
+        {"stat": "qh", "line": "\"Quan hệ: cả phòng nghĩ gì về em. Phòng này nhớ dai lắm.\""}
+      ],
+      "handbook": "\"Sổ tay có 10 việc. Ngày 40 mà thiếu một ô, XP cao mấy sếp cũng không ký.\"",
+      "afternoon": "\"Buổi chiều em được chọn một việc thôi. Mỗi việc ghi rõ được gì, mất gì, đọc kỹ rồi chọn.\"",
+      "meet": "\"Nói chuyện với mọi người không tốn lượt nào. Chào đủ cả công ty là xong một ô sổ tay đấy.\"",
+      "evening": "\"Hết giờ rồi. Pin và Uy tín chỉ bị xét đúng lúc này mỗi ngày, nên buổi chiều vẫn còn cứu được.\"",
+      "home": {"who": "Mẹo", "line": "Buổi tối thỉnh thoảng có tin nhắn hoặc chuyện bất ngờ. Tự học thì được XP nhưng tốn Pin. Đi ngủ để sang ngày mới."}
+    }
+  },
+  "tips": {
+    "canteen": {"who": "Cô Ba", "line": "\"Ăn trưa với cô thì hồi Pin. Còn ngồi tám với tụi nó thì được Quan hệ, mà phải có người đang ngồi mới tám được.\""},
+    "trasua": {"who": "Chị Thu", "line": "\"Mỗi ngày mua một ly thôi em. Mua cho mình thì đỡ mệt, mua cho đồng nghiệp thì được lòng.\""},
+    "kpi": {"who": "Anh Tuấn", "line": "\"Tối thứ Sáu anh chấm. Trượt cũng không sao. Còn làm lơ thì anh có sao.\""},
+    "close": {"line": "\"Sáng mai em có rảnh không? Có chuyện này {toi} chỉ kể với em.\""},
+    "special": {"who": "Chị Mai", "line": "\"Hôm nay không giống mọi ngày đâu em. Đọc dòng vàng trên bảng giờ ấy.\""},
+    "lowPin": {"who": "Anh Tùng", "line": "\"Em trông như cái laptop còn 5% pin. Chiều nay ăn uống gì đi.\""}
+  }
+}

@@ -99,9 +99,6 @@ body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--font-b
   <div class="card stats" id="stats" aria-label="Chỉ số"></div>
 </div>
 <div class="hud tr">
-  <div class="card seg" role="group" aria-label="Chọn nhân vật">
-    <button id="g-m" aria-pressed="true">Nam</button><button id="g-f" aria-pressed="false">Nữ</button>
-  </div>
 </div>
 <div class="toast" id="toast" hidden role="status"></div>
 <div class="hint" id="hint">Chạm vào sàn để đi · WASD / phím mũi tên · E để tương tác</div>
@@ -248,7 +245,8 @@ sign(6.75, 6.5, 1.55, 1.1, .06, .5, '← TẬP ĐOÀN DEADLINE', P.ink, P.yellow
 box(6.75, 6.5, 1.55, 1.1, .06, .5, P.ink, {round:0, cast:false, hot:'exit', material:new T.MeshBasicMaterial({visible:false})});
 
 /* ---------- People: you, chị Thu behind the counter, sometimes a colleague, the shipper outside ---------- */
-const player = makeChar({lanyard:true});
+const PLAYER_BASE = {}; // what you wear here
+let player = makeChar(Wd.playerLook(G.DEFAULT_LOOK, PLAYER_BASE));
 const ENTRY = [5.6, 7.0];
 const owner = makeChar({shirt:TEA.pink, pants:P.pants, hair:'#2b1d16', style:'ponytail', apron:true, clip:P.yellow});
 owner.g.position.set(2.8, 0, .95); tagHot(owner, 'counter');
@@ -319,9 +317,11 @@ addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
 addEventListener('blur', () => keys.clear());
 
 /* ---------- Gender toggle ---------- */
-const gm = document.getElementById('g-m'), gf = document.getElementById('g-f');
-function setGender(f){ player.parts.setHair(f ? 'long' : 'short'); gm.setAttribute('aria-pressed', !f); gf.setAttribute('aria-pressed', f); if (S && S.female !== f) { S.female = f; save(); } }
-gm.onclick = () => setGender(false); gf.onclick = () => setGender(true);
+// the look from "Ảnh thẻ hồ sơ" (tầng Intern's opening), kept in the save: rebuild the character in place
+function wearLook(look){
+  const old = player; player = makeChar(Wd.playerLook(look, PLAYER_BASE));
+  player.g.position.copy(old.g.position); player.g.rotation.copy(old.g.rotation); player.path = old.path; scene.remove(old.g);
+}
 
 /* ---------- Tags + sheet (same components as the other maps) ---------- */
 const tagsEl = document.getElementById('tags'), tagEls = {};
@@ -332,7 +332,7 @@ for (const [id, h] of Object.entries(HOT)) {
 const sheet = document.getElementById('sheet');
 let talkId = null;
 const nextLine = Wd.makeLineBag();
-const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = G.fillName(text, S); return e; };
 function sheetAction(label, onClick){
   const close = document.getElementById('sheet-close'); close.parentElement.querySelector('.sheet-main')?.remove();
   close.classList.toggle('ghost', !!label); if (!label) return;
@@ -464,7 +464,7 @@ async function backToOffice(){
 }
 
 /* ---------- Arrival: the office's card fades out on the shop ---------- */
-setGender(!!S.female);
+wearLook(G.lookOf(S));
 if (eventCard()) { arrivedForEvent = true; spawnGuest(eventCard().npc); player.g.position.set(2.5, 0, 2.55); player.g.rotation.y = Math.PI; }
 else { spawnRegular(); player.g.position.set(ENTRY[0], 0, ENTRY[1]); planPath(player, 4.2, 3.0); }
 afterChange();

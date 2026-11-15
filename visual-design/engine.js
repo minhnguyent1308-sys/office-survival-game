@@ -88,8 +88,8 @@ export const PLACE_ACTIONS = Object.entries(ACTIONS).reduce((m, [id, a]) => ((m[
 
 const DAY_ONE = {
   id: 'D1', title: 'Ngày đầu nhận việc', type: 'milestone', npc: 'mai', room: 'lobby', heavy: false,
-  intro: 'Chị Mai đưa bạn cuốn "Sổ tay nhân viên mới": "10 nhiệm vụ, làm xong trước buổi đánh giá ngày 40 là được. Thiếu một ô thôi là sếp không ký đâu."',
-  choices: [{label: 'Nhận sổ tay', effects: {}, addFlags: ['co_so_tay'], comment: 'Trang đầu sổ tay ghi tay: "Chúc em may mắn." Nét chữ run run.'}],
+  intro: 'Chị Mai nhìn phiếu: "{ten} đúng không? Chị là Mai, lễ tân. Sếp bảo chị kèm em hôm nay." Rồi đưa bạn cuốn "Sổ tay nhân viên mới": "10 nhiệm vụ, làm xong trước buổi đánh giá ngày 40 là được. Thiếu một ô thôi là sếp không ký đâu."',
+  choices: [{label: 'Nhận sổ tay', effects: {}, addFlags: ['co_so_tay'], comment: 'Trang đầu sổ tay ghi tay: "Chúc em {ten} may mắn." Nét chữ run run.'}],
 };
 
 export const EARLY_ENDINGS = {
@@ -99,11 +99,12 @@ export const EARLY_ENDINGS = {
 
 /* ---------- State: one plain JSON object (what a save store keeps) ---------- */
 // startRooms: cards.json rooms.start (the map opens room by room through 'unlock' cards); left out = every room open.
-export function newGame({female = false, rng = Math.random, startRooms = ROOM_IDS} = {}) {
+// name + look come from the opening (mo-dau.js): looks only, never stats (Lily 15/11).
+export function newGame({name = '', look = null, rng = Math.random, startRooms = ROOM_IDS} = {}) {
   return {
     v: SAVE_VERSION,
     runId: 'r' + Math.floor(rng() * 36 ** 8).toString(36) + Date.now().toString(36),
-    day: 1, part: 'morning', female,
+    day: 1, part: 'morning', name, look: look || {...DEFAULT_LOOK},
     rooms: [...startRooms],
     stats: {...START},
     close: Object.fromEntries(NPC_IDS.map(n => [n, CLOSE_START])),
@@ -114,6 +115,12 @@ export function newGame({female = false, rng = Math.random, startRooms = ROOM_ID
     ending: null,
   };
 }
+export const DEFAULT_LOOK = {hair: 'short', color: 'den', extra: 'none'};
+// saves from before the opening only had female (the old Nam/Nữ switch)
+export const lookOf = s => s?.look || {...DEFAULT_LOOK, hair: s?.female ? 'long' : 'short'};
+// {ten} / {TEN} in any text = the player's name (cards, intros, notes); saves without a name read "Intern"
+export const playerName = s => s?.name || 'Intern';
+export const fillName = (text, s) => (typeof text === 'string' && text.includes('{') ? text.replace(/\{ten\}/g, playerName(s)).replace(/\{TEN\}/g, playerName(s).toUpperCase()) : text);
 function freshToday() { return {cardId: null, cardDone: false, action: null, minigame: null, delta: {xp: 0, pin: 0, ut: 0, qh: 0}, notes: []}; }
 
 export const hasFlag = (s, f) => s.flags.includes(f);
