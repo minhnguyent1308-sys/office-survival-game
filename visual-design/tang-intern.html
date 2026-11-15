@@ -1369,16 +1369,12 @@ async function newRun({look, name}){
 /* -- opening (mo-dau.js): welcome -> Ảnh thẻ hồ sơ -> Phiếu nhân viên mới -> 4 story cards -> Day 1 by the elevator -- */
 let opening = null, dragX = null, lookSpin = 0;    // 'welcome' | 'look' | null: what the camera shows behind the opening screens
 const LOBBY_VIEW = new T.Vector3(13.2, 0, 3.4), FRONT = Math.PI / 4;                     // facing the camera
-const backdrop = new T.Mesh(new T.PlaneGeometry(5, 4.4), new T.MeshBasicMaterial({color:'#3c83ec'})); // ID-photo blue
-backdrop.visible = false; scene.add(backdrop);
 function openingMode(mode){
-  opening = mode; document.body.classList.toggle('opening', !!mode); cutscene = !!mode; backdrop.visible = mode === 'look';
+  opening = mode; document.body.classList.toggle('opening', !!mode); cutscene = !!mode;
   if (mode) { closeSheet(); coach.hide(); }
   if (mode === 'welcome') { focusHalf = [9, 6.5]; camFocus = LOBBY_VIEW.clone(); }
   else if (mode === 'look') {
     fainted = false; sceneSit = null; arriveByElevator(); player.g.rotation.set(0, FRONT, 0); lookSpin = 0;
-    const p = player.g.position, toCam = camOffset.clone().normalize();
-    backdrop.position.set(p.x, 2, p.z).addScaledVector(new T.Vector3(toCam.x, 0, toCam.z).normalize(), -1.1); backdrop.lookAt(backdrop.position.clone().add(camOffset));
     focusHalf = [1.7, 1.75]; camFocus = lookFocus();
   } else { camFocus = null; focusHalf = [6, 5.6]; }
 }
@@ -1389,7 +1385,7 @@ function lookFocus(){
   return phone ? c.add(new T.Vector3(1, 0, 1).normalize().multiplyScalar(half * .8)) : c.add(new T.Vector3(1, 0, -1).normalize().multiplyScalar(half * .38));
 }
 renderer.domElement.addEventListener('pointerdown', e => { if (opening === 'look') { dragX = e.clientX; renderer.domElement.setPointerCapture(e.pointerId); } });
-renderer.domElement.addEventListener('pointermove', e => { if (opening === 'look' && dragX != null) { player.g.rotation.y += (e.clientX - dragX) * .012; dragX = e.clientX; lookSpin = 2.5; } });
+renderer.domElement.addEventListener('pointermove', e => { if (opening === 'look' && dragX != null) { player.g.rotation.y += (e.clientX - dragX) * .012; dragX = e.clientX; lookSpin = 1.5; } });
 addEventListener('pointerup', () => { dragX = null; });
 // the photo for the form: the head and shoulders, cropped from the frame just drawn
 function shootPhoto(){
@@ -1569,7 +1565,11 @@ function tick(now){
   if (ev) { evIdle += dt; if (evIdle > 1.2) { evIdle = 0; runStage(ev); } } else evIdle = 0;
   updateSlots();
   if (opening === 'welcome' && camFocus && !reduce) camFocus.x = LOBBY_VIEW.x + Math.sin(now / 5000) * 1.6; // slow drift across the lobby
-  if (opening === 'look') { if (dragX == null && (lookSpin -= dt) <= 0 && !reduce) player.g.rotation.y += dt * .5; camFocus = lookFocus(); }
+  if (opening === 'look') {                                                    // faces you; a drag turns it, then it eases back to the front
+    if (dragX == null && (lookSpin -= dt) <= 0) { const want = FRONT + (reduce ? 0 : Math.sin(now / 1400) * .35), r = player.g.rotation;
+      r.y = want + ((((r.y - want + Math.PI) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)) - Math.PI; // shortest way back
+      r.y += (want - r.y) * Math.min(1, dt * 3); }
+    camFocus = lookFocus(); }
   updateCoach();
   if (meBubble > 0) { meBubble -= dt; meBubbleEl.hidden = !place(meBubbleEl, pos.x, 2.25 + pos.y, pos.z); } else meBubbleEl.hidden = true;
   // HUD room name
