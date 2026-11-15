@@ -371,7 +371,11 @@ plant(27.3, .3, .8);
 /* ---------- Characters: one builder for player and every NPC ---------- */
 // makeChar + tagHot come from world.js
 const player = makeChar({lanyard:true});
-player.g.position.set(8, 0, 7);
+// every new day and every new run starts here: just out of the elevator, facing the floor (Lily 15/11).
+// Also clears a scene pose (fainted, seated) so nothing from the last scene follows you.
+const ARRIVE = {x:11.3, z:1.6, rot:0};
+function arriveByElevator(){ player.path = []; player.g.rotation.set(0, ARRIVE.rot, 0); player.g.position.set(ARRIVE.x, 0, ARRIVE.z); }
+arriveByElevator();
 const NPCS = { // each person gets one signature look so the player can tell them apart without name tags
   boss:   {at:[2.8, 1.35],  rot:0,       look:Wd.NPC_LOOKS.tuan},
   hang:   {at:[2.0, 15.85], rot:Math.PI, look:Wd.NPC_LOOKS.hang},
@@ -1332,7 +1336,8 @@ function showEnd(){
     actions:[{label:'Chia sẻ kết cục', ghost:true, onClick:share}, {label:'Chơi lại', onClick:restart}]});
 }
 async function restart(){
-  cutscene = false; camFocus = null; fainted = false; player.g.rotation.x = 0; sceneSit = null; focusHalf = [6, 5.6]; document.getElementById('sheet-close').hidden = false;
+  cutscene = false; camFocus = null; fainted = false; sceneSit = null; pendingHot = null; focusHalf = [6, 5.6]; document.getElementById('sheet-close').hidden = false;
+  arriveByElevator();                          // the old run may have ended in a room the new run starts with closed (the meeting room)
   await store.clear(); S = G.newGame({female: gf.getAttribute('aria-pressed') === 'true', startRooms: CARD_DATA.rooms?.start}); G.startMorning(S, CARDS); applyRooms();
   for (const id of Object.keys(NPCS)) if (NPCS[id].quest) release(id);
   if (questId === 'client') release('client');
@@ -1384,7 +1389,6 @@ if (fromHome && !G.isAtHome(S)) {
   fadeEl.style.transition = 'none'; fadeEl.classList.add('on'); fadeEl.offsetWidth; fadeEl.style.transition = '';
   setTimeout(() => fadeEl.classList.remove('on'), 700);
 } else if (fromShop) {                         // back from the milk tea shop: out of the elevator, the shop's card fades out
-  player.g.position.set(11.3, 0, 1.6); player.g.rotation.y = 0;
   fadeEl.style.transition = 'none'; fadeEl.classList.add('on'); fadeEl.offsetWidth; fadeEl.style.transition = '';
   setTimeout(() => fadeEl.classList.remove('on'), 700);
 } else fadeEl.classList.remove('on');
