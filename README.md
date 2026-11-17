@@ -39,7 +39,7 @@ Lưu ý: địa chỉ `phong-tro.html` sẽ hiện thành `/phong-tro` (Cloudfla
 
 | Thư mục | Nội dung |
 |---|---|
-| `visual-design/` | Mã game: `tang-intern.html` (màn chính), `phong-tro.html`, `tra-sua.html`, `engine.js` (luật chơi), `world.js` (dựng thế giới 3D), `minigames.js`, `noi-that.js` (đồ trong phòng trọ); cùng ảnh mẫu thiết kế và câu thoại NPC |
+| `visual-design/` | Mã game: `tang-intern.html` (màn chính), `phong-tro.html`, `tra-sua.html`, `engine.js` (luật chơi), `world.js` (dựng thế giới 3D), `minigames.js`, `noi-that.js` (đồ trong phòng trọ), `so.css` (khung "cuốn sổ" dùng chung cho Chợ Trọ và Bộ sưu tập); cùng ảnh mẫu thiết kế và câu thoại NPC |
 | `kich-ban/` | Dữ liệu kịch bản: `cards.json` (lá kịch bản), `handbook.json`, `minigames.json`, `danh-gia.json`, tài liệu cấu trúc |
 | `kich-ban/mo-phong/` | Bot chơi thử để cân bằng game: `node kich-ban/mo-phong/mo-phong.mjs` (cần Node 18+) |
 | `build.sh` | Tạo thư mục `dist/` chơi được |
