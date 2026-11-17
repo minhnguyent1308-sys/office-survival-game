@@ -17,7 +17,7 @@ Trên Windows không có `sh`: chép thủ công các file liệt kê trong `bui
 
 ## Đưa game lên mạng (Cloudflare)
 
-Game là file tĩnh nên chạy trên Cloudflare Workers gói miễn phí (tải file tĩnh không giới hạn lượt). `wrangler.jsonc` đã cấu hình sẵn: Cloudflare chạy `build.sh` để tạo `dist/`, rồi đưa `dist/` lên mạng. Mỗi lần merge vào `main`, Cloudflare tự build và deploy lại.
+Game là file tĩnh nên chạy trên Cloudflare Workers gói miễn phí (tải file tĩnh không giới hạn lượt). `wrangler.jsonc` đã cấu hình sẵn: `npx wrangler deploy` tự chạy `build.sh` để tạo `dist/`, rồi đưa `dist/` lên mạng. Mỗi lần merge vào `main`, Cloudflare tự build và deploy lại.
 
 Thiết lập một lần (làm trên trang Cloudflare, không cần token hay mật khẩu nào trong repo):
 
@@ -26,12 +26,12 @@ Thiết lập một lần (làm trên trang Cloudflare, không cần token hay m
 3. Điền:
    - **Project name**: `song-sot-noi-cong-so` (phải trùng `name` trong `wrangler.jsonc`)
    - **Production branch**: `main`
-   - **Build command**: `sh build.sh`
+   - **Build command**: để trống (wrangler tự chạy `build.sh`)
    - **Deploy command**: `npx wrangler deploy` (mặc định)
    - Để trống Root directory, không cần biến môi trường.
 4. Bấm **Deploy**. Khoảng 1 đến 2 phút sau, game có ở `https://song-sot-noi-cong-so.<tên-miền-con>.workers.dev`.
 
-Muốn thử trên máy đúng như trên Cloudflare: `sh build.sh && npx wrangler dev` rồi mở http://localhost:8787.
+Muốn thử trên máy đúng như trên Cloudflare: `npx wrangler dev` rồi mở http://localhost:8787.
 
 Lưu ý: địa chỉ `phong-tro.html` sẽ hiện thành `/phong-tro` (Cloudflare tự bỏ đuôi `.html`); game vẫn chạy bình thường. Save nằm trong trình duyệt của người chơi, nên đổi tên miền sau này thì save cũ không theo sang.
 
