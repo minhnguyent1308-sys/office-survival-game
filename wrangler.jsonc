@@ -16,7 +16,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "so-lieu"
+      "database_name": "so-lieu",
+      "database_id": "3236c588-c74d-4e4b-8c91-439aefcd7fba"
     }
   ]
 }
