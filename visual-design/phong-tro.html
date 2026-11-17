@@ -681,7 +681,7 @@ function modal({eyebrow = '', title, nodes = [], actions = [], docked = false}){
   modalWrap.hidden = false; closeSheet(); modalEl.querySelector('.choice,.btn')?.focus();
 }
 const closeModal = () => { modalWrap.hidden = true; };
-document.getElementById('open-collection').onclick = () => modal({eyebrow:'Mở thêm qua mỗi ván chơi', title:'Bộ sưu tập', nodes:[Ho.collectionNode(PROFILE.p, REVIEW, CARDS, S.runId)], actions:[{label:'Đóng', onClick:closeModal}]});
+document.getElementById('open-collection').onclick = () => modal({eyebrow:'Mở thêm qua mỗi ván chơi', title:'Bộ sưu tập', nodes:[Ho.collectionNode(PROFILE.p, REVIEW, CARDS, S.runId, PROFILE, () => ({day: S.day, trang: location.pathname}))], actions:[{label:'Đóng', onClick:closeModal}]});
 function choiceList(c, onPick){
   const box = el('div', 'choices');
   if (G.autoResolves(S, c)) { const b = el('button', 'choice', 'Tiếp'); b.onclick = () => onPick(0); box.appendChild(b); return box; }

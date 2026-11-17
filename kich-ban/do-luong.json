@@ -1,4 +1,5 @@
 {
-  "note": "Bộ đếm ẩn danh. endpoint để trống = chỉ đếm trong trình duyệt của người chơi, không gửi đi đâu. Khi có địa chỉ nhận (lúc deploy), điền URL vào đây: game gửi bằng sendBeacon một JSON nhỏ {v, id, e, day, ending}; id là mã ngẫu nhiên của trình duyệt, không có tên hay thông tin cá nhân. e: run_start | run_end | second_run | share.",
-  "endpoint": ""
+  "note": "Bộ đếm ẩn danh và hộp góp ý (ho-so.js, gop-y.js; máy nhận là worker/index.js). Để trống endpoint = chỉ đếm trong trình duyệt, không gửi đi đâu; để trống feedback = không hiện hộp góp ý. Game gửi bằng sendBeacon một JSON nhỏ {v, id, run, e, day, k, r, n}: id là mã ngẫu nhiên của trình duyệt, run là mã ngẫu nhiên của ván, không có tên hay thông tin cá nhân. e: open | time | run_start | day | kpi | minigame | buy | run_end | second_run | share (giải thích trong ho-so.js). Người chơi tắt đếm được trong Bộ sưu tập.",
+  "endpoint": "/api/su-kien",
+  "feedback": "/api/gop-y"
 }

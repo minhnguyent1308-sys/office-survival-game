@@ -2,6 +2,7 @@
 // "Chơi lại" clears the run, never this. Same three-op store as the save (load / save / clear), so a server can replace it later.
 // Pure logic first (emptyProfile, sync, finish, newThisRun), then the browser store, then the collection screen.
 import {hasFlag} from './engine.js';
+import {feedbackNode} from './gop-y.js';
 
 export const PROFILE_VERSION = 1;
 export const emptyProfile = () => ({
@@ -55,31 +56,73 @@ export class BrowserProfileStore {
   async clear() { try { localStorage.removeItem(this.key); } catch { /* nothing saved */ } }
 }
 
-// Anonymous counter: events are counted in the profile always; they are sent only when do-luong.json names an endpoint (empty = nothing leaves the browser).
-// The payload has a random browser id and the event, never a name.
+// Anonymous counter (do-luong.json): events are counted in the profile always; they are sent only when do-luong.json names an
+// endpoint (empty = nothing leaves the browser) and the player has not turned counting off (p.noTrack, in the collection).
+// Payload: {v, id, run, e, day, k, r, n}: a random browser id, a random run id, the event and a few numbers. Never a name.
+// e: open (k = page) | time (n = seconds on the page) | run_start | day | kpi (k = KPI id, r = dat|truot|lam_lo)
+//    | minigame (k = game id, r = grade) | buy (k = item id) | run_end (k = ending) | second_run | share
 let cfg;
-async function send(p, e, data) {
+const config = async () => (cfg ??= await fetch('do-luong.json').then(r => r.json()).catch(() => ({})));
+const anonId = p => (p.anon ||= Math.random().toString(36).slice(2) + Date.now().toString(36));
+async function send(p, e, data = {}) {
   try {
-    cfg ??= await fetch('do-luong.json').then(r => r.json()).catch(() => ({}));
-    if (!cfg.endpoint) return;
-    p.anon ||= Math.random().toString(36).slice(2) + Date.now().toString(36);
-    navigator.sendBeacon(cfg.endpoint, JSON.stringify({v: 1, id: p.anon, e, ...data}));
+    if (p.noTrack) return;
+    if (!(await config()).endpoint) return;
+    anonId(p);
+    navigator.sendBeacon(cfg.endpoint, JSON.stringify({v: 2, id: p.anon, e, ...data}));
   } catch { /* counting must never break the game */ }
+}
+
+// What this run did since the last report: [[e, data]]. Moves p.sent forward, so each fact is reported once per run,
+// whichever page (office, rented room, tea shop) saw it first. A run met for the first time after day 1 (a save from
+// before the counter existed) only reports its day: what it did earlier is taken as already known.
+export function pending(p, s) {
+  const out = [], run = s.runId, kpis = s.kpiLog || [], games = Object.entries(s.counters?.minigames || {}), owned = s.home?.owned || {};
+  let m = p.sent;
+  if (m?.run !== run) {
+    const old = s.day > 1;
+    m = p.sent = {run, day: 0, kpi: old ? kpis.length : 0, mg: old ? games.map(([id]) => id) : [], buy: old ? {...owned} : {}};
+    if (!old) out.push(['run_start', {run, day: s.day}]);
+  }
+  if (s.day > m.day) { m.day = s.day; out.push(['day', {run, day: s.day}]); }
+  for (const k of kpis.slice(m.kpi)) out.push(['kpi', {run, day: s.day, k: k.id, r: k.ignored ? 'lam_lo' : k.ok ? 'dat' : 'truot'}]);
+  m.kpi = kpis.length;
+  for (const [id, grade] of games) if (!m.mg.includes(id)) { m.mg.push(id); out.push(['minigame', {run, day: s.day, k: id, r: grade}]); }
+  for (const [id, n] of Object.entries(owned)) for (; (m.buy[id] || 0) < n; m.buy[id] = (m.buy[id] || 0) + 1) out.push(['buy', {run, day: s.day, k: id}]);
+  return out;
+}
+
+// Seconds the page was actually in view: sent each time it is hidden (tab switched, phone locked, page left).
+function timeOnPage(p) {
+  let since = document.visibilityState === 'visible' ? Date.now() : 0;
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') { since = Date.now(); return; }
+    if (!since) return;
+    const n = Math.round((Date.now() - since) / 1000); since = 0;
+    if (n > 0) send(p, 'time', {k: location.pathname, n: Math.min(n, 4 * 3600)});
+  });
 }
 
 // One handle per page: loads the profile, fills it from the save in hand, keeps it saved when it changes.
 export async function open({badges = [], store = new BrowserProfileStore()} = {}) {
   const p = (await store.load()) || emptyProfile();
+  const report = s => { const out = pending(p, s); if (out.length) store.save(p); for (const [e, d] of out) send(p, e, d); };
+  send(p, 'open', {k: location.pathname}); timeOnPage(p);
+  const fb = (await config()).feedback;
   return {
     p, store,
-    sync(s) { if (sync(p, s, {badges})) store.save(p); },
-    finish(s, endingId) { const first = !p.runs.some(r => r.id === s.runId); sync(p, s, {badges}); finish(p, s, endingId); store.save(p); if (first) send(p, 'run_end', {day: s.day, ending: endingId}); },
-    // run_start | share: counted locally, sent if an endpoint is set
+    sync(s) { if (sync(p, s, {badges})) store.save(p); report(s); },
+    finish(s, endingId) { const first = !p.runs.some(r => r.id === s.runId); sync(p, s, {badges}); finish(p, s, endingId); store.save(p); report(s); if (first) send(p, 'run_end', {run: s.runId, day: s.day, k: endingId}); },
+    // run_start | share: counted locally; share is also sent (run_start is sent by report, which knows the run id)
     track(e) {
-      if (e === 'run_start') { p.counters.runsStarted++; if (p.counters.runsStarted > 1) { p.counters.secondRuns++; send(p, 'second_run', {}); } }
-      if (e === 'share') p.counters.shares++;
-      store.save(p); send(p, e, {});
+      if (e === 'run_start') { p.counters.runsStarted++; if (p.counters.runsStarted > 1) { p.counters.secondRuns++; send(p, 'second_run'); } }
+      if (e === 'share') { p.counters.shares++; send(p, 'share'); }
+      store.save(p);
     },
+    // the player's switch in the collection: off = nothing is sent from this browser
+    setTracking(on) { p.noTrack = !on; store.save(p); },
+    // the feedback box (gop-y.js) for this page; null while do-luong.json has no feedback address
+    feedback(context) { return feedbackNode({endpoint: fb, id: () => { const had = p.anon; anonId(p); if (!had) store.save(p); return p.anon; }, context}); },
   };
 }
 
@@ -111,6 +154,8 @@ function css() {
 .coll .it.off b{color:var(--muted);letter-spacing:.12em}
 .coll .tag{font:700 10px var(--font-body);background:var(--yellow);border:1.5px solid var(--ink);border-radius:999px;padding:1px 7px;align-self:start;text-transform:uppercase;letter-spacing:.06em}
 .coll .foot{font-size:12px;color:var(--muted);margin-top:12px}
+.coll .track{display:flex;gap:8px;align-items:flex-start;cursor:pointer}
+.coll .track input{margin:2px 0 0;width:16px;height:16px;flex:none}
 .gift{background:#fce6b6;display:grid;place-items:center;padding:24px 16px}
 .gift .box{width:min(520px,100%);display:grid;gap:14px;justify-items:start}
 .gift h1{font-size:clamp(30px,6vw,44px)}
@@ -125,7 +170,8 @@ function css() {
 const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 
 // The node for a modal body. runId (this run) puts "Mới" on what this run opened first.
-export function collectionNode(p, rv, cards, runId = null) {
+// h (the handle from open()) adds the counting switch and the feedback box under the lists.
+export function collectionNode(p, rv, cards, runId = null, h = null, context) {
   css();
   const cat = catalogue(rv, cards), root = mk('div', 'coll'), hints = rv.collection?.hints || {};
   cat.forEach((sec, i) => {
@@ -140,6 +186,13 @@ export function collectionNode(p, rv, cards, runId = null) {
     }
   });
   root.appendChild(mk('p', 'foot', 'Bộ sưu tập lưu trên trình duyệt này, ván mới không làm mất.'));
+  if (h) {
+    const row = mk('label', 'foot track'), box = mk('input'); box.type = 'checkbox'; box.checked = !p.noTrack;
+    box.onchange = () => h.setTracking(box.checked);
+    row.append(box, mk('span', null, 'Cho game đếm lượt chơi ẩn danh (không tên, không IP) để làm game hay hơn.'));
+    const fbBox = h.feedback(context);
+    root.append(row, ...(fbBox ? [fbBox] : []));
+  }
   return root;
 }
 // one line for the end screen: "Ván này bạn mở thêm 1 kết cục, 3 huy hiệu. Tổng: 2/9 kết cục, 9/18 huy hiệu."

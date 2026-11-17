@@ -1371,6 +1371,7 @@ function showEnd(){
   const share = async e => { if (!cardBlob) return; PROFILE.track('share');
     try { const f = file(); if (navigator.canShare?.({files: [f]})) await navigator.share({files: [f], text}); else { download(); await navigator.clipboard?.writeText(text); e.target.textContent = 'Đã lưu ảnh và chép lời, dán cho bạn bè nhé'; } } catch { /* the player closed the share sheet */ } };
   nodes.push(preview);
+  const fb = PROFILE.feedback(() => ({day: S.day, ket_cuc: early ? S.ending : r.ending.id, trang: location.pathname})); if (fb) nodes.push(fb);
   modal({eyebrow: early ? 'Kết thúc sớm' : `Ngày ${G.TOTAL_DAYS} · Phán quyết` + (end.secret ? ' · Kết cục bí mật' : ''), title:end.title, nodes,
     actions:[{label:'Lưu ảnh', ghost:true, onClick:saveImg}, {label:'Chia sẻ', ghost:true, onClick:share}, {label:'Chơi lại', onClick:restart}]});
 }
@@ -1523,7 +1524,7 @@ document.getElementById('open-friends').onclick = () => {
     if (v >= tiers.at(-1)) list.appendChild(el('div', 'perk on', `${tiers.at(-1)} · ${G.perkData().title80}`)); }
   modal({eyebrow:'Thân 40 mở chuyện riêng, 40 và 60 mở đặc quyền', title:'Thân thiết', nodes:[list], actions:[{label:'Đóng', onClick:closeModal}]});
 };
-document.getElementById('open-collection').onclick = () => modal({eyebrow:'Mở thêm qua mỗi ván chơi', title:'Bộ sưu tập', nodes:[Ho.collectionNode(PROFILE.p, REVIEW, CARDS, S.runId)], actions:[{label:'Đóng', onClick:closeModal}]});
+document.getElementById('open-collection').onclick = () => modal({eyebrow:'Mở thêm qua mỗi ván chơi', title:'Bộ sưu tập', nodes:[Ho.collectionNode(PROFILE.p, REVIEW, CARDS, S.runId, PROFILE, () => ({day: S.day, trang: location.pathname}))], actions:[{label:'Đóng', onClick:closeModal}]});
 modalWrap.addEventListener('keydown', e => { if (e.key === 'Escape' && modalEl.querySelector('.row .btn:last-child')?.textContent === 'Đóng') closeModal(); });
 
 // talking: today's card first; every talk counts for "Chào hỏi cả công ty"

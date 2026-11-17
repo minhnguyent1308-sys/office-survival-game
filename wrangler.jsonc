@@ -1,13 +1,22 @@
-// Cấu hình deploy lên Cloudflare Workers (chỉ phục vụ file tĩnh, không có code server).
-// `npx wrangler deploy` tự chạy build.sh để tạo dist/, rồi đưa dist/ lên mạng.
-// Nhờ vậy ô "Build command" trên Cloudflare để trống cũng được.
+// Cấu hình deploy lên Cloudflare Workers.
+// `npx wrangler deploy` tự chạy build.sh để tạo dist/, rồi đưa dist/ lên mạng. Nhờ vậy ô "Build command" trên Cloudflare để trống cũng được.
+// File tĩnh (game) do Cloudflare phục vụ thẳng; worker/index.js chỉ chạy cho các địa chỉ /api/... (bộ đếm, góp ý, số liệu dashboard).
 {
   "name": "song-sot-noi-cong-so",
   "compatibility_date": "2026-11-01",
+  "main": "worker/index.js",
   "build": {
     "command": "sh build.sh"
   },
   "assets": {
-    "directory": "./dist"
-  }
+    "directory": "./dist",
+    "binding": "ASSETS"
+  },
+  // Database D1 lưu sự kiện ẩn danh và góp ý. Bảng tự tạo ở lần gọi đầu, không cần chạy migration.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "so-lieu"
+    }
+  ]
 }
