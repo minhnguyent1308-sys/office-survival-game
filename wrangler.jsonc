@@ -1,8 +1,12 @@
 // Cấu hình deploy lên Cloudflare Workers (chỉ phục vụ file tĩnh, không có code server).
-// Cloudflare chạy build.sh để tạo dist/, rồi `npx wrangler deploy` đưa dist/ lên mạng.
+// `npx wrangler deploy` tự chạy build.sh để tạo dist/, rồi đưa dist/ lên mạng.
+// Nhờ vậy ô "Build command" trên Cloudflare để trống cũng được.
 {
   "name": "song-sot-noi-cong-so",
   "compatibility_date": "2026-11-01",
+  "build": {
+    "command": "sh build.sh"
+  },
   "assets": {
     "directory": "./dist"
   }
