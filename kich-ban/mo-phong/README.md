@@ -54,3 +54,7 @@ Kết quả 2×2500 ván: chăm chỉ lên Junior 40,6% / 39,7%, y hệt khi t�
 
 ## Quà ván sau (16/11, bước 4)
 `GIFT=thu_gioi_thieu|kinh_nghiem|tieng_lanh|goi_quen` (và `GIFT_NPC=hang` cho thư giới thiệu) áp quà lúc bắt đầu ván. Chăm chỉ lên Junior (N=2500, SEED=0): không quà 40,6%; Kinh nghiệm 40,8%; Tiếng lành 41,0%; Gối quen 39,5%; Thư giới thiệu 40,6% (anh Tuấn) đến 51,0% (chị Hằng). Mọi quà đều dưới trần 55%.
+
+## Nội thất phòng trọ (17/11)
+Ví tiền và đồ đạc không cộng chỉ số, nên bot không mua sắm. Tin nhắn mở Chợ Trọ của chị Mai đến trên laptop buổi tối (không phải lá buổi sáng), không chiếm chỗ lá nào: 2×2500 ván vẫn là **40,6%** (SEED=0) và **39,7%** (SEED=77), y như trước. (Bản thử đặt nó làm lá buổi sáng ở sảnh làm số này giảm còn 38,8% / 39,0%.)
+Kiểm tra luật mua, đặt, cất đồ và lương thứ Sáu: `node kiem-tra-noi-that.mjs` (25 mục).

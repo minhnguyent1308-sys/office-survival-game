@@ -170,6 +170,7 @@ export function newGame({name = '', look = null, rng = Math.random, startRooms =
     flags: [], used: [], followups: [], followupsMade: [], history: [],
     counters: {actions: {}, talked: [], rooms: [], gossipWith: [], minigames: {}},
     missionsDone: [], kpiLog: [],
+    home: {wallet: null},   // phòng trọ (noi-that.json): wallet null = mẹ's gift not given yet; ensureHome fills the rest
     today: freshToday(),
     ending: null,
   };
@@ -460,6 +461,81 @@ export function buyTea(s, kind) {
   return {got: applyEffects(s, TEA[kind].effects)};
 }
 
+/* ---------- Phòng trọ: ví tiền và nội thất (noi-that.json, Lily 17/11). No item changes a stat: looks, lines and the cat only ---------- */
+// The page loads noi-that.json and calls useFurniture(data) once. Without it (office, tea shop, the simulator): no wallet, no pay, nothing to buy.
+// Save shape (added on read, SAVE_VERSION stays 1): home = {wallet, room, owned: {id: n}, placed: {roomId: [{id, x, z, rot}]}, paid: [days]}
+// A save from before the feature has no home: it starts with 0 and an empty room. A new game has home.wallet null: the first read gives mẹ's gift.
+let NT = null;
+export function useFurniture(data) { if (data) NT = data; }
+export const furnitureData = () => NT;
+export const itemById = id => NT?.items.find(i => i.id === id) || null;
+export function ensureHome(s) {
+  if (!NT || !s) return null;
+  const h = (s.home ||= {wallet: 0});
+  if (h.wallet == null) h.wallet = NT.money.start;
+  h.room ||= Object.keys(NT.rooms)[0]; h.owned ||= {}; h.placed ||= {}; h.paid ||= [];
+  h.placed[h.room] ||= [];
+  return h;
+}
+export const homeRoom = s => (ensureHome(s) ? NT.rooms[s.home.room] : null);
+export const placedHere = s => (ensureHome(s) ? s.home.placed[s.home.room] : []);
+export const isPlaced = (s, id) => placedHere(s).some(p => p.id === id);
+export const ownedCount = (s, id) => ensureHome(s)?.owned[id] || 0;
+export const hasBox = s => !!NT?.box && ownedCount(s, NT.box) > 0;
+// owned but not standing in this room: with a box they wait in it; without one they are waiting to be placed (the page places them)
+export function unplaced(s) {
+  if (!ensureHome(s)) return [];
+  const here = placedHere(s), out = [];
+  for (const it of NT.items) { const n = ownedCount(s, it.id) - here.filter(p => p.id === it.id).length; if (n > 0) out.push({item: it, n}); }
+  return out;
+}
+// Friday night (paydays in noi-that.json): weekly allowance, plus a bonus when the week's KPI was met. Once per day, kept in home.paid.
+function payday(s, kpi) {
+  const h = ensureHome(s); if (!h || !NT.money.paydays.includes(s.day) || h.paid.includes(s.day)) return null;
+  const pay = {weekly: NT.money.weekly, kpi: kpi?.ok ? NT.money.kpiBonus : 0};
+  h.wallet += pay.weekly + pay.kpi; h.paid.push(s.day);
+  return pay;
+}
+// Chợ Trọ opens with chị Mai's message (noi-that.json unlock.card): it arrives on the laptop the first evening after you helped her twice.
+// It is not a morning card and takes no card slot, so the balance stays as it was (Lily 17/11). From then on the laptop shows "Chợ Trọ".
+export const shopOpen = s => !!NT && hasFlag(s, NT.unlock.flag);
+export const shopInvite = s => (NT && !shopOpen(s) && requiresOk(s, NT.unlock.card.requires) ? NT.unlock.card : null);
+export function answerShopInvite(s, index) {
+  const c = shopInvite(s), ch = c?.choices[index]; if (!ch) return null;
+  (ch.addFlags || []).forEach(f => addFlag(s, f)); addFlag(s, NT.unlock.flag);
+  return {got: {}, comment: ch.comment || null, label: ch.label};
+}
+export function canBuy(s, id) {
+  const it = itemById(id), h = ensureHome(s);
+  if (!it || !h) return {ok: false, why: 'Không có món này'};
+  if (!shopOpen(s)) return {ok: false, why: 'Chợ Trọ chưa mở'};
+  if ((h.owned[id] || 0) >= (it.max || 1)) return {ok: false, sold: true, why: 'Đã có'};
+  if (it.price > h.wallet) return {ok: false, why: `Thiếu ${it.price - h.wallet} nghìn`};
+  return {ok: true};
+}
+// buying never places: the page then places it (no box, or the box itself) or it waits in the box. Returns {item, mustPlace}.
+export function buyItem(s, id) {
+  if (!canBuy(s, id).ok) return null;
+  const it = itemById(id), h = s.home; h.wallet -= it.price; h.owned[id] = (h.owned[id] || 0) + 1;
+  return {item: it, mustPlace: mustPlace(s, id)};
+}
+// the box itself, and anything bought before the box, has nowhere to wait: it goes straight into the room
+export const mustPlace = (s, id) => !hasBox(s) || id === NT?.box;
+// x, z = floor corner after rotation (same as noi-that.js placeItem), rot = quarter turns; a slot item ignores them and goes to its slot.
+// The page checks the spot is free (it knows the walls and the walk grid); the engine keeps the counts honest. Returns the index or -1.
+export function putItem(s, id, x, z, rot = 0) {
+  const it = itemById(id); if (!it || !unplaced(s).some(u => u.item.id === id)) return -1;
+  const slot = it.slot && homeRoom(s).slots?.[it.slot];
+  const here = placedHere(s); here.push(slot ? {id, x: slot.x, z: slot.z, rot: slot.rot || 0} : {id, x, z, rot: rot % 4});
+  return here.length - 1;
+}
+export function moveItem(s, index, x, z, rot = 0) {
+  const p = placedHere(s)[index], it = p && itemById(p.id); if (!it || it.slot) return false;
+  Object.assign(p, {x, z, rot: rot % 4}); return true;
+}
+export const canStore = (s, index) => { const p = placedHere(s)[index]; return !!p && hasBox(s) && p.id !== NT.box; };
+export function storeItem(s, index) { if (!canStore(s, index)) return false; placedHere(s).splice(index, 1); return true; }
+
 // 17:55: the only moment burnout and early dismissal are checked (the afternoon can still save you).
 export function endOfDay(s) {
   if (s.week) for (const k of STATS) s.week.low[k] = Math.min(s.week.low[k], s.stats[k]);   // KPI "giữ Pin từ 30" looks at 17:55
@@ -493,14 +569,14 @@ export function goHome(s) { if (s.part === 'evening') s.today.atHome = true; }
 // Friday evening -> weekend screen: Pin +20 first, then sometimes a weekend card.
 export function nextDay(s, cards, rng = Math.random) {
   if (weekday(s.day) === 4) {
-    const kpi = scoreWeek(s);
+    const kpi = scoreWeek(s), pay = payday(s, kpi);
     s.part = 'weekend'; s.today = freshToday(); s.today.kpiResult = kpi;
     const got = applyEffects(s, {pin: 20});
     const phase = phaseOf(s.day + 3);
     const pool = cards.filter(c => c.type === 'weekend' && (c.phases || []).includes(phase) && !s.used.includes(c.id) && requiresOk(s, c.requires));
     const c = pool.length && rng() < WEEKEND_CARD_CHANCE ? weighted(pool, rng) : null;
     if (c) { s.today.cardId = c.id; addUnique(s.used, c.id); }
-    return {weekend: true, got, card: c, kpi};
+    return {weekend: true, got, card: c, kpi, pay};
   }
   s.day += 1; wakeUp(s, cards, rng);
   return {weekend: false};
@@ -593,6 +669,27 @@ export class BrowserSaveStore {
   async load() { try { const s = JSON.parse(localStorage.getItem(this.key)); return s && s.v === SAVE_VERSION ? s : null; } catch { return null; } }
   async save(state) { try { localStorage.setItem(this.key, JSON.stringify(state)); } catch { /* private mode: play without saving */ } }
   async clear() { try { localStorage.removeItem(this.key); } catch { /* nothing saved */ } }
+}
+
+/* ---------- Data check for noi-that.json (models: names of the builders in noi-that.js, when the page has them) ---------- */
+export function validateFurniture(data, cardData = null, models = null) {
+  const problems = [], cats = new Set((data.shop?.categories || []).map(c => c.id)), ids = new Set();
+  for (const it of data.items || []) {
+    if (!it.id || ids.has(it.id)) problems.push(`món "${it.id}" thiếu id hoặc trùng`); ids.add(it.id);
+    for (const k of ['name', 'desc', 'perk', 'model']) if (!it[k]) problems.push(`${it.id}: thiếu ${k}`);
+    if (!(it.price > 0)) problems.push(`${it.id}: giá phải > 0`);
+    if (!Array.isArray(it.size) || it.size.length !== 2) problems.push(`${it.id}: size cần [rộng, sâu]`);
+    if (!cats.has(it.category)) problems.push(`${it.id}: nhóm "${it.category}" chưa có trong shop.categories`);
+    if (it.slot && !Object.values(data.rooms || {}).some(r => r.slots?.[it.slot])) problems.push(`${it.id}: chỗ cố định "${it.slot}" không có phòng nào`);
+    if (models && !models.includes(it.model)) problems.push(`${it.id}: noi-that.js chưa có hàm dựng "${it.model}"`);
+  }
+  if (data.box && !ids.has(data.box)) problems.push(`box "${data.box}" không phải một món`);
+  for (const k of ['start', 'weekly', 'kpiBonus']) if (!(data.money?.[k] >= 0)) problems.push(`money.${k} thiếu`);
+  const inv = data.unlock?.card;
+  if (!data.unlock?.flag || !inv?.intro || !(inv.choices || []).length) problems.push('unlock cần flag và card (intro, choices)');
+  if (cardData) { const flags = [...(cardData.flagsBadges || []), ...(cardData.flagsHidden || [])];
+    if (!flags.includes(data.unlock?.flag)) problems.push(`cờ mở Chợ Trọ "${data.unlock?.flag}" chưa khai báo trong cards.json`); }
+  return problems;
 }
 
 /* ---------- Data check for nhip-choi.json ---------- */

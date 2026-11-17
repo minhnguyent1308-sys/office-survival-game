@@ -1,0 +1,343 @@
+{
+  "version": 1,
+  "note": "Nội thất phòng trọ (Lily chốt 17/11). Chỉ dùng ở phòng trọ; không món nào cộng chỉ số (perk = ngoại hình, câu thoại, chỗ mèo nằm). Tiền: quà mẹ 200 lúc bắt đầu ván mới, phụ cấp 350 mỗi tối thứ Sáu (ngày 5, 12, 19, 26, 33), thưởng KPI 50 mỗi tuần đạt; save cũ bắt đầu với 0 và phòng trống. Giá tính bằng nghìn đồng: người chăm chỉ (2.150) mua được bất kỳ 10 món. Thêm món mới = thêm một object vào `items` + một hàm dựng cùng tên `model` trong visual-design/noi-that.js. `size` = [rộng x, sâu z] tính bằng ô khi chưa xoay; mặt trước quay về +z (phía camera). `slot`: tên chỗ cố định trong `rooms.<id>.slots` (đồ không đặt tự do), hoặc null = người chơi tự đặt. `max`: số lần mua được (mặc định 1). Phòng là dữ liệu (`rooms`): sau này thêm phòng to hơn (sự kiện chuyển nhà) = thêm một phòng; đồ đã đặt lưu riêng theo phòng trong save: home = {room, owned: {id: số lượng}, placed: {<roomId>: [{id, x, z, rot}]}}. Thùng đồ (Lily 17/11, đổi 21h40): là một món bán trong shop, 40 nghìn, ghim đầu danh sách (`pinned`). Chưa mua thùng: món mới mua đặt ngay vào phòng, chỉ dời chỗ được, không cất được. Có thùng: món đã mua mà chưa đặt trong phòng hiện tại thì nằm trong thùng (= owned trừ placed), không cần lưu riêng; cất vào hay mang ra bao nhiêu lần cũng được, không mất tiền. Bàn học cũng cất được, khi đó laptop về lại sàn. Chuyển nhà sau này: phòng mới bắt đầu với mọi món trong thùng. Đợt 2 (chưa làm): thú cưng trong shop (mèo khác màu, dùng chung hành vi mèo Deadline, đặt tên khi mua); số thú tối đa là spec của từng phòng (`maxPets`, phòng hiện tại 2 tính cả mèo Deadline hay không thì chốt ở đợt 2). Cửa hàng (Lily 17/11): màn catalog tên `shop.name`, dòng hướng dẫn `shop.tagline`, hàng icon theo `shop.categories`; mỗi món có `category`. Thêm nhóm mới = thêm một object vào categories + một icon trong noi-that-xem-truoc.html (sau này là phong-tro.html). `desc`: mô tả hiện ở màn Chợ Trọ khi bấm vào món; `perk`: dòng tác dụng ngắn ngay dưới. Gắn vào game (Lily duyệt 17/11): `box` = id món thùng đồ; `lines` (không bắt buộc) = câu thoại khi bấm vào món đã đặt trong phòng; kệ sách thêm một câu về số huy hiệu. Lá `unlock.card` đã chép sang cards.json (sửa lá thì sửa ở cards.json).",
+  "money": {
+    "start": 200,
+    "weekly": 350,
+    "paydays": [
+      5,
+      12,
+      19,
+      26,
+      33
+    ],
+    "kpiBonus": 50,
+    "unit": "nghìn"
+  },
+  "box": "thung_do",
+  "rooms": {
+    "tro_nho": {
+      "name": "Phòng trọ",
+      "size": [
+        9,
+        7
+      ],
+      "door": [
+        5.6,
+        0.95
+      ],
+      "maxPets": 2,
+      "slots": {
+        "ban_hoc": {
+          "x": 3.0,
+          "z": 0,
+          "rot": 0
+        }
+      },
+      "start": [
+        "giuong",
+        "laptop_san"
+      ]
+    }
+  },
+  "items": [
+    {
+      "id": "thung_do",
+      "name": "Thùng đồ",
+      "price": 40,
+      "model": "thungDo",
+      "size": [
+        0.62,
+        0.46
+      ],
+      "slot": null,
+      "category": "tu_ke",
+      "pinned": true,
+      "perk": "Mở tab Thùng đồ: cất đồ vào, mang đồ ra bao nhiêu lần cũng được.",
+      "desc": "Thùng carton to, dán băng keo hai lớp. Có thùng rồi thì đồ chưa dùng tới cứ cất vào, lúc nào thích lại mang ra bày. Chưa có thùng thì đồ mua về phải đặt luôn trong phòng và chỉ dời chỗ được."
+    },
+    {
+      "id": "tu_quan_ao",
+      "name": "Tủ quần áo vải",
+      "price": 320,
+      "model": "tuQuanAo",
+      "size": [
+        1.2,
+        0.55
+      ],
+      "slot": null,
+      "perk": "Mở lại điểm \"Mở tủ\"; đổi màu bộ đồ ngủ (4 màu).",
+      "category": "tu_ke",
+      "desc": "Tủ vải khung sắt, kéo khóa một cái là gọn. Năm cái sơ mi trắng cuối cùng cũng có chỗ treo."
+    },
+    {
+      "id": "ban_hoc",
+      "name": "Bàn học gấp",
+      "price": 260,
+      "model": "banHoc",
+      "size": [
+        1.6,
+        0.75
+      ],
+      "slot": "ban_hoc",
+      "perk": "Laptop từ sàn lên bàn.",
+      "category": "ban_ghe",
+      "desc": "Bàn gấp vừa khít dưới cửa sổ. Laptop thôi nằm sàn, lưng bạn thầm cảm ơn."
+    },
+    {
+      "id": "ghe_luoi",
+      "name": "Ghế lười",
+      "price": 250,
+      "model": "gheLuoi",
+      "size": [
+        0.9,
+        0.9
+      ],
+      "slot": null,
+      "perk": "Cuối tuần nhân vật nằm dài trên ghế, câu thoại cuối tuần mới.",
+      "category": "ban_ghe",
+      "desc": "Ngồi xuống là lún, lún rồi là không muốn dậy. Hợp với sáng Chủ nhật không email.",
+      "lines": [
+        "Bạn ngồi xuống ghế lười. Mười phút sau vẫn chưa muốn đứng dậy.",
+        "Ghế lười ôm bạn như chưa từng có deadline nào.",
+        "Mèo đã nằm thử ghế lười trước bạn. Nó chấm 10 điểm."
+      ]
+    },
+    {
+      "id": "ke_sach",
+      "name": "Kệ sách",
+      "price": 240,
+      "model": "keSach",
+      "size": [
+        1.0,
+        0.35
+      ],
+      "slot": null,
+      "perk": "Trưng các huy hiệu đã có trên kệ.",
+      "category": "tu_ke",
+      "desc": "Ba tầng gỗ cho sách kỹ năng chưa đọc và những huy hiệu đã kiếm được.",
+      "lines": [
+        "Cuốn \"Đắc nhân tâm\" vẫn còn nguyên lớp ni lông.",
+        "Bạn xếp lại kệ sách theo màu. Năng suất tối nay: một kệ sách đẹp.",
+        "Kệ dưới cùng là sách kỹ năng, kệ trên cùng là thứ bạn tự hào."
+      ]
+    },
+    {
+      "id": "cay_lon",
+      "name": "Cây lớn (bàng Singapore)",
+      "price": 210,
+      "model": "cayLon",
+      "size": [
+        0.6,
+        0.6
+      ],
+      "slot": null,
+      "perk": "Câu thoại riêng; mèo thỉnh thoảng nấp sau cây.",
+      "category": "cay",
+      "desc": "Bàng Singapore lá to, sống khỏe dù chủ đi làm mười tiếng một ngày.",
+      "lines": [
+        "Bàng Singapore vừa ra thêm một lá mới. Nó tiến bộ nhanh hơn bạn.",
+        "Bạn tưới cây. Ít nhất có một thứ trong phòng được chăm đều đặn.",
+        "Mèo nấp sau chậu cây, tưởng bạn không thấy."
+      ]
+    },
+    {
+      "id": "ban_tra",
+      "name": "Bàn trà thấp",
+      "price": 200,
+      "model": "banTra",
+      "size": [
+        1.3,
+        0.9
+      ],
+      "slot": null,
+      "perk": "Đồng nghiệp ghé phòng ngồi bàn này (chưa có thì ngồi sàn).",
+      "category": "ban_ghe",
+      "desc": "Bàn thấp cho bữa mì tối, và cho đồng nghiệp ghé phòng có chỗ đặt laptop.",
+      "lines": [
+        "Bàn trà còn vết cốc mì tối qua.",
+        "Bạn đặt cốc nước lên bàn trà, lần đầu tiên không phải đặt xuống sàn."
+      ]
+    },
+    {
+      "id": "ghe_go",
+      "name": "Ghế gỗ",
+      "price": 160,
+      "model": "gheGo",
+      "size": [
+        0.6,
+        0.56
+      ],
+      "slot": null,
+      "perk": "Đặt sát bàn thì nhân vật ngồi ghế khi mở laptop.",
+      "category": "ban_ghe",
+      "desc": "Ghế gỗ bốn chân, không xoay, không ngả. Ngồi thẳng lưng như đang họp.",
+      "lines": [
+        "Ghế gỗ cứng vừa đủ để bạn không ngủ gật lúc đọc email đêm.",
+        "Bạn kéo ghế sát bàn, ngồi thẳng lưng. Tư thế này sếp mà thấy chắc khen.",
+        "Ghế kêu cót két một tiếng. Nó cũng mệt như bạn."
+      ]
+    },
+    {
+      "id": "tu_dau_giuong",
+      "name": "Tủ đầu giường",
+      "price": 130,
+      "model": "tuDauGiuong",
+      "size": [
+        0.55,
+        0.5
+      ],
+      "slot": null,
+      "perk": "Đồng hồ báo thức; câu chúc ngủ ngon mới khi bấm \"Đi ngủ\".",
+      "category": "tu_ke",
+      "desc": "Một ngăn kéo, một đèn ngủ, một đồng hồ báo thức đặt sẵn 7 giờ 30."
+    },
+    {
+      "id": "den_cay",
+      "name": "Đèn cây đứng",
+      "price": 130,
+      "model": "denCay",
+      "size": [
+        0.4,
+        0.4
+      ],
+      "slot": null,
+      "perk": "Ánh sáng buổi tối ấm hơn quanh đèn.",
+      "category": "den",
+      "desc": "Đèn đứng ánh vàng, làm góc phòng ấm hơn hẳn bóng tuýp của chủ trọ."
+    },
+    {
+      "id": "tham",
+      "name": "Thảm",
+      "price": 120,
+      "model": "tham",
+      "size": [
+        2.6,
+        2.0
+      ],
+      "slot": null,
+      "flat": true,
+      "perk": "Trang trí.",
+      "category": "trang_tri",
+      "desc": "Thảm xanh bạc hà. Đi chân trần buổi tối không còn lạnh."
+    },
+    {
+      "id": "dem_ngoi",
+      "name": "Đệm ngồi đỏ",
+      "price": 80,
+      "model": "demNgoi",
+      "size": [
+        0.5,
+        0.5
+      ],
+      "slot": null,
+      "flat": true,
+      "perk": "Mèo ngủ trên đệm (chưa có thì ngủ trên giường).",
+      "category": "trang_tri",
+      "desc": "Đệm đỏ êm. Mua cho bạn, nhưng mèo Deadline sẽ nhận là của nó."
+    },
+    {
+      "id": "den_dom_dom",
+      "name": "Dây đèn đom đóm",
+      "price": 60,
+      "model": "denDomDom",
+      "size": [
+        0.3,
+        0.3
+      ],
+      "slot": null,
+      "perk": "Đèn nhấp nháy buổi tối.",
+      "category": "den",
+      "desc": "Dây đèn nhỏ cuộn trong lọ thủy tinh, nhấp nháy như tin nhắn chưa đọc."
+    },
+    {
+      "id": "chau_cay_nho",
+      "name": "Chậu cây nhỏ (trầu bà)",
+      "price": 50,
+      "model": "chauCayNho",
+      "size": [
+        0.3,
+        0.3
+      ],
+      "slot": null,
+      "max": 5,
+      "perk": "Trang trí; món rẻ để mua ngay đêm đầu.",
+      "category": "cay",
+      "desc": "Trầu bà dễ sống, tưới quên cũng không giận. Mua được tối đa 5 chậu.",
+      "lines": [
+        "Trầu bà vươn thêm một đoạn. Không cần ai giao KPI.",
+        "Bạn tưới chậu trầu bà. Nó không nói gì, nhưng trông vui hơn."
+      ]
+    }
+  ],
+  "shop": {
+    "name": "Chợ Trọ",
+    "tagline": "Đủ thứ tả pí lù cho căn phòng bạn ấm cúng",
+    "categories": [
+      {
+        "id": "ban_ghe",
+        "name": "Bàn ghế"
+      },
+      {
+        "id": "tu_ke",
+        "name": "Tủ kệ"
+      },
+      {
+        "id": "cay",
+        "name": "Cây xanh"
+      },
+      {
+        "id": "den",
+        "name": "Đèn"
+      },
+      {
+        "id": "trang_tri",
+        "name": "Trang trí"
+      }
+    ]
+  },
+  "unlock": {
+    "note": "Chợ Trọ chưa mở từ đầu (Lily chốt 17/11): chị Mai giới thiệu sau khi người chơi giúp chị 2 buổi chiều (trùng nhiệm vụ sổ tay số 7). Khi gắn vào game (17/11), lá này đổi thành tin nhắn của chị Mai trên laptop vào buổi tối đầu tiên đủ điều kiện, thay vì lá buổi sáng ở sảnh: lá buổi sáng chiếm chỗ một lá khác và làm tỉ lệ lên Junior của bot chăm chỉ giảm khoảng 1,2 điểm (40,2% còn 38,9%), tin nhắn tối không chiếm chỗ lá nào nên cân bằng giữ nguyên. Lá này nằm ở đây, không ở cards.json (engine.js: shopInvite / answerShopInvite). Lựa chọn nào cũng thêm cờ `flag`; laptop chỉ hiện nút Chợ Trọ khi có cờ này. Save cũ đã giúp chị Mai đủ 2 lần thì tin nhắn đến ngay tối hôm đó.",
+    "flag": "mo_cho_tro",
+    "card": {
+      "id": "E_CHO_TRO",
+      "title": "Hàng của cả tòa nhà",
+      "npc": "mai",
+      "requires": {
+        "actions": {
+          "giup_chi_mai": 2
+        }
+      },
+      "intro": "Chị Mai nhắn: \"Em ơi, cả tòa mình đặt đồ ở Chợ Trọ, shipper toàn gửi quầy chị. Em ở trọ một mình hả? Phòng có gì chưa?\" Kèm ảnh ba hộp hàng dán tem \"Chợ Trọ\" chất trên quầy lễ tân.",
+      "choices": [
+        {
+          "label": "\"Dạ, mỗi cái giường thôi chị.\"",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 0
+          },
+          "addFlags": [
+            "mo_cho_tro"
+          ],
+          "comment": "Chị Mai gửi một tràng \"haha\", rồi gửi link: \"Đặt đi, hàng về chị giữ cho. Nhớ mua cái thùng trước, không thì đồ bày đầy phòng.\""
+        },
+        {
+          "label": "\"Laptop em vẫn để dưới sàn ạ.\"",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 0
+          },
+          "addFlags": [
+            "mo_cho_tro"
+          ],
+          "comment": "\"Trời ơi, lưng em còn phải đi làm 40 ngày đấy.\" Chị gửi link, dặn thêm: \"Mua cái bàn trước đi em.\""
+        }
+      ]
+    },
+    "toast": "Laptop sáng lên: chị Mai vừa gửi bạn một đường link"
+  }
+}
