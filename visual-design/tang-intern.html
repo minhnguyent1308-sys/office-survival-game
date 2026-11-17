@@ -3,6 +3,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Be+Vietnam+Pro:wght@400;600&display=swap">
+<link rel="stylesheet" href="so.css">
 <style>
 /* Layout: full-screen 3D floor, small HUD chips pinned to corners, dialog card slides up from bottom.
    Single deliberate look (warm office daylight), same in both host themes. */
@@ -155,6 +156,7 @@ body.opening .hud,body.opening #tags,body.opening .hint,body.opening .toast{disp
 </div>
 <div class="hud br"><button class="card tool primary" id="leave-work" hidden>Tan làm →</button></div>
 <div class="toast" id="toast" hidden role="status"></div>
+<div class="cat-wrap" id="collection" hidden></div>
 <div class="modal-wrap" id="modal-wrap" hidden><div class="card modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"></div></div>
 <div class="hint" id="hint">Chạm vào sàn để đi · WASD / phím mũi tên · E để tương tác</div>
 <div class="card sheet" id="sheet" hidden role="dialog" aria-modal="false" aria-labelledby="sheet-title">
@@ -1489,7 +1491,7 @@ function tipStep(){
   return {key:'tip:' + id, who, text:say(text), buttons:[{label:TUT.ok, onClick:() => { Op.tipOnce(id); hideCoach(); }}]};
 }
 function updateCoach(){
-  const busy = opening || cutscene || staging || mgRunning || !sheet.hidden || !modalWrap.hidden || fadeEl.classList.contains('on');
+  const busy = opening || cutscene || staging || mgRunning || !sheet.hidden || !modalWrap.hidden || !collEl.hidden || fadeEl.classList.contains('on');
   if (busy) { if (coach.shown) hideCoach(); return; }
   if (S.day > 1 && Op.guide().started && !Op.guide().done) Op.setGuide({done:true});   // the first day is behind you
   const on = Op.tutorialOn(S), step = on ? tutorialStep() : tipStep();
@@ -1523,7 +1525,8 @@ document.getElementById('open-friends').onclick = () => {
     if (v >= tiers.at(-1)) list.appendChild(el('div', 'perk on', `${tiers.at(-1)} · ${G.perkData().title80}`)); }
   modal({eyebrow:'Thân 40 mở chuyện riêng, 40 và 60 mở đặc quyền', title:'Thân thiết', nodes:[list], actions:[{label:'Đóng', onClick:closeModal}]});
 };
-document.getElementById('open-collection').onclick = () => modal({eyebrow:'Mở thêm qua mỗi ván chơi', title:'Bộ sưu tập', nodes:[Ho.collectionNode(PROFILE.p, REVIEW, CARDS, S.runId)], actions:[{label:'Đóng', onClick:closeModal}]});
+const collEl = document.getElementById('collection');   // Bộ sưu tập: the so.css book, drawn by ho-so.js
+document.getElementById('open-collection').onclick = () => { closeSheet(); Ho.openCollection(collEl, PROFILE.p, REVIEW, CARDS, S.runId); };
 modalWrap.addEventListener('keydown', e => { if (e.key === 'Escape' && modalEl.querySelector('.row .btn:last-child')?.textContent === 'Đóng') closeModal(); });
 
 // talking: today's card first; every talk counts for "Chào hỏi cả công ty"
@@ -1599,7 +1602,7 @@ function tick(now){
   if (toastT > 0) { toastT -= dt; if (toastT <= 0) toastEl.hidden = true; }
   else if (toastQueue.length) toast(toastQueue.shift());
   // staged midday event (cards.json when "midday"): once the morning is over and nothing is on screen, it starts by itself
-  const ev = !staging && !cutscene && !mgRunning && sheet.hidden && modalWrap.hidden && !fadeEl.classList.contains('on') ? G.todaysEvent(S, CARDS) : null;
+  const ev = !staging && !cutscene && !mgRunning && sheet.hidden && modalWrap.hidden && collEl.hidden && !fadeEl.classList.contains('on') ? G.todaysEvent(S, CARDS) : null;
   if (ev) { evIdle += dt; if (evIdle > 1.2) { evIdle = 0; runStage(ev); } } else evIdle = 0;
   updateSlots();
   updateCoach();
@@ -1629,7 +1632,7 @@ function tick(now){
     if ((PEOPLE.has(id) || HOT[id].act) && !near && !gos && !intro && !quest && !task) el.hidden = true; // no floating label; prompt only when close
     if (cutscene) el.hidden = true;                                                     // verdict scene: no prompts over the meeting
   }
-  leaveBtn.hidden = !(S.part === 'evening' && sheet.hidden && modalWrap.hidden);
+  leaveBtn.hidden = !(S.part === 'evening' && sheet.hidden && modalWrap.hidden && collEl.hidden);
   if (!opening) renderer.render(scene, cam);                                  // an opening screen covers the floor
   requestAnimationFrame(tick);
 }

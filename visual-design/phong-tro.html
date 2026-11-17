@@ -6,6 +6,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Be+Vietnam+Pro:wght@400;600&display=swap">
+<link rel="stylesheet" href="so.css">
 <style>
 /* Same design system as tang-intern.html: tokens, HUD cards, chips, sheet, modal. Only the room and the transition are new. */
 :root{
@@ -87,48 +88,11 @@ body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--font-b
 .fade small{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--yellow);font-weight:600}
 .fade b{font:800 40px/1.05 var(--font-display)}
 .fade span{font-size:15px;opacity:.8;max-width:360px}
-/* wallet line + Chợ Trọ catalog + place bar (Lily 17/11): same paper/ink cards; approved in noi-that-xem-truoc.html */
+/* wallet line + place bar (Lily 17/11); the Chợ Trọ catalog itself is drawn by so.css (shared with Bộ sưu tập). Approved in noi-that-xem-truoc.html */
 .where .money{font-size:13px;color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
 .btn:disabled{background:var(--lock);cursor:default}
 .place-bar .why{font-size:13px;color:var(--accent);font-weight:600;min-height:1.4em}
 .place-bar .row{flex-wrap:wrap}
-.detail .btn{white-space:nowrap}
-.cat-wrap{position:fixed;inset:0;z-index:8;display:grid;place-items:center;padding:16px;background:rgba(42,34,48,.28)}
-.book{position:relative;display:flex;align-items:flex-start;width:min(600px,100%);height:min(680px,calc(100vh - 32px))}
-.tabs{display:flex;flex-direction:column;gap:8px;padding-top:56px;margin-right:-2px;z-index:1}
-.tab{writing-mode:vertical-rl;transform:rotate(180deg);font:800 15px var(--font-display);letter-spacing:.04em;color:var(--muted);background:var(--rule);border:2px solid var(--ink);border-left:0;border-radius:0 10px 10px 0;padding:14px 8px;cursor:pointer}
-.tab[aria-selected="true"]{background:var(--paper);color:var(--ink)}
-.page{position:relative;flex:1;height:100%;box-sizing:border-box;grid-template-columns:minmax(0,1fr);padding:16px 18px 14px;display:grid;grid-template-rows:auto auto auto 1fr auto;gap:12px;min-width:0;background:var(--paper)}
-.page header{text-align:center;border-bottom:2px solid var(--rule);padding-bottom:10px}
-.page h2{margin:0;font:800 40px/1 var(--font-display);color:var(--ink)}
-.page header p{margin:4px 0 0;font-size:14px;color:var(--muted)}
-.x{position:absolute;top:8px;right:10px;width:34px;height:34px;border-radius:10px;border:2px solid var(--ink);background:var(--paper);font:800 20px/1 var(--font-display);cursor:pointer;color:var(--ink)}
-.shop-bar{display:flex;gap:8px;align-items:center}
-.search{flex:1;display:flex;align-items:center;gap:6px;background:#f6eedf;border:2px solid var(--ink);border-radius:10px;padding:0 10px;min-width:0}
-.search input{flex:1;min-width:0;border:0;background:transparent;font:400 14px var(--font-body);color:var(--ink);padding:8px 0;outline:none}
-.search svg,.cats svg{width:20px;height:20px;fill:none;stroke:var(--ink);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
-.search:focus-within{outline:3px solid var(--accent);outline-offset:2px}
-.wallet{font:600 13px var(--font-body);background:var(--yellow);border:2px solid var(--ink);border-radius:999px;padding:6px 12px;white-space:nowrap;font-variant-numeric:tabular-nums}
-.cats{display:flex;gap:6px;flex-wrap:wrap;border-bottom:2px solid var(--rule);padding-bottom:10px}
-.cats button{width:44px;height:40px;display:grid;place-items:center;background:var(--paper);border:2px solid var(--ink);border-radius:10px;box-shadow:0 2px 0 var(--ink);cursor:pointer}
-.cats button[aria-pressed="true"]{background:var(--ink)}.cats button[aria-pressed="true"] svg{stroke:var(--paper)}
-.grid{overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:10px;align-content:start;padding:10px 4px 4px 2px}
-.tile{position:relative;display:grid;gap:4px;padding:6px 6px 8px;background:#fbf6ec;border:2px solid var(--rule);border-radius:12px;cursor:pointer;font:600 13px var(--font-body);color:var(--ink)}
-.tile .pic{aspect-ratio:1;display:grid;place-items:center;background:var(--paper);border-radius:8px}
-.tile img{width:100%;height:100%;object-fit:contain}
-.tile .pin{position:absolute;top:-8px;left:50%;transform:translateX(-50%);font:600 11px var(--font-body);background:var(--accent);color:#fff;border:2px solid var(--ink);border-radius:999px;padding:1px 8px;white-space:nowrap;z-index:1}
-.tile .price{font-variant-numeric:tabular-nums}
-.tile:hover{border-color:var(--ink)}
-.tile.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
-.tile.sold .price{color:var(--pin)}
-.tile.poor .price{color:var(--muted)}.tile.poor img{opacity:.55}
-.tile:focus-visible,.cats button:focus-visible,.tab:focus-visible,.x:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-.empty{grid-column:1/-1;text-align:center;color:var(--muted);font-size:14px}
-.detail{display:flex;gap:12px;align-items:center;justify-content:space-between;border-top:2px solid var(--rule);padding-top:10px;min-height:44px}
-.detail div{display:grid;gap:2px;font-size:13px;color:var(--muted);line-height:1.4}.detail b{font:800 18px var(--font-display);color:var(--ink)}
-.detail .perk{color:var(--ink);font-weight:600}
-.detail .hint-line{margin:0;font-size:13px;color:var(--muted)}
-@media (max-width:560px){.book{flex-direction:column;height:calc(100vh - 32px)}.tabs{flex-direction:row;padding:0 0 0 14px;margin:0 0 -2px;align-self:flex-start}.tab{writing-mode:horizontal-tb;transform:none;border:2px solid var(--ink);border-bottom:0;border-radius:10px 10px 0 0;padding:6px 14px}.page{width:100%;min-height:0}.page h2{font-size:32px}.wallet{padding:6px 8px}}
 @media (prefers-reduced-motion:reduce){.chip{transition:none}.chip.quest,.stats .warn{animation:none}.fade{transition:none}}
 @media (max-width:640px){.hud.tl{top:calc(62px + env(safe-area-inset-top,0px))}}
 /* HUD layout: day card + stats stacked top-left, buttons top-right, Tan làm bottom-right; the hint, sheet and toast keep clear of all of them */
@@ -181,6 +145,7 @@ body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--font-b
 </div>
 <div class="fade on" id="fade" aria-live="polite"><small id="fade-eyebrow"></small><b id="fade-title">Về phòng trọ</b><span id="fade-sub"></span></div>
 <script>/* first frame: paint the scene-change card the previous page handed over, before the 3D world loads */try{const f=JSON.parse(sessionStorage.getItem('ssns-fade')),d=document.getElementById('fade');sessionStorage.removeItem('ssns-fade');if(f&&(d.classList.contains('on')||location.hash.includes('from=home'))){d.style.transition='none';d.classList.add('on');for(const k of['eyebrow','title','sub'])document.getElementById('fade-'+k).textContent=f[k]||''}}catch(e){}</script>
+<div class="cat-wrap" id="collection" hidden></div>
 <div class="modal-wrap" id="modal-wrap" hidden><div class="card modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"></div></div>
 
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
@@ -681,7 +646,8 @@ function modal({eyebrow = '', title, nodes = [], actions = [], docked = false}){
   modalWrap.hidden = false; closeSheet(); modalEl.querySelector('.choice,.btn')?.focus();
 }
 const closeModal = () => { modalWrap.hidden = true; };
-document.getElementById('open-collection').onclick = () => modal({eyebrow:'Mở thêm qua mỗi ván chơi', title:'Bộ sưu tập', nodes:[Ho.collectionNode(PROFILE.p, REVIEW, CARDS, S.runId)], actions:[{label:'Đóng', onClick:closeModal}]});
+const collEl = document.getElementById('collection');   // Bộ sưu tập: the so.css book, drawn by ho-so.js
+document.getElementById('open-collection').onclick = () => { closeSheet(); Ho.openCollection(collEl, PROFILE.p, REVIEW, CARDS, S.runId); };
 function choiceList(c, onPick){
   const box = el('div', 'choices');
   if (G.autoResolves(S, c)) { const b = el('button', 'choice', 'Tiếp'); b.onclick = () => onPick(0); box.appendChild(b); return box; }
@@ -713,7 +679,7 @@ function openLaptopCard(){
 
 /* -- scene changes: tan làm -> room, bed -> next morning / weekend -- */
 const fadeEl = document.getElementById('fade'); let fading = false;
-const busy = () => fading || !modalWrap.hidden || !catalogEl.hidden;
+const busy = () => fading || !modalWrap.hidden || !catalogEl.hidden || !collEl.hidden;
 const wait = ms => new Promise(r => setTimeout(r, reduce ? Math.min(ms, 300) : ms));
 async function sceneChange(card, swap, {stay = false} = {}){
   fading = true; keys.clear(); player.path = []; pendingHot = null; closeSheet();
