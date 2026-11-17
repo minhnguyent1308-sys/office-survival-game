@@ -190,11 +190,11 @@ export const NPC_LOOKS = {
 
 /* ---------- Scene change office → room: one quote per day, every trip a different line ---------- */
 /* ---------- The player's look (opening "Ảnh thẻ hồ sơ", mo-dau.js): looks only, no stats (Lily 15/11) ----------
-   White shirt + intern lanyard stay fixed so you always spot yourself; hair styles and accessories avoid every NPC's signature look. */
+   White shirt + intern lanyard stay fixed so you always spot yourself; hair styles and accessories avoid every NPC's signature look. No briefcase: it stuck to you all day, even in bed (Lily 17/11); an old save with extra:'bag' falls back to 'none'. */
 export const LOOKS = {
   hair:  [{id:'short', label:'Ngắn'}, {id:'long', label:'Dài'}],
   color: [{id:'den', label:'Đen', hex:'#2b1d16'}, {id:'hatde', label:'Nâu hạt dẻ', hex:'#6b3a22'}, {id:'nausang', label:'Nâu sáng', hex:'#a8703f'}],
-  extra: [{id:'none', label:'Không'}, {id:'glasses', label:'Kính gọng vàng', short:'Kính', set:{glasses:'#c9a227'}}, {id:'bag', label:'Cặp tài liệu', short:'Cặp', set:{bag:true}}, {id:'clip', label:'Kẹp tóc', short:'Kẹp', set:{clip:'#f7d046'}}],
+  extra: [{id:'none', label:'Không'}, {id:'glasses', label:'Kính gọng vàng', short:'Kính', set:{glasses:'#c9a227'}}, {id:'clip', label:'Kẹp tóc', short:'Kẹp', set:{clip:'#f7d046'}}],
 };
 const pick = (list, id) => list.find(o => o.id === id) || list[0];
 // makeChar options for a look; base = what the page dresses you in (pyjamas at home)
