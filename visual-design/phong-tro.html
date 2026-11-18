@@ -647,7 +647,7 @@ function modal({eyebrow = '', title, nodes = [], actions = [], docked = false}){
 }
 const closeModal = () => { modalWrap.hidden = true; };
 const collEl = document.getElementById('collection');   // Bộ sưu tập: the so.css book, drawn by ho-so.js
-document.getElementById('open-collection').onclick = () => { closeSheet(); Ho.openCollection(collEl, PROFILE.p, REVIEW, CARDS, S.runId); };
+document.getElementById('open-collection').onclick = () => { closeSheet(); Ho.openCollection(collEl, PROFILE.p, REVIEW, CARDS, S.runId, PROFILE, () => ({day: S.day, trang: location.pathname})); };
 function choiceList(c, onPick){
   const box = el('div', 'choices');
   if (G.autoResolves(S, c)) { const b = el('button', 'choice', 'Tiếp'); b.onclick = () => onPick(0); box.appendChild(b); return box; }

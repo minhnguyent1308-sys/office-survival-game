@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Số liệu người chơi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Be+Vietnam+Pro:wght@400;600&display=swap">
+<style>
+/* Same tokens as the game pages (tang-intern.html): one design system */
+:root{
+  --ground:#f9f0e1; --ink:#2a2230; --paper:#fffdf8; --muted:#7a6f74; --accent:#e8505b; --lock:#b9b0a6;
+  --yellow:#f7d046; --xp:#3c83ec; --pin:#44ba6a; --ut:#e3b23c; --qh:#f45561; --rule:#eadfcd;
+  --font-display:"Baloo 2","Be Vietnam Pro",system-ui,sans-serif;
+  --font-body:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font:15px/1.45 var(--font-body)}
+main{max-width:1120px;margin:0 auto;padding:20px 16px 48px}
+h1{font:800 30px/1.1 var(--font-display);margin:0}
+h2{font:800 19px/1.2 var(--font-display);margin:0 0 2px}
+.sub{color:var(--muted);font-size:13px;margin:0 0 12px}
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
+.range{display:flex;flex-wrap:wrap;gap:6px}
+button{white-space:nowrap}
+button{font:600 14px var(--font-body);color:var(--ink);background:var(--paper);border:2px solid var(--ink);border-radius:999px;padding:6px 14px;cursor:pointer;min-height:36px}
+button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+button.small{font-size:12px;padding:2px 10px;min-height:28px}
+.card{background:var(--paper);border:2px solid var(--ink);border-radius:12px;box-shadow:0 3px 0 var(--ink);padding:14px 16px;min-width:0}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.wide{grid-column:1/-1}
+@media (max-width:760px){.grid{grid-template-columns:minmax(0,1fr)}}
+.tiles{display:grid;gap:10px;grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:14px}
+@media (max-width:760px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tile b{display:block;font:800 30px/1 var(--font-display);margin-top:4px}
+.tile span{font-size:13px;color:var(--muted)}
+.tile small{display:block;font-size:12px;color:var(--muted);margin-top:4px}
+/* horizontal bars: label | bar | value (the rows double as the table view) */
+.bars{display:grid;grid-template-columns:minmax(90px,38%) minmax(0,1fr) auto;gap:6px 10px;align-items:center;margin-top:8px;font-size:13.5px}
+.bars .lab{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bars .track{height:14px}
+.bars .fill{height:100%;background:var(--xp);border-radius:0 4px 4px 0;min-width:2px}
+.bars .val{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.bars .val small{color:var(--muted)}
+.stack{display:flex;height:14px;gap:2px}
+.bars.st{grid-template-columns:minmax(90px,30%) minmax(0,1fr)}
+.bars.st .val{grid-column:2;text-align:left;margin-top:-4px}
+.stack i{display:block;height:100%}
+.stack i:last-child{border-radius:0 4px 4px 0}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12.5px;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+/* columns by day */
+.cols{position:relative;display:flex;align-items:flex-end;gap:2px;height:160px;margin-top:12px;border-bottom:1px solid var(--rule)}
+.cols div{flex:1;background:var(--xp);border-radius:4px 4px 0 0;min-height:1px;position:relative}
+.cols div:hover,.cols div:focus{background:var(--ink);outline:none}
+.axis{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:4px}
+#tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--paper);font-size:12.5px;padding:6px 9px;border-radius:8px;z-index:9;display:none;max-width:240px}
+.empty{color:var(--muted);font-size:13.5px;margin:10px 0 0}
+.fb{display:grid;gap:8px;margin-top:10px;max-height:520px;overflow:auto}
+.fb article{border-top:1px solid var(--rule);padding:8px 0 2px;display:grid;grid-template-columns:1fr auto;gap:2px 10px}
+.fb p{margin:0;grid-column:1/-1;overflow-wrap:anywhere}
+.fb .meta{font-size:12px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.gate{max-width:420px;margin:12vh auto 0}
+.gate input{width:100%;font:15px var(--font-body);padding:9px 12px;border:2px solid var(--ink);border-radius:10px;margin:10px 0}
+.err{color:var(--accent);font-size:13.5px}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<div id="tip" role="tooltip"></div>
+<script type="module">
+// Dashboard số liệu: đọc /api/so-lieu (Worker, worker/index.js), cần khóa KHOA_DASHBOARD (chủ game tự đặt trong Cloudflare).
+// Khóa chỉ lưu trong trình duyệt này. Tên kết cục, KPI, minigame, đồ nội thất lấy từ chính file dữ liệu của game.
+const app = document.getElementById('app'), tip = document.getElementById('tip');
+const KEY = 'ssns-khoa-dashboard';
+const store = {get: () => { try { return localStorage.getItem(KEY) || ''; } catch { return ''; } }, set: v => { try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); } catch {} }};
+const el = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(attrs)) k === 'class' ? e.className = v : k.startsWith('on') ? e[k] = v : e.setAttribute(k, v); e.append(...kids.flat().filter(x => x != null)); return e; };
+const num = n => (n || 0).toLocaleString('vi-VN');
+const pct = (a, b) => (b ? Math.round(a / b * 100) + '%' : '–');
+const PAGE = {'/': 'Văn phòng', '/index.html': 'Văn phòng', '/phong-tro': 'Phòng trọ', '/phong-tro.html': 'Phòng trọ', '/tra-sua': 'Quán trà sữa', '/tra-sua.html': 'Quán trà sữa'};
+const TAG = {hay: 'Hay', kho: 'Khó quá', loi: 'Gặp lỗi', y_tuong: 'Có ý tưởng', null: 'Không chọn nhãn'};
+const GRADE = {xuat_sac: 'Xuất sắc', dat: 'Đạt', truot: 'Trượt', lam_lo: 'Làm lơ'};
+const SHADE = {xuat_sac: 'var(--xp)', dat: 'var(--pin)', truot: 'var(--qh)', lam_lo: 'var(--lock)'};
+
+let names = {}, days = 30, data = null, tagFilter = null;
+async function loadNames() {
+  const get = f => fetch(f).then(r => r.json()).catch(() => ({}));
+  const [dg, nc, mg, nt] = await Promise.all([get('danh-gia.json'), get('nhip-choi.json'), get('minigames.json'), get('noi-that.json')]);
+    names = {
+    ending: Object.fromEntries([...(dg.endings || []).map(e => [e.id, e.title]), ...Object.entries(dg.early || {}).map(([id, e]) => [id, e.title + ' (nghỉ sớm)'])]),
+    kpi: Object.fromEntries((nc.kpi?.pool || []).map(k => [k.id, k.title])),
+    minigame: Object.fromEntries((mg.games || []).map(g => [g.id, g.name])),
+    item: Object.fromEntries((nt.items || []).map(i => [i.id, i.name])),
+  };
+}
+
+async function fetchStats() {
+  const r = await fetch(`/api/so-lieu?days=${days}`, {headers: {'x-khoa': store.get()}});
+  const body = await r.json().catch(() => ({ok: false, why: 'Không đọc được số liệu.'}));
+  if (!r.ok) throw Object.assign(new Error(body.why), {status: r.status});
+  return body;
+}
+
+function gate(msg) {
+  const input = el('input', {type: 'password', placeholder: 'Khóa dashboard', autocomplete: 'current-password'});
+  const go = () => { store.set(input.value.trim()); show(); };
+  input.onkeydown = e => { if (e.key === 'Enter') go(); };
+  app.replaceChildren(el('div', {class: 'card gate'},
+    el('h1', {}, 'Số liệu người chơi'),
+    el('p', {class: 'sub'}, 'Nhập khóa KHOA_DASHBOARD bạn đã đặt trong Cloudflare. Khóa chỉ lưu trên trình duyệt này.'),
+    input, msg ? el('p', {class: 'err'}, msg) : null, el('button', {onclick: go}, 'Mở dashboard')));
+  input.focus();
+}
+
+async function show() {
+  if (!store.get()) return gate();
+  try { data = await fetchStats(); render(); }
+  catch (e) { if (e.status === 401 || e.status === 403) { if (e.status === 401) store.set(''); gate(e.message); } else app.replaceChildren(el('p', {class: 'err'}, e.message)); }
+}
+
+/* ---------- pieces ---------- */
+const card = (title, sub, ...body) => el('section', {class: 'card'}, el('h2', {}, title), sub ? el('p', {class: 'sub'}, sub) : null, ...body);
+const empty = () => el('p', {class: 'empty'}, 'Chưa có số liệu trong khoảng này.');
+const tile = (label, value, note) => el('div', {class: 'card tile'}, el('span', {}, label), el('b', {}, value), note ? el('small', {}, note) : null);
+// rows: [{label, n, note?}], one hue, longest bar = max
+function bars(rows, {fmt = r => num(r.n)} = {}) {
+  if (!rows.length) return empty();
+  const max = Math.max(...rows.map(r => r.n), 1);
+  return el('div', {class: 'bars'}, rows.flatMap(r => [
+    el('span', {class: 'lab', title: r.label}, r.label),
+    el('div', {class: 'track'}, el('div', {class: 'fill', style: `width:${r.n / max * 100}%`})),
+    el('span', {class: 'val'}, fmt(r)),
+  ]));
+}
+// rows: [{label, parts: {grade: n}}] as 100% stacks, with a legend and the counts written out
+function stacks(rows, order) {
+  if (!rows.length) return empty();
+  const out = el('div', {class: 'bars st'}, rows.flatMap(r => {
+    const total = order.reduce((s, g) => s + (r.parts[g] || 0), 0);
+    const bar = el('div', {class: 'stack'}, order.filter(g => r.parts[g]).map(g => el('i', {style: `width:${r.parts[g] / total * 100}%;background:${SHADE[g]}`, 'data-tip': `${r.label}: ${GRADE[g]} ${r.parts[g]} (${pct(r.parts[g], total)})`})));
+    return [el('span', {class: 'lab', title: r.label}, r.label), bar, el('span', {class: 'val'}, el('small', {}, order.map(g => `${GRADE[g]} ${pct(r.parts[g] || 0, total)}`).join(' · ')))];
+  }));
+  return [out, el('div', {class: 'legend'}, order.map(g => el('span', {}, el('i', {style: `background:${SHADE[g]}`}), GRADE[g])))];
+}
+const group = (list, name) => Object.values(list.reduce((acc, r) => { (acc[r.k] ||= {label: name[r.k] || r.k, parts: {}}).parts[r.r] = r.n; return acc; }, {}));
+
+// vertical columns, one per item: [{n, tip}], with a first / middle / last label under them
+function columns(items, {aria, first, mid, last}) {
+  if (!items.length) return empty();
+  const max = Math.max(...items.map(d => d.n), 1);
+  return [el('div', {class: 'cols', role: 'img', 'aria-label': aria}, items.map(d => el('div', {tabindex: 0, style: `height:${d.n / max * 100}%`, 'data-tip': d.tip}))),
+    el('div', {class: 'axis'}, el('span', {}, first), el('span', {}, mid ?? `cao nhất ${num(max)}`), el('span', {}, last))];
+}
+const dmy = s => s.split('-').reverse().join('/'), dm = s => dmy(s).slice(0, 5);
+
+function feedbackList(fb) {
+  const list = fb.list.filter(f => tagFilter === null || String(f.nhan) === tagFilter);
+  const box = el('div', {class: 'fb'}, list.length ? list.map(f => el('article', {},
+    el('span', {class: 'meta'}, [f.sao ? '★'.repeat(f.sao) + '☆'.repeat(5 - f.sao) : 'Không chấm sao', TAG[f.nhan], f.day ? `ngày ${f.day}` : null, f.ket_cuc ? names.ending[f.ket_cuc] || f.ket_cuc : null, PAGE[f.trang] || null, new Date(f.t).toLocaleString('vi-VN', {dateStyle: 'short', timeStyle: 'short'})].filter(Boolean).join(' · ')),
+    el('button', {class: 'small', title: 'Ẩn góp ý này khỏi dashboard', onclick: async e => {
+      e.target.disabled = true;
+      const r = await fetch('/api/gop-y/an', {method: 'POST', headers: {'x-khoa': store.get()}, body: JSON.stringify({so: f.so})});
+      if (r.ok) { fb.list = fb.list.filter(x => x !== f); e.target.closest('article').remove(); } else e.target.disabled = false;
+    }}, 'Ẩn'),
+    el('p', {}, f.noi_dung || el('i', {class: 'meta'}, '(không viết gì)')))) : empty());
+  const chips = el('div', {class: 'chips'}, [[null, 'Tất cả'], ...fb.tags.map(t => [String(t.nhan), `${TAG[t.nhan]} (${t.n})`])].map(([v, label]) =>
+    el('button', {class: 'small', 'aria-pressed': String(tagFilter === v), onclick: () => { tagFilter = v; render(); }}, label)));
+  return [chips, box];
+}
+
+/* ---------- page ---------- */
+function render() {
+  const d = data, f = d.funnel || {}, ret = d.retention || {}, fb = d.feedback;
+  const newPeople = d.perDay.reduce((s, r) => s + r.moi, 0), fbTotal = fb.tags.reduce((s, t) => s + t.n, 0);
+  const active = d.pages.reduce((m, p) => Math.max(m, p.nguoi), 0);
+  const stars = fb.stars.reduce((a, s) => [a[0] + s.sao * s.n, a[1] + s.n], [0, 0]);
+  const minutes = d.time.luot ? Math.round(d.time.giay / d.time.luot / 60) : 0;
+  const endTotal = d.endings.reduce((s, e) => s + e.n, 0);
+
+  const range = el('div', {class: 'range'}, [7, 30, 90].map(n => el('button', {'aria-pressed': String(days === n), onclick: () => { days = n; show(); }}, `${n} ngày`)));
+  app.replaceChildren(
+    el('div', {class: 'top'},
+      el('div', {}, el('h1', {}, 'Số liệu người chơi'), el('p', {class: 'sub'}, `Từ ${dmy(d.from)} đến ${dmy(d.to)} (giờ Việt Nam). Ẩn danh: không tên, không IP.`)),
+      el('div', {class: 'range'}, range, el('button', {onclick: () => { store.set(''); gate(); }}, 'Khóa lại'))),
+    el('div', {class: 'tiles'},
+      tile('Người chơi', num(active), `${num(newPeople)} người mới`),
+      tile('Ván bắt đầu', num(f.bat_dau), `${pct(f.ngay40, f.bat_dau)} chơi tới ngày 40`),
+      tile('Quay lại hôm sau', pct(ret.lai1, ret.du1), `sau 7 ngày: ${pct(ret.lai7, ret.du7)}`),
+      tile('Phút chơi mỗi ngày', num(minutes), 'trung bình mỗi người'),
+      tile('Chơi ván thứ hai', num(d.others.van_hai), 'lượt bắt đầu lại sau một ván'),
+      tile('Chia sẻ thẻ kết cục', num(d.others.chia_se), `${pct(d.others.chia_se, endTotal)} số ván xong`),
+      tile('Góp ý', num(fbTotal), stars[1] ? `${(stars[0] / stars[1]).toFixed(1)} sao trung bình` : 'chưa có ai chấm sao'),
+      tile('Ván xong', num(endTotal), endTotal ? `Junior: ${pct((d.endings.find(e => e.k === 'junior') || {}).n || 0, endTotal)}` : null)),
+    el('div', {class: 'grid'},
+      el('div', {class: 'wide'}, card('Người chơi mỗi ngày', 'Rê chuột hoặc chạm vào cột để xem người mới, lượt mở game và số ván.', columns(
+        d.perDay.map(r => ({n: r.nguoi, tip: `${dmy(r.ngay)}\n${num(r.nguoi)} người chơi (${num(r.moi)} mới)\n${num(r.mo)} lượt mở game\n${num(r.van)} ván mới · ${num(r.xong)} ván xong`})),
+        {aria: 'Số người chơi mỗi ngày', first: d.perDay[0] && dm(d.perDay[0].ngay), last: d.perDay.at(-1) && dm(d.perDay.at(-1).ngay)}))),
+      card('Phễu một ván', 'Trong số ván bắt đầu trong khoảng này, bao nhiêu ván đi tới mỗi mốc.', bars([
+        {label: 'Bắt đầu ván', n: f.bat_dau || 0}, {label: 'Hết tuần 1 (ngày 5)', n: f.ngay5 || 0}, {label: 'Ngày 15', n: f.ngay15 || 0},
+        {label: 'Ngày 30', n: f.ngay30 || 0}, {label: 'Ngày 40', n: f.ngay40 || 0}, {label: 'Có kết cục (kể cả nghỉ sớm)', n: f.xong || 0},
+      ].filter(r => f.bat_dau), {fmt: r => `${num(r.n)} · ${pct(r.n, f.bat_dau)}`})),
+      card('Bỏ dở ở ngày nào', 'Ván chưa có kết cục và đã im hơn 1 ngày, theo ngày cuối cùng người chơi tới.', columns(Array.from({length: 39}, (_, i) => { const n = (d.quit.find(q => q.day === i + 1) || {}).n || 0; return {n, tip: `Dừng ở ngày ${i + 1}: ${num(n)} ván`}; }).filter(() => d.quit.length),
+        {aria: 'Số ván bỏ dở theo ngày', first: 'Ngày 1', last: 'Ngày 39'})),
+      card('Kết cục', 'Bot mô phỏng cho Junior khoảng 40%. Lệch xa thì nên xem lại độ khó.', bars(d.endings.map(e => ({label: names.ending[e.k] || e.k, n: e.n})), {fmt: r => `${num(r.n)} · ${pct(r.n, endTotal)}`})),
+      card('Dùng nơi nào trong game', 'Số người đã mở từng khu.', bars(d.pages.reduce((acc, p) => { const label = PAGE[p.k] || p.k, row = acc.find(r => r.label === label); row ? row.n += p.nguoi : acc.push({label, n: p.nguoi}); return acc; }, []), {fmt: r => `${num(r.n)} người`})),
+      card('KPI tuần', 'Kết quả từng tờ giấy nhớ của anh Tuấn.', stacks(group(d.kpi, names.kpi), ['dat', 'truot', 'lam_lo'])),
+      card('Minigame', 'Tỉ lệ từng mức điểm.', stacks(group(d.minigames, names.minigame), ['xuat_sac', 'dat', 'truot'])),
+      card('Chợ Trọ', 'Món được mua nhiều nhất.', bars(d.buys.slice(0, 10).map(b => ({label: names.item[b.k] || b.k, n: b.n})))),
+      card('Điểm sao', stars[1] ? `${num(stars[1])} lượt chấm, trung bình ${(stars[0] / stars[1]).toFixed(1)} sao.` : null, bars([5, 4, 3, 2, 1].map(s => ({label: '★'.repeat(s), n: (fb.stars.find(x => x.sao === s) || {}).n || 0})).filter(() => stars[1]))),
+      el('div', {class: 'wide'}, card('Góp ý mới nhất', 'Chỉ bạn thấy. Bấm Ẩn để bỏ góp ý spam khỏi dashboard.', feedbackList(fb))),
+    ),
+  );
+}
+
+// one tooltip for every [data-tip] mark (mouse, touch, keyboard)
+const showTip = (t, x, y) => { tip.textContent = t; tip.style.whiteSpace = 'pre-line'; tip.style.display = 'block'; tip.style.left = Math.min(x + 12, innerWidth - tip.offsetWidth - 8) + 'px'; tip.style.top = Math.max(8, y - tip.offsetHeight - 10) + 'px'; };
+document.addEventListener('pointermove', e => { const t = e.target.closest?.('[data-tip]'); t ? showTip(t.dataset.tip, e.clientX, e.clientY) : tip.style.display = 'none'; });
+document.addEventListener('focusin', e => { const t = e.target.closest?.('[data-tip]'); if (t) { const b = t.getBoundingClientRect(); showTip(t.dataset.tip, b.left, b.top); } });
+document.addEventListener('focusout', () => tip.style.display = 'none');
+
+await loadNames(); show();
+</script>
+</body>
+</html>

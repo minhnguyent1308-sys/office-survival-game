@@ -16,7 +16,7 @@
     "continue": "Đi làm tiếp",
     "newRun": "Ván mới",
     "newRunConfirm": "Bấm lần nữa để xóa ván đang chơi",
-    "footer": "Game tự lưu sau mỗi lựa chọn."
+    "footer": "Game tự lưu sau mỗi lựa chọn. Game đếm lượt chơi ẩn danh, không tên, không IP (tắt được trong Bộ sưu tập)."
   },
   "look": {
     "eyebrow": "Phòng Nhân sự",
