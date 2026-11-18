@@ -188,7 +188,7 @@ Mỗi lần bấm nói chuyện, nhân vật nói một câu trong danh sách c�
 
 # Tám chuyện ở canteen
 
-Chỉ có khi nhân vật đang ngồi ở canteen. Mỗi người có 10 câu chuyện riêng về scandal và chuyện ngoài lề của công ty, chọn ngẫu nhiên.
+Chỉ có khi nhân vật đang ngồi ở canteen. Mỗi người có 10 câu chuyện riêng (anh Tùng có 11) về scandal và chuyện ngoài lề của công ty, chọn ngẫu nhiên.
 
 ## Chị Hằng
 
@@ -241,3 +241,4 @@ Chỉ có khi nhân vật đang ngồi ở canteen. Mỗi người có 10 câu c
 8. Chị Mai lễ tân biết lương cả công ty. Chị ấy không nói, nhưng nhìn cách chị chào từng người là anh đoán được ai lương cao.
 9. Phòng mình có một nhóm chat riêng không có sếp. Và anh nghi trong đó còn một nhóm nhỏ hơn, không có anh.
 10. Đợt rồi có thư nặc danh tố sếp lên ban giám đốc. Ai cũng nghi anh Minh, vì cái thư được căn lề quá đẹp.
+11. Giải Nhân viên xuất sắc năm nay về tay cháu ruột giám đốc, vào làm được hai tháng, vì có tinh thần đóng góp và thái độ tích cực. Anh vượt KPI hai năm liền. Cậu ấy được 10 triệu và chuyến du lịch nước ngoài, cả phòng được bình giữ nhiệt in logo công ty. Chắc để giữ cái đầu cho nguội.
