@@ -2,6 +2,7 @@
 // "Chơi lại" clears the run, never this. Same three-op store as the save (load / save / clear), so a server can replace it later.
 // Pure logic first (emptyProfile, sync, finish, newThisRun), then the browser store, then the collection screen.
 import {hasFlag} from './engine.js';
+import {iconSvg} from './bieu-tuong.js';   // one picture per collection item; an item with none falls back to a generic one of its group
 import {feedbackNode} from './gop-y.js';
 
 export const PROFILE_VERSION = 1;
@@ -166,11 +167,6 @@ const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls)
 // The book (so.css, same as Chợ Trọ): three tabs, a progress line, sticker tiles, and one detail line for the tile you tap.
 // Found first, then the empty slots; a hint shows only when you tap an empty slot. runId (this run) puts "Mới" on what this run opened first.
 const TABS = [{kind: 'e', name: 'Kết cục', secs: [0]}, {kind: 'b', name: 'Huy hiệu', secs: [1]}, {kind: 'p', name: 'Câu chuyện', secs: [2, 3, 4]}];
-const ICON = {   // one sticker per group until each item has its own picture
-  e: '<path d="M6 3v18"/><path d="M6 4h11l-2 4 2 4H6"/>',
-  b: '<circle cx="12" cy="9" r="5"/><path d="M9 13l-2 8 5-3 5 3-2-8"/>',
-  p: '<path d="M4 5c3-1 6-1 8 1 2-2 5-2 8-1v14c-3-1-6-1-8 1-2-2-5-2-8-1z"/><path d="M12 6v14"/>',
-};
 // The last tab, "Góp ý" (only with h, the handle from open()): the counting switch and the feedback box (gop-y.js). context(): see gop-y.js.
 function moreNode(p, h, context) {
   const more = mk('div', 'more'), row = mk('label', 'track'), box = mk('input'); box.type = 'checkbox'; box.checked = !p.noTrack;
@@ -221,7 +217,7 @@ export function openCollection(wrap, p, rv, cards, runId = null, h = null, conte
       const b = mk('button', 'tile ' + (it.on ? 'got' : 'off') + (st.sel === it.id ? ' sel' : ''));
       b.setAttribute('aria-label', it.on ? it.name : 'Chưa mở');
       if (it.on && isNew(it.kind, it.id)) b.appendChild(mk('span', 'pin new', 'Mới'));
-      const pic = mk('span', 'pic', it.on ? null : '?'); if (it.on) pic.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${ICON[it.kind]}</svg>`;
+      const pic = mk('span', 'pic', it.on ? null : '?'); if (it.on) pic.innerHTML = iconSvg(it.id, it.kind);
       b.append(pic, mk('span', 'nm', it.on ? it.name : '???'));
       b.onclick = () => { st.sel = it.id; render(); grid.querySelector('.sel')?.focus(); };
       return b;
