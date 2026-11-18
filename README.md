@@ -1,5 +1,7 @@
 # Sống sót nơi công sở
 
+**Chơi:** https://song-sot-noi-cong-so.minhnguyen-t-1308.workers.dev · **Số liệu người chơi:** https://song-sot-noi-cong-so.minhnguyen-t-1308.workers.dev/so-lieu (cần khóa `KHOA_DASHBOARD`)
+
 Game nhập vai 3D trên trình duyệt: bạn là intern, có 40 ngày để sống sót và thăng tiến ở công ty. Ban ngày ở tầng Intern, buổi tối về phòng trọ, thỉnh thoảng ghé quán trà sữa.
 
 ## Cách mở game
@@ -45,9 +47,9 @@ Game đếm lượt chơi ẩn danh (không tên, không IP, không cookie) và 
 
 Thiết lập một lần (làm trên trang Cloudflare, không đưa mật khẩu vào repo):
 
-1. **Tạo database:** **Storage & Databases** → **D1 SQL database** → **Create**, đặt tên `so-lieu`. Chép **Database ID** vào `database_id` trong `wrangler.jsonc` (ID không phải mật khẩu, để trong repo được).
-2. **Đặt khóa dashboard:** **Workers & Pages** → `song-sot-noi-cong-so` → **Settings** → **Variables and Secrets** → **Add**, chọn kiểu **Secret**, tên `KHOA_DASHBOARD`, giá trị là mật khẩu bạn tự nghĩ. Chưa đặt thì dashboard khóa cửa.
-3. Mở `https://song-sot-noi-cong-so.<tên-miền-con>.workers.dev/so-lieu` và nhập khóa đó.
+1. **Tạo database:** **Storage & Databases** → **D1 SQL database** → **Create**, đặt tên `so-lieu`. Chép **Database ID** vào `database_id` trong `wrangler.jsonc` (ID không phải mật khẩu, để trong repo được). Đã làm.
+2. **Đặt khóa dashboard:** **Workers & Pages** → `song-sot-noi-cong-so` → **Settings** → **Variables and Secrets** → **Add**, tích ô **Secret**, tên `KHOA_DASHBOARD`, giá trị là mật khẩu bạn tự nghĩ. Chưa đặt thì dashboard khóa cửa.
+3. Mở https://song-sot-noi-cong-so.minhnguyen-t-1308.workers.dev/so-lieu và nhập khóa đó. Kiểm tra nhanh khóa còn hay mất: mở `/api/so-lieu`, thấy "Sai khóa." là khóa còn, thấy "Chưa đặt khóa" là khóa đã mất.
 
 Thử trên máy: tạo file `.dev.vars` (đã có trong `.gitignore`) với dòng `KHOA_DASHBOARD=mat-khau-thu`, chạy `npx wrangler dev`, rồi mở http://localhost:8787/so-lieu. D1 lúc này là bản trên máy, không đụng dữ liệu thật.
 
