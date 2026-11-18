@@ -5,6 +5,9 @@
   "name": "song-sot-noi-cong-so",
   "compatibility_date": "2026-11-01",
   "main": "worker/index.js",
+  // Giữ các biến đặt trên trang Cloudflare (ví dụ KHOA_DASHBOARD kiểu Text) khi deploy. Thiếu dòng này, mỗi lần merge
+  // `wrangler deploy` xóa mọi biến không có trong file này. Biến kiểu Secret thì không bao giờ bị xóa.
+  "keep_vars": true,
   "build": {
     "command": "sh build.sh"
   },
