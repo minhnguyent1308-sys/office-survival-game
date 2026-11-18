@@ -122,6 +122,107 @@ export const MODELS = {
     [[0, .3, 0, .1], [.07, .36, -.04, .08], [-.07, .34, .03, .085], [.02, .42, .02, .07]].forEach(([dx, y, dz, r]) => ball(.15 + dx, y, .15 + dz, r, P.green, [1, .8, 1], {ico: 0}));
     [[.12, .16, .22], [.16, .09, .26]].forEach(([dx, y, dz]) => ball(.15 + dx, y, dz, .05, P.green, [1, .6, 1], {ico: 0})); // trailing vine
   },
+  /* ---------- Room styles (Lily 18/11, concepts in visual-design/phong-cach/). Wall items (`wall` in the json): back against z = 0, hung above the floor ---------- */
+  // Ấm cúng: a string of warm bulbs, sagging in two loops across the wall
+  dayDenTuong(g, mat){ const {ball} = kitFor(g, mat), bulb = glow(mat, '#ffd98a', 1.6);
+    for (let i = 0; i <= 16; i++) { const t = i/16; ball(.05 + t*1.9, 2.45 - Math.sin(t*Math.PI*2) ** 2 * .3, .06, .04, null, [1, 1, 1], {material: bulb, cast: false}); }
+    const l = new T.PointLight('#ffcf7a', 1.6, 2.6, 1.6); l.position.set(1, 2.1, .4); g.add(l);
+  },
+  // Ấm cúng: round wool rug, three rings of terracotta and cream
+  thamTronLen(g, mat){ const {cyl} = kitFor(g, mat);
+    cyl(.8, .01, .8, .8, .8, .02, '#f2dcc0', {seg: 40, cast: false}); cyl(.8, .02, .8, .62, .62, .02, '#c8663f', {seg: 40, cast: false}); cyl(.8, .03, .8, .4, .4, .02, '#f2dcc0', {seg: 40, cast: false});
+  },
+  // Ấm cúng: rattan basket with a folded wool blanket
+  gioMay(g, mat){ const {cyl, box} = kitFor(g, mat);
+    cyl(.25, .2, .25, .25, .2, .4, '#c99a5b'); cyl(.25, .4, .25, .26, .26, .03, '#a87a40');
+    box(.03, .09, .32, .44, .3, .16, '#c8553d', {round: .07}); box(.1, .17, .4, .3, .2, .16, '#f6e3c8', {round: .07});
+  },
+  // Ấm cúng: wall shelf with three pots of trailing pothos
+  keCayRu(g, mat){ const {box, cyl, ball} = kitFor(g, mat);
+    box(0, 0, 1.9, 1.2, .3, .05, P.wood, {round: .01}); [.08, 1.08].forEach(x => box(x, 0, 1.75, .04, .25, .15, P.woodDark, {round: 0}));
+    [[.2, .45], [.6, .65], [1.0, .35]].forEach(([x, len]) => { cyl(x, 2.05, .15, .1, .08, .2, P.pot);
+      for (let k = 0; k < 6; k++) ball(x + (k % 2 ? .05 : -.05), 2.1 - k*len/5, .2, .06, P.green, [1, .7, 1], {ico: 0}); });
+  },
+  // Ấm cúng: three vanilla candles on a wooden tray, flames glowing
+  nenThom(g, mat){ const {box, cyl, ball} = kitFor(g, mat), flame = glow(mat, '#ffb347', 2);
+    box(.02, .02, 0, .31, .31, .03, P.wood, {round: .01});
+    [[.1, .12, .12], [.22, .14, .09], [.14, .24, .07]].forEach(([x, z, h]) => { cyl(x, .03 + h/2, z, .045, .045, h, '#fff1dc'); ball(x, .03 + h + .03, z, .02, null, [1, 1.6, 1], {material: flame, cast: false}); });
+    const l = new T.PointLight('#ffb35a', 1.2, 1.8, 1.6); l.position.set(.17, .45, .17); g.add(l);
+  },
+  // Dễ thương: big teddy bear with a pink bow, sitting
+  gauBong(g, mat){ const {ball, box} = kitFor(g, mat), c = '#d9a074', l = '#f6d7b8';
+    ball(.35, .3, .33, .32, c, [1, .95, .9]); ball(.35, .78, .38, .24, c); [-.17, .17].forEach(a => ball(.35 + a, .98, .36, .08, c));
+    ball(.35, .74, .6, .09, l, [1, .8, .7]); ball(.35, .3, .62, .16, l, [1, 1, .4]); [-.08, .08].forEach(a => ball(.35 + a, .82, .58, .025, P.ink));
+    [-.3, .3].forEach(a => ball(.35 + a, .38, .43, .1, c, [1, 1.4, 1])); [-.15, .15].forEach(a => ball(.35 + a, .08, .6, .11, c, [1, .8, 1.3]));
+    box(.27, .48, .58, .16, .06, .07, '#ff8fab', {round: .03});
+  },
+  // Dễ thương: cloud-shaped wall lamp, soft white
+  denMay(g, mat){ const {ball} = kitFor(g, mat), m = mat('#ffffff', {emissive: '#fff4f8', emissiveIntensity: .45});
+    [[.3, 2.05, .22], [.58, 2.15, .3], [.86, 2.07, .24], [.58, 1.95, .24]].forEach(([x, y, r]) => ball(x, y, .08, r, null, [1, .8, .3], {material: m, cast: false}));
+    const l = new T.PointLight('#fff1e0', 1.6, 2.6, 1.6); l.position.set(.55, 2, .5); g.add(l);
+  },
+  // Dễ thương: bunting, ten pastel triangles on a sagging string
+  coPastel(g, mat){ const cols = ['#ffc4d6', '#cdeee0', '#ffe08a', '#d6c8ff'];
+    for (let k = 0; k < 10; k++) { const t = (k + .5)/10, m = new T.Mesh(new T.ConeGeometry(.1, .22, 3), mat(cols[k % 4])); m.rotation.x = Math.PI;
+      m.position.set(.1 + k*.24, 2.63 - Math.sin(t*Math.PI) * .2, .06); m.castShadow = true; g.add(m); }
+  },
+  // Dễ thương: round pink rug with two cat ears
+  thamTaiMeo(g, mat){ const {cyl} = kitFor(g, mat);
+    cyl(.85, .01, .9, .8, .8, .02, '#ffffff', {seg: 40, cast: false}); cyl(.85, .02, .9, .73, .73, .02, '#ffd6e2', {seg: 40, cast: false});
+    [-.42, .42].forEach(a => { const e = cyl(.85 + a, .015, .24, .26, .26, .02, '#ffd6e2', {seg: 3, cast: false}); e.rotation.y = Math.PI/2; });
+  },
+  // Dễ thương: big glass jar of five-colour sweets
+  huKeo(g, mat){ const {cyl, ball} = kitFor(g, mat);
+    ['#ff8fab', '#8fd6a3', '#ffe08a', '#b9a7ff', '#7ad7ff', '#ff8fab', '#ffe08a'].forEach((c, k) => ball(.15 + Math.cos(k*1.7)*.06, .06 + k*.045, .15 + Math.sin(k*1.7)*.06, .05, c));
+    cyl(.15, .2, .15, .12, .12, .4, P.glass, {material: new T.MeshStandardMaterial({color: P.glass, transparent: true, opacity: .35, roughness: .1, depthWrite: false}), cast: false});
+    cyl(.15, .42, .15, .125, .125, .05, '#ff8fab');
+  },
+  // Wibu: two posters of original chibi girls (no real anime character), "がんばって" / "おつかれ"
+  posterAnime(g, mat){ const {box} = kitFor(g, mat);
+    const chibi = (hair, eye, bg, word) => { const c = document.createElement('canvas'); c.width = 220; c.height = 300; const x = c.getContext('2d');
+      x.fillStyle = bg; x.fillRect(0, 0, 220, 300); x.fillStyle = 'rgba(255,255,255,.5)'; for (let k = 0; k < 14; k++) { x.beginPath(); x.arc((k*53) % 220, (k*97) % 300, 3 + k % 4, 0, 7); x.fill(); }
+      x.fillStyle = hair; x.beginPath(); x.arc(110, 130, 78, Math.PI, 0); x.lineTo(188, 250); x.lineTo(32, 250); x.closePath(); x.fill();
+      x.fillStyle = '#ffe3d1'; x.beginPath(); x.ellipse(110, 150, 60, 64, 0, 0, 7); x.fill();
+      x.fillStyle = hair; x.beginPath(); x.moveTo(48, 130); x.quadraticCurveTo(110, 60, 172, 130); x.lineTo(150, 112); x.lineTo(128, 135); x.lineTo(108, 108); x.lineTo(86, 135); x.lineTo(66, 112); x.closePath(); x.fill();
+      [86, 134].forEach(a => { x.fillStyle = '#fff'; x.beginPath(); x.ellipse(a, 160, 13, 18, 0, 0, 7); x.fill(); x.fillStyle = eye; x.beginPath(); x.ellipse(a, 163, 10, 14, 0, 0, 7); x.fill(); x.fillStyle = '#fff'; x.beginPath(); x.arc(a - 4, 156, 4, 0, 7); x.fill(); });
+      x.fillStyle = '#ff9fb5'; [70, 150].forEach(a => { x.beginPath(); x.ellipse(a, 185, 10, 5, 0, 0, 7); x.fill(); });
+      x.strokeStyle = '#7a3a4a'; x.lineWidth = 3; x.beginPath(); x.arc(110, 186, 8, .2, Math.PI - .2); x.stroke();
+      x.fillStyle = '#fff'; x.font = '700 30px sans-serif'; x.textAlign = 'center'; x.fillText(word, 110, 285);
+      const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return new T.MeshStandardMaterial({map: t, roughness: .8}); };
+    [[0, chibi('#ff8fc8', '#5b4bd6', '#7ad7ff', 'がんばって')], [.85, chibi('#ffd166', '#2f9e6e', '#ff8fc8', 'おつかれ')]].forEach(([x, face]) => {
+      box(x + .02, 0, 1.38, .74, .03, .99, '#f4f4fa', {round: .01, cast: false});
+      const faces = Array(6).fill(mat('#f4f4fa')); faces[4] = face;
+      box(x + .04, .02, 1.4, .7, .03, .95, null, {round: 0, cast: false, material: faces}); });
+  },
+  // Wibu: lit glass cabinet, three shelves of little figures
+  tuFigure(g, mat){ const {box, cyl, ball} = kitFor(g, mat), w = '#eeeef4';
+    box(0, 0, 0, .6, .04, 1.5, w, {round: 0}); box(0, 0, 0, .03, .4, 1.5, w, {round: 0}); box(.57, 0, 0, .03, .4, 1.5, w, {round: 0});
+    box(0, 0, 0, .6, .4, .38, w, {round: .02}); box(0, 0, 1.48, .6, .4, .04, w, {round: 0});
+    box(.03, .37, .4, .54, .02, 1.08, '#cfefff', {round: 0, cast: false, material: new T.MeshStandardMaterial({color: '#cfefff', transparent: true, opacity: .22, roughness: .05, depthWrite: false})});
+    [.4, .76, 1.12].forEach((y, r) => { box(.03, .03, y, .54, .34, .03, '#ffffff', {round: 0});
+      ['#ff8fc8', '#7ad7ff', '#ffd166'].forEach((c, k) => { const fx = .12 + k*.18, fz = .2;
+        cyl(fx, y + .06, fz, .035, .045, .06, '#2c3152'); cyl(fx, y + .15, fz, .03, .045, .12, ['#ffffff', '#2c3152', '#ff5d8f'][(k + r) % 3]);
+        ball(fx, y + .27, fz, .055, '#ffe3d1'); ball(fx, y + .3, fz - .01, .06, c, [1, .8, 1]); }); });
+    const l = new T.PointLight('#ffffff', .8, 1.4, 1.6); l.position.set(.3, 1.3, .5); g.add(l);
+  },
+  // Wibu: long body pillow lying on the bed (fixed spot tren_giuong)
+  goiOm(g, mat){ const {box} = kitFor(g, mat);
+    box(0, 0, .48, .28, 1.2, .16, '#ffffff', {round: .08});
+    box(.02, .08, .63, .24, .36, .02, '#ffd166', {round: .01, cast: false}); box(.04, .5, .63, .2, .55, .02, '#ff8fc8', {round: .01, cast: false});
+  },
+  // Wibu: LED strip high on the wall, five colours
+  ledRgb(g, mat){ const {box} = kitFor(g, mat), cols = ['#ff5d8f', '#ff8fc8', '#b18cff', '#7ad7ff', '#7dffc8'];
+    for (let k = 0; k < 10; k++) box(k*.3, .01, 2.82, .3, .04, .05, null, {round: 0, cast: false, material: glow(mat, cols[k % 5], 1.6)});
+    const l = new T.PointLight('#ff8fc8', 1.6, 3.5, 1.6); l.position.set(1.5, 2.5, .6); g.add(l);
+  },
+  // Wibu: beckoning lucky cat on a small wooden stand
+  meoVayTay(g, mat){ const {box, ball} = kitFor(g, mat), w = '#ffffff';
+    box(.02, .02, 0, .31, .31, .5, P.wood, {round: .02});
+    ball(.17, .62, .17, .1, w, [1, 1.1, .9]); ball(.17, .78, .17, .085, w); ball(.26, .82, .2, .03, w, [1, 1.6, 1]);
+    [-.05, .05].forEach(a => { const e = new T.Mesh(new T.ConeGeometry(.03, .06, 4), mat(w)); e.position.set(.17 + a, .87, .17); g.add(e); });
+    ball(.17, .69, .25, .03, '#ffd166'); box(.13, .23, .66, .08, .02, .015, '#ff5d8f', {round: 0, cast: false});
+    [-.03, .03].forEach(a => ball(.17 + a, .79, .245, .012, P.ink));
+  },
 };
 
 // Builds one item from its json entry and places it: x, z = floor corner after rotation, rot = quarter turns (1 = front faces +x).

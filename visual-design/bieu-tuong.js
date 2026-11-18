@@ -1,4 +1,4 @@
-// Biểu tượng cho từng món trong Bộ sưu tập (52 món): kết cục, huy hiệu, chuyện ở trọ/công ty, ngày đặc biệt, chuyện riêng.
+// Biểu tượng cho từng món trong Bộ sưu tập (56 món): kết cục, huy hiệu, chuyện ở trọ/công ty, ngày đặc biệt, chuyện riêng.
 // Khóa = id trong danh-gia.json (kết cục, huy hiệu) hoặc id lá trong cards.json. Mỗi hình vẽ trong ô 64x64, nét mực dày 2.5, tô phẳng bằng màu của HUD.
 // Thêm kết cục / huy hiệu / lá mới thì thêm một dòng ở đây; thiếu hình thì sổ dùng hình chung của nhóm (ho-so.js).
 const I = 'var(--ink)', P = 'var(--paper)', Y = 'var(--yellow)', R = 'var(--accent)', B = 'var(--xp)', G = 'var(--pin)';
@@ -37,6 +37,12 @@ export const ICON = {
   than_voi_mai: `<path d="M10 44a22 22 0 0 1 44 0z" fill="${Y}"/><rect x="6" y="44" width="52" height="9" rx="3" fill="${S}"/><path d="M32 22v-4"/><circle cx="32" cy="15" r="3.5" fill="${I}"/>${heart(54, 12, .9)}`,
   than_voi_coba: `<path d="M12 28h40v16a10 10 0 0 1-10 10H22a10 10 0 0 1-10-10z" fill="${S}"/><path d="M8 28h48M12 34H5M52 34h7M28 24h8"/><path d="M22 20q-3-4 0-8q3-4 0-8M34 20q-3-4 0-8q3-4 0-8" stroke-width="2"/>${heart(32, 42, 1.1)}`,
   nhan_vien_kpi: `<circle cx="30" cy="34" r="22" fill="${P}"/><circle cx="30" cy="34" r="15" fill="${R}"/><circle cx="30" cy="34" r="8" fill="${P}"/><circle cx="30" cy="34" r="3" fill="${R}"/><path d="M30 34L54 10M48 10h8v8"/>`,
+
+  /* ---------- Phong cách phòng trọ (Lily 18/11): một bộ đồ mua đủ ở Chợ Trọ ---------- */
+  bo_tro_tieu_chuan: `<path d="M8 30L32 10l24 20" fill="none"/><rect x="13" y="28" width="38" height="28" rx="2" fill="${P}"/><rect x="18" y="38" width="16" height="3" fill="${W}"/><path d="M20 41v8M32 41v8" stroke-width="2"/><path d="M43 50v-8" stroke="${G}"/><path d="M43 44c-5 0-6-4-6-6 4 0 6 2 6 6zM43 43c4 0 5-3 5-5-4 0-5 2-5 5z" fill="${G}"/>`,
+  bo_am_cung: `<path d="M6 14q13 12 26 0q13 12 26 0" fill="none" stroke-width="2"/><circle cx="12" cy="18" r="3" fill="${Y}"/><circle cx="22" cy="21" r="3" fill="${Y}"/><circle cx="42" cy="21" r="3" fill="${Y}"/><circle cx="52" cy="18" r="3" fill="${Y}"/><path d="M18 34h28v14a8 8 0 0 1-8 8H26a8 8 0 0 1-8-8z" fill="${O}"/><path d="M46 38h3a5 5 0 0 1 0 10h-3"/><path d="M26 30q-2-3 0-6M34 30q-2-3 0-6" stroke-width="2"/>`,
+  bo_de_thuong: `<circle cx="18" cy="16" r="7" fill="${W}"/><circle cx="46" cy="16" r="7" fill="${W}"/><circle cx="32" cy="34" r="20" fill="${W}"/><ellipse cx="32" cy="41" rx="9" ry="7" fill="${C}"/><circle cx="25" cy="31" r="2.4" fill="${I}" stroke="none"/><circle cx="39" cy="31" r="2.4" fill="${I}" stroke="none"/><circle cx="32" cy="38" r="2" fill="${I}" stroke="none"/><path d="M24 54l8-5 8 5-8 5z" fill="${K}"/>`,
+  bo_wibu: `<rect x="12" y="6" width="40" height="52" rx="3" fill="${K}"/><circle cx="32" cy="30" r="13" fill="${C}"/><path d="M19 28q13-16 26 0l-4-4-4 5-5-6-5 6-4-5z" fill="${V}"/><circle cx="27" cy="31" r="2.6" fill="${I}" stroke="none"/><circle cx="37" cy="31" r="2.6" fill="${I}" stroke="none"/><path d="M29 37q3 2 6 0" stroke-width="2"/><path d="M20 50h24" stroke="${P}" stroke-width="3"/><path d="M50 6l3-4M56 12l5-2" stroke="${Y}" stroke-width="2"/>`,
 
   /* ---------- Chuyện ở trọ ---------- */
   EN_DIEN: `<path d="M14 6h36v52l-6-4-6 4-6-4-6 4-6-4-6 4z" fill="${P}"/><path d="M35 12L24 32h8l-4 16 14-22h-9z" fill="${Y}"/>`,

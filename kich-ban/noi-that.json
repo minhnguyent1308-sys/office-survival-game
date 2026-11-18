@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "Nội thất phòng trọ (Lily chốt 17/11). Chỉ dùng ở phòng trọ; không món nào cộng chỉ số (perk = ngoại hình, câu thoại, chỗ mèo nằm). Tiền: quà mẹ 200 lúc bắt đầu ván mới, phụ cấp 350 mỗi tối thứ Sáu (ngày 5, 12, 19, 26, 33), thưởng KPI 50 mỗi tuần đạt; save cũ bắt đầu với 0 và phòng trống. Giá tính bằng nghìn đồng: người chăm chỉ (2.150) mua được bất kỳ 10 món. Thêm món mới = thêm một object vào `items` + một hàm dựng cùng tên `model` trong visual-design/noi-that.js. `size` = [rộng x, sâu z] tính bằng ô khi chưa xoay; mặt trước quay về +z (phía camera). `slot`: tên chỗ cố định trong `rooms.<id>.slots` (đồ không đặt tự do), hoặc null = người chơi tự đặt. `max`: số lần mua được (mặc định 1). Phòng là dữ liệu (`rooms`): sau này thêm phòng to hơn (sự kiện chuyển nhà) = thêm một phòng; đồ đã đặt lưu riêng theo phòng trong save: home = {room, owned: {id: số lượng}, placed: {<roomId>: [{id, x, z, rot}]}}. Thùng đồ (Lily 17/11, đổi 21h40): là một món bán trong shop, 40 nghìn, ghim đầu danh sách (`pinned`). Chưa mua thùng: món mới mua đặt ngay vào phòng, chỉ dời chỗ được, không cất được. Có thùng: món đã mua mà chưa đặt trong phòng hiện tại thì nằm trong thùng (= owned trừ placed), không cần lưu riêng; cất vào hay mang ra bao nhiêu lần cũng được, không mất tiền. Bàn học cũng cất được, khi đó laptop về lại sàn. Chuyển nhà sau này: phòng mới bắt đầu với mọi món trong thùng. Đợt 2 (chưa làm): thú cưng trong shop (mèo khác màu, dùng chung hành vi mèo Deadline, đặt tên khi mua); số thú tối đa là spec của từng phòng (`maxPets`, phòng hiện tại 2 tính cả mèo Deadline hay không thì chốt ở đợt 2). Cửa hàng (Lily 17/11): màn catalog tên `shop.name`, dòng hướng dẫn `shop.tagline`, hàng icon theo `shop.categories`; mỗi món có `category`. Thêm nhóm mới = thêm một object vào categories + một icon trong noi-that-xem-truoc.html (sau này là phong-tro.html). `desc`: mô tả hiện ở màn Chợ Trọ khi bấm vào món; `perk`: dòng tác dụng ngắn ngay dưới. Gắn vào game (Lily duyệt 17/11): `box` = id món thùng đồ; `lines` (không bắt buộc) = câu thoại khi bấm vào món đã đặt trong phòng; kệ sách thêm một câu về số huy hiệu. Lá `unlock.card` đã chép sang cards.json (sửa lá thì sửa ở cards.json).",
+  "note": "Nội thất phòng trọ (Lily chốt 17/11). Chỉ dùng ở phòng trọ; không món nào cộng chỉ số (perk = ngoại hình, câu thoại, chỗ mèo nằm). Tiền: quà mẹ 200 lúc bắt đầu ván mới, phụ cấp 350 mỗi tối thứ Sáu (ngày 5, 12, 19, 26, 33), thưởng KPI 50 mỗi tuần đạt; save cũ bắt đầu với 0 và phòng trống. Giá tính bằng nghìn đồng: người chăm chỉ (2.150) mua được bất kỳ 10 món. Thêm món mới = thêm một object vào `items` + một hàm dựng cùng tên `model` trong visual-design/noi-that.js. `size` = [rộng x, sâu z] tính bằng ô khi chưa xoay; mặt trước quay về +z (phía camera). `slot`: tên chỗ cố định trong `rooms.<id>.slots` (đồ không đặt tự do), hoặc null = người chơi tự đặt. `max`: số lần mua được (mặc định 1). Phòng là dữ liệu (`rooms`): sau này thêm phòng to hơn (sự kiện chuyển nhà) = thêm một phòng; đồ đã đặt lưu riêng theo phòng trong save: home = {room, owned: {id: số lượng}, placed: {<roomId>: [{id, x, z, rot}]}}. Thùng đồ (Lily 17/11, đổi 21h40): là một món bán trong shop, 40 nghìn, ghim đầu danh sách (`pinned`). Chưa mua thùng: món mới mua đặt ngay vào phòng, chỉ dời chỗ được, không cất được. Có thùng: món đã mua mà chưa đặt trong phòng hiện tại thì nằm trong thùng (= owned trừ placed), không cần lưu riêng; cất vào hay mang ra bao nhiêu lần cũng được, không mất tiền. Bàn học cũng cất được, khi đó laptop về lại sàn. Chuyển nhà sau này: phòng mới bắt đầu với mọi món trong thùng. Đợt 2 (chưa làm): thú cưng trong shop (mèo khác màu, dùng chung hành vi mèo Deadline, đặt tên khi mua); số thú tối đa là spec của từng phòng (`maxPets`, phòng hiện tại 2 tính cả mèo Deadline hay không thì chốt ở đợt 2). Cửa hàng (Lily 17/11): màn catalog tên `shop.name`, dòng hướng dẫn `shop.tagline`, hàng icon theo `shop.categories`; mỗi món có `category`. Thêm nhóm mới = thêm một object vào categories + một icon trong noi-that-xem-truoc.html (sau này là phong-tro.html). `desc`: mô tả hiện ở màn Chợ Trọ khi bấm vào món; `perk`: dòng tác dụng ngắn ngay dưới. Gắn vào game (Lily duyệt 17/11): `box` = id món thùng đồ; `lines` (không bắt buộc) = câu thoại khi bấm vào món đã đặt trong phòng; kệ sách thêm một câu về số huy hiệu. Lá `unlock.card` đã chép sang cards.json (sửa lá thì sửa ở cards.json). Phong cách (Lily 18/11, concept ở visual-design/phong-cach/): `styles` = các bộ đồ; mỗi món thuộc nhiều nhất một bộ. Mua đủ mọi món của bộ (mua, không cần đặt) thì được cờ `badge` một lần, là huy hiệu nhóm \"phong_cach\" trong danh-gia.json (hiện ở mục Phong cách phòng trọ của Bộ sưu tập, anh Tuấn không đọc ở buổi đánh giá). Thêm bộ = thêm một object vào styles + cờ vào flagsBadges của cards.json + huy hiệu, gợi ý ở danh-gia.json + biểu tượng ở bieu-tuong.js. `wall: true` = đồ treo tường: chỉ đặt sát tường (xoay 0 = tường trong, xoay 1 = tường trái), không vướng đồ dưới sàn, không chắn lối đi; chỉ vướng đồ treo tường khác, cửa sổ, cửa ra vào và nhà vệ sinh.",
   "money": {
     "start": 200,
     "weekly": 350,
@@ -31,6 +31,11 @@
         "ban_hoc": {
           "x": 3.0,
           "z": 0,
+          "rot": 0
+        },
+        "tren_giuong": {
+          "x": 1.3,
+          "z": 3.15,
           "rot": 0
         }
       },
@@ -268,6 +273,272 @@
         "Trầu bà vươn thêm một đoạn. Không cần ai giao KPI.",
         "Bạn tưới chậu trầu bà. Nó không nói gì, nhưng trông vui hơn."
       ]
+    },
+    {
+      "id": "day_den_tuong",
+      "name": "Dây đèn treo tường",
+      "price": 90,
+      "model": "dayDenTuong",
+      "size": [
+        2.0,
+        0.12
+      ],
+      "slot": null,
+      "wall": true,
+      "category": "den",
+      "perk": "Treo sát tường. Buổi tối cả dây sáng vàng.",
+      "desc": "Hai mét bóng đèn tròn nhỏ, treo võng trên tường. Bật lên là phòng trọ thành quán cà phê, tiền điện thì vẫn là của phòng trọ.",
+      "lines": [
+        "Bạn bật dây đèn. Phòng nhìn như ảnh trên mạng, nếu không ai nhìn kỹ góc bếp.",
+        "Một bóng đèn chập chờn. Bạn quyết định gọi nó là \"hiệu ứng\".",
+        "Dây đèn sáng vàng. Hôm nay bỗng không còn tệ lắm."
+      ]
+    },
+    {
+      "id": "tham_tron_len",
+      "name": "Thảm tròn len",
+      "price": 110,
+      "model": "thamTronLen",
+      "size": [
+        1.6,
+        1.6
+      ],
+      "slot": null,
+      "flat": true,
+      "category": "trang_tri",
+      "perk": "Thảm phẳng, đặt được dưới ghế và bàn.",
+      "desc": "Thảm len đan tay ba vòng màu đất nung. Đi chân trần lên thấy ấm, mèo thấy càng ấm hơn."
+    },
+    {
+      "id": "gio_may",
+      "name": "Giỏ mây và chăn len",
+      "price": 120,
+      "model": "gioMay",
+      "size": [
+        0.5,
+        0.5
+      ],
+      "slot": null,
+      "category": "trang_tri",
+      "perk": "Trang trí.",
+      "desc": "Giỏ mây đựng một cái chăn len gấp đôi. Không lạnh cũng đắp, vì nó ở ngay đó.",
+      "lines": [
+        "Bạn kéo chăn len ra đắp. Điều hòa vẫn chưa bật.",
+        "Chăn len có mùi nắng. Chắc mẹ phơi trước khi gửi lên.",
+        "Mèo đã nằm trong giỏ mây trước khi bạn kịp lấy chăn."
+      ]
+    },
+    {
+      "id": "ke_cay_ru",
+      "name": "Kệ cây rủ",
+      "price": 150,
+      "model": "keCayRu",
+      "size": [
+        1.2,
+        0.3
+      ],
+      "slot": null,
+      "wall": true,
+      "category": "cay",
+      "perk": "Treo sát tường, ba chậu trầu bà rủ xuống.",
+      "desc": "Kệ gỗ treo tường với ba chậu cây rủ. Tưới mỗi tuần một lần, giống như gọi về nhà.",
+      "lines": [
+        "Bạn tưới cây. Lá rủ dài thêm một chút, giống deadline.",
+        "Ba chậu cây vẫn xanh. Bạn đang làm tốt hơn mình nghĩ."
+      ]
+    },
+    {
+      "id": "nen_thom",
+      "name": "Nến thơm",
+      "price": 40,
+      "model": "nenThom",
+      "size": [
+        0.35,
+        0.35
+      ],
+      "slot": null,
+      "category": "den",
+      "perk": "Ba ngọn nến nhỏ trên khay gỗ.",
+      "desc": "Ba cây nến mùi vani trên khay gỗ. Đặt dưới sàn cho an toàn, vì chủ trọ đã dặn ba lần.",
+      "lines": [
+        "Mùi vani lan khắp phòng. Mùi mì gói lùi lại một bước.",
+        "Bạn thổi tắt nến rồi lại thắp. Không vì gì cả."
+      ]
+    },
+    {
+      "id": "gau_bong",
+      "name": "Gấu bông khổng lồ",
+      "price": 180,
+      "model": "gauBong",
+      "size": [
+        0.7,
+        0.7
+      ],
+      "slot": null,
+      "category": "trang_tri",
+      "perk": "Trang trí; ôm được.",
+      "desc": "Gấu bông cao gần một mét, đeo nơ hồng. Biết lắng nghe hơn nhiều cuộc họp.",
+      "lines": [
+        "Bạn ôm gấu bông. Nó không hỏi tiến độ.",
+        "Gấu bông vẫn cười. Nó chưa bao giờ phải làm báo cáo tuần.",
+        "Mèo ngồi lên đầu gấu bông. Hai đứa đang tranh chỗ trong lòng bạn."
+      ]
+    },
+    {
+      "id": "den_may",
+      "name": "Đèn đám mây",
+      "price": 130,
+      "model": "denMay",
+      "size": [
+        1.1,
+        0.25
+      ],
+      "slot": null,
+      "wall": true,
+      "category": "den",
+      "perk": "Treo sát tường, sáng dịu như mây.",
+      "desc": "Đèn hình đám mây treo tường, sáng trắng dịu. Trời ngoài cửa sổ có mưa thì trong phòng vẫn có mây đẹp.",
+      "lines": [
+        "Đám mây sáng dịu. Bạn nhìn nó lâu hơn nhìn màn hình.",
+        "Đây là đám mây duy nhất không chứa file của công ty."
+      ]
+    },
+    {
+      "id": "co_pastel",
+      "name": "Dây cờ pastel",
+      "price": 50,
+      "model": "coPastel",
+      "size": [
+        2.4,
+        0.12
+      ],
+      "slot": null,
+      "wall": true,
+      "category": "trang_tri",
+      "perk": "Treo sát tường.",
+      "desc": "Mười lá cờ tam giác bốn màu kẹo. Ngày nào trong phòng cũng như sắp có tiệc."
+    },
+    {
+      "id": "tham_tai_meo",
+      "name": "Thảm tai mèo",
+      "price": 110,
+      "model": "thamTaiMeo",
+      "size": [
+        1.7,
+        1.7
+      ],
+      "slot": null,
+      "flat": true,
+      "category": "trang_tri",
+      "perk": "Thảm phẳng, đặt được dưới ghế và bàn.",
+      "desc": "Thảm tròn màu hồng có hai cái tai mèo. Mèo thật nằm lên thì thành mèo hai lớp."
+    },
+    {
+      "id": "hu_keo",
+      "name": "Hũ kẹo",
+      "price": 40,
+      "model": "huKeo",
+      "size": [
+        0.3,
+        0.3
+      ],
+      "slot": null,
+      "category": "trang_tri",
+      "perk": "Trang trí.",
+      "desc": "Hũ thủy tinh to đầy kẹo năm màu. Ăn một viên mỗi khi xong một việc, nên hũ vẫn còn đầy.",
+      "lines": [
+        "Bạn lấy một viên kẹo. Phần thưởng cho việc đã mở laptop.",
+        "Hũ kẹo vơi đi một chút. Tuần này căng thật."
+      ]
+    },
+    {
+      "id": "poster_anime",
+      "name": "Bộ poster anime",
+      "price": 80,
+      "model": "posterAnime",
+      "size": [
+        1.6,
+        0.08
+      ],
+      "slot": null,
+      "wall": true,
+      "category": "trang_tri",
+      "perk": "Treo sát tường.",
+      "desc": "Hai poster in hình hai cô bé tóc hồng và tóc vàng của một bộ anime chỉ bạn xem. Ghi \"Cố lên!\" và \"Vất vả rồi!\" bằng tiếng Nhật.",
+      "lines": [
+        "Poster ghi \"Cố lên!\". Bạn coi như sếp đã nói câu đó.",
+        "Bạn đứng nghiêm trước poster. Tập phản xạ trước buổi đánh giá."
+      ]
+    },
+    {
+      "id": "tu_figure",
+      "name": "Tủ kính figure",
+      "price": 220,
+      "model": "tuFigure",
+      "size": [
+        0.6,
+        0.4
+      ],
+      "slot": null,
+      "category": "tu_ke",
+      "perk": "Trang trí; tủ kính có đèn.",
+      "desc": "Tủ kính ba tầng có đèn, đủ chỗ cho chín figure. Hiện đang có chín figure và một lời hứa sẽ không mua thêm.",
+      "lines": [
+        "Bạn lau kính tủ figure. Đây là việc duy nhất hôm nay bạn làm cẩn thận.",
+        "Chín figure nhìn bạn. Không ai hỏi KPI.",
+        "Bạn xoay một figure lệch đi 5 độ rồi xoay lại. Hoàn hảo."
+      ]
+    },
+    {
+      "id": "goi_om",
+      "name": "Gối ôm dài",
+      "price": 90,
+      "model": "goiOm",
+      "size": [
+        0.28,
+        1.2
+      ],
+      "slot": "tren_giuong",
+      "category": "trang_tri",
+      "perk": "Nằm trên giường (chỗ cố định).",
+      "desc": "Gối ôm dài một mét hai, vỏ in hoa văn hồng vàng. Ngủ ôm nó thì sáng dậy ít muốn nghỉ việc hơn."
+    },
+    {
+      "id": "led_rgb",
+      "name": "Dải LED đổi màu",
+      "price": 120,
+      "model": "ledRgb",
+      "size": [
+        3.0,
+        0.08
+      ],
+      "slot": null,
+      "wall": true,
+      "category": "den",
+      "perk": "Treo sát tường, sáng hồng tím xanh.",
+      "desc": "Ba mét LED dán chân tường trên cao, năm màu chạy vòng. Phòng trọ thành phòng stream, chỉ thiếu người xem.",
+      "lines": [
+        "LED chuyển sang màu hồng. Tâm trạng bạn cũng vậy.",
+        "Bạn chỉnh LED sang chế độ \"tập trung\". Nó vẫn nhấp nháy."
+      ]
+    },
+    {
+      "id": "meo_vay_tay",
+      "name": "Mèo vẫy tay",
+      "price": 50,
+      "model": "meoVayTay",
+      "size": [
+        0.35,
+        0.35
+      ],
+      "slot": null,
+      "category": "trang_tri",
+      "perk": "Trang trí; đứng trên kệ gỗ nhỏ.",
+      "desc": "Mèo thần tài vẫy tay đứng trên kệ gỗ nhỏ. Vẫy cả ngày để gọi lương về sớm.",
+      "lines": [
+        "Mèo vẫy tay vẫn vẫy. Lương vẫn chưa về.",
+        "Mèo Deadline nhìn mèo vẫy tay rất lâu. Chắc là ghen."
+      ]
     }
   ],
   "shop": {
@@ -339,5 +610,55 @@
       ]
     },
     "toast": "Laptop sáng lên: chị Mai vừa gửi bạn một đường link"
-  }
+  },
+  "styles": [
+    {
+      "id": "tieu_chuan",
+      "name": "Trọ tiêu chuẩn",
+      "badge": "bo_tro_tieu_chuan",
+      "items": [
+        "ban_hoc",
+        "ghe_go",
+        "tham",
+        "ban_tra",
+        "chau_cay_nho"
+      ]
+    },
+    {
+      "id": "am_cung",
+      "name": "Ấm cúng",
+      "badge": "bo_am_cung",
+      "items": [
+        "day_den_tuong",
+        "tham_tron_len",
+        "gio_may",
+        "ke_cay_ru",
+        "nen_thom"
+      ]
+    },
+    {
+      "id": "de_thuong",
+      "name": "Dễ thương",
+      "badge": "bo_de_thuong",
+      "items": [
+        "gau_bong",
+        "den_may",
+        "co_pastel",
+        "tham_tai_meo",
+        "hu_keo"
+      ]
+    },
+    {
+      "id": "wibu",
+      "name": "Wibu",
+      "badge": "bo_wibu",
+      "items": [
+        "poster_anime",
+        "tu_figure",
+        "goi_om",
+        "led_rgb",
+        "meo_vay_tay"
+      ]
+    }
+  ]
 }

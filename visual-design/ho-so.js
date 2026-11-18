@@ -133,12 +133,17 @@ export function catalogue(rv, cards) {
   const byType = t => cards.filter(c => c.type === t).map(c => ({id: c.id, name: c.title, line: c.intro}));
   return [
     {kind: 'e', name: 'Kết cục', items: [...rv.endings.map(e => ({id: e.id, name: e.title, line: e.verdict})), ...Object.entries(rv.early).map(([id, e]) => ({id, name: e.title, line: e.verdict}))]},
-    {kind: 'b', name: 'Huy hiệu', items: Object.entries(rv.badges).map(([id, b]) => ({id, name: b.name, line: b.line}))},
+    {kind: 'b', name: 'Huy hiệu', short: 'Ở công ty', items: badgeList(rv, null)},
     {kind: 'p', name: 'Chuyện ở trọ và ở công ty', items: byType('event'), short: 'Ở trọ, ở công ty', note: 'Sự kiện bất ngờ buổi tối ở phòng trọ và giữa buổi ở công ty'},
     {kind: 'p', name: 'Ngày đặc biệt', items: byType('special_day')},
     {kind: 'p', name: 'Chuyện riêng của mỗi người', short: 'Chuyện riêng', items: byType('character_event')},
+    {kind: 'b', name: 'Phong cách phòng trọ', short: 'Phòng trọ', items: badgeList(rv, 'phong_cach')},   // Lily 18/11: a whole room style bought in Chợ Trọ
   ];
 }
+// badges of one group (danh-gia.json badges[].group; null = the work badges anh Tuấn reads)
+const badgeList = (rv, group) => Object.entries(rv.badges).filter(([, b]) => (b.group || null) === group).map(([id, b]) => ({id, name: b.name, line: b.line}));
+// [got, total] over every badge list, for the end screen and the share card
+export const badgeCount = (p, cat) => counts(p, cat.filter(sec => sec.kind === 'b')).reduce((a, [g, t]) => [a[0] + g, a[1] + t], [0, 0]);
 const has = (p, kind, id) => kind === 'e' ? (p.endings[id] || 0) > 0 : kind === 'b' ? p.badges.includes(id) : p.played.includes(id);
 export const counts = (p, cat) => cat.map(sec => [sec.items.filter(i => has(p, sec.kind, i.id)).length, sec.items.length]);
 
@@ -166,7 +171,7 @@ const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls)
 
 // The book (so.css, same as Chợ Trọ): three tabs, a progress line, sticker tiles, and one detail line for the tile you tap.
 // Found first, then the empty slots; a hint shows only when you tap an empty slot. runId (this run) puts "Mới" on what this run opened first.
-const TABS = [{kind: 'e', name: 'Kết cục', secs: [0]}, {kind: 'b', name: 'Huy hiệu', secs: [1]}, {kind: 'p', name: 'Câu chuyện', secs: [2, 3, 4]}];
+const TABS = [{kind: 'e', name: 'Kết cục', secs: [0]}, {kind: 'b', name: 'Huy hiệu', secs: [1, 5]}, {kind: 'p', name: 'Câu chuyện', secs: [2, 3, 4]}];
 // The last tab, "Góp ý" (only with h, the handle from open()): the counting switch and the feedback box (gop-y.js). context(): see gop-y.js.
 function moreNode(p, h, context) {
   const more = mk('div', 'more'), row = mk('label', 'track'), box = mk('input'); box.type = 'checkbox'; box.checked = !p.noTrack;
@@ -232,7 +237,7 @@ export function openCollection(wrap, p, rv, cards, runId = null, h = null, conte
 }
 // one line for the end screen: "Ván này bạn mở thêm 1 kết cục, 3 huy hiệu. Tổng: 2/9 kết cục, 9/18 huy hiệu."
 export function summaryLine(p, rv, cards, s) {
-  const n = newThisRun(p, s), cat = catalogue(rv, cards), [e, b] = counts(p, cat);
+  const n = newThisRun(p, s), cat = catalogue(rv, cards), e = counts(p, cat)[0], b = badgeCount(p, cat);
   const listed = new Set(cat.filter(x => x.kind === 'p').flatMap(x => x.items.map(i => i.id))); n.played = n.played.filter(id => listed.has(id));   // only events, special days, character events count
   const bits = [n.endings.length && `${n.endings.length} kết cục`, n.badges.length && `${n.badges.length} huy hiệu`, n.played.length && `${n.played.length} chuyện`].filter(Boolean);
   return (bits.length ? `Ván này bạn mở thêm ${bits.join(', ')}. ` : 'Ván này không mở thêm gì mới. ') + `Tổng: ${e[0]}/${e[1]} kết cục, ${b[0]}/${b[1]} huy hiệu.`;

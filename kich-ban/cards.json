@@ -19,7 +19,11 @@
     "than_voi_mai",
     "than_voi_coba",
     "nhan_vien_moi_guong_mau",
-    "nhan_vien_kpi"
+    "nhan_vien_kpi",
+    "bo_tro_tieu_chuan",
+    "bo_am_cung",
+    "bo_de_thuong",
+    "bo_wibu"
   ],
   "flagsHidden": [
     "duoc_giao_du_an",

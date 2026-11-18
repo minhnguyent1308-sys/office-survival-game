@@ -317,13 +317,32 @@ const extraBlockers = [];                 // tonight's guest
 let furn = [];                            // what stands in the room now: {index, item, g, rect, twinkle}
 const DESK = 'ban_hoc';                   // the one item with a fixed slot: the laptop moves onto it
 const NO_FURN = [{x0:0, z0:0, x1:2.6, z1:2.6}, {x0:4.95, z0:0, x1:6.25, z1:1.75}];   // the bathroom, and the way in from the door
+// wall items (wall: true in noi-that.json, Lily 18/11) hang on the back wall (rot 0, z = 0) or the left wall (rot 1, x = 0), over nothing on the floor.
+// What is already on a wall, as spans along it: a wall item may hang over a span only if its lowest point clears the span's top (the bathroom never).
+const WALL_SPANS = {back:[{a:0, b:2.6, top:99}, {a:2.92, b:4.68, top:2.42}, {a:5.05, b:6.15, top:2.25}, {a:6.33, b:W, top:1.97}],   // bathroom, window, door, kitchen shelf
+                    left:[{a:0, b:2.6, top:99}, {a:3.0, b:4.55, top:.95}]};                                                       // bathroom, bed headboard
+const onBackWall = (item, rect) => Math.abs((rect.x1 - rect.x0) - item.size[0]) < 1e-6;   // a wall item is wider than deep: unturned = along the back wall
+const LOWEST = {};
+function lowest(item){   // the lowest point of a wall item's model, built once
+  if (LOWEST[item.id] == null) { const {g} = NTm.placeItem(new T.Group(), mat, item, {x:0, z:0}); LOWEST[item.id] = bb3.setFromObject(g).min.y; }
+  return LOWEST[item.id];
+}
+function wallProblem(item, rect, skip){
+  const back = onBackWall(item, rect), [a, b] = back ? [rect.x0, rect.x1] : [rect.z0, rect.z1];
+  if (back ? rect.z0 > 1e-6 : rect.x0 > 1e-6) return 'Đồ treo tường phải sát tường';
+  if (a < 0 || b > (back ? W : D)) return 'Ra ngoài phòng mất rồi';
+  const low = lowest(item);
+  if (WALL_SPANS[back ? 'back' : 'left'].some(sp => a < sp.b && b > sp.a && low < sp.top)) return 'Chỗ tường này vướng cửa, bếp hoặc nhà vệ sinh';
+  if (furn.some(f => f.index !== skip && f.item.wall && onBackWall(f.item, f.rect) === back && overlap(f.rect, rect))) return 'Vướng món khác';
+  return null;
+}
 const WARDROBE_LINES = ['Năm cái áo sơ mi trắng, mỗi ngày một cái. Cái thứ sáu là áo phông in chữ "Không OT".', 'Bộ đồ đi phỏng vấn treo ở góc, chưa mặc lại lần nào.', 'Bạn tìm thấy thẻ nhân viên của công ty cũ. Ảnh trên thẻ trông vui hơn.'];
 const overlap = (a, b) => a.x0 < b.x1 - 1e-6 && a.x1 > b.x0 + 1e-6 && a.z0 < b.z1 - 1e-6 && a.z1 > b.z0 + 1e-6;
 const centerOf = r => [(r.x0 + r.x1)/2, (r.z0 + r.z1)/2];
 function rectOf(item, x, z, rot){ const [w, d] = item.size, t = rot % 2 === 1; return {x0:x, z0:z, x1:x + (t ? d : w), z1:z + (t ? w : d)}; }
 const furnAt = id => furn.find(f => f.item.id === id);
 function rebuildBlockers(){
-  blockers.length = 0; blockers.push(...BASE_BLOCKERS, ...furn.filter(f => !f.item.flat).map(f => f.rect), ...extraBlockers);
+  blockers.length = 0; blockers.push(...BASE_BLOCKERS, ...furn.filter(f => !f.item.flat && !f.item.wall).map(f => f.rect), ...extraBlockers);
   if (!G.isPlaced(S, DESK)) blockers.push(LAPTOP_FLOOR_RECT);
   buildGrid();
 }
@@ -782,17 +801,20 @@ function renderShop(){
   const it = G.itemById(shop.sel), d = $('cat-detail');
   if (!it) { d.innerHTML = `<p class="hint-line">${inShop ? 'Bấm một món để xem chi tiết.' : 'Bấm một món để mang ra đặt trong phòng.'}</p>`; return; }
   const c = G.canBuy(S, it.id), max = it.max || 1, have = G.ownedCount(S, it.id);
-  d.innerHTML = `<div><b></b><span class="desc"></span><span class="perk"></span></div>`;
+  d.innerHTML = `<div><b></b><span class="desc"></span><span class="perk"></span><span class="perk set"></span></div>`;
   d.querySelector('b').textContent = it.name; d.querySelector('.desc').textContent = it.desc;
   d.querySelector('.perk').textContent = it.perk + (max > 1 ? ` Đang có ${have}/${max}.` : '') + (it.slot ? ' Đặt ở chỗ cố định.' : '');
+  const st = G.styleOf(it.id), [sn, sall] = st ? G.styleProgress(S, st) : [0, 0];   // room style (Lily 18/11): progress toward its badge
+  d.querySelector('.set').textContent = !st ? '' : G.hasFlag(S, st.badge) ? `Bộ ${st.name}: đủ bộ, đã có huy hiệu.` : `Bộ ${st.name}: đã có ${sn}/${sall}. Mua đủ bộ để nhận huy hiệu.`;
   const btn = el('button', 'btn', !inShop ? 'Mang ra' : c.ok ? `Mua · ${money(it.price)} nghìn` : c.why); btn.disabled = inShop && !c.ok; d.appendChild(btn);
   btn.onclick = () => inShop ? buy(it) : startPlace(it);
 }
 function buy(it){
   const r = G.buyItem(S, it.id); if (!r) return renderShop();
   afterChange();
-  if (it.slot || r.mustPlace) return startPlace(it, {must:true});    // the desk goes to its slot; without a box things go straight into the room
-  toast(`${it.name} đã vào thùng đồ`); renderShop();
+  const got = r.badge ? `Đủ bộ ${r.badge.style.name}! Huy hiệu mới: ${REVIEW.badges[r.badge.flag]?.name || r.badge.style.name}` : '';   // a whole room style (Lily 18/11)
+  if (it.slot || r.mustPlace) { startPlace(it, {must:true}); if (got) toast(got); return; }    // the desk goes to its slot; without a box things go straight into the room
+  toast(`${it.name} đã vào thùng đồ` + (got ? ` · ${got}` : '')); renderShop();
 }
 
 /* ---------- Placing, moving and storing furniture: a ghost on a 0.25 grid, Xoay / Đặt / Hủy (Lily 17/11) ---------- */
@@ -801,11 +823,12 @@ const SNAP = .25, snap = v => Math.round(v / SNAP) * SNAP;
 const placeBar = $('place-bar');
 // why a spot is not allowed (null = fine). Flat things (rug, cushion) may lie under others; nothing goes in the bathroom, the doorway or the desk's slot.
 function spotProblem(item, rect, skip){
+  if (item.wall) return wallProblem(item, rect, skip);
   if (rect.x0 < 0 || rect.z0 < 0 || rect.x1 > W || rect.z1 > D) return 'Ra ngoài phòng mất rồi';
   if (NO_FURN.some(r => overlap(r, rect))) return 'Chỗ này phải để trống (lối đi, nhà vệ sinh)';
   if (BASE_BLOCKERS.some(b => overlap(b, rect))) return 'Vướng đồ của chủ trọ';
   if (item.flat) return null;
-  if (furn.some(f => f.index !== skip && !f.item.flat && overlap(f.rect, rect))) return 'Vướng món khác';
+  if (furn.some(f => f.index !== skip && !f.item.flat && !f.item.wall && overlap(f.rect, rect))) return 'Vướng món khác';
   const desk = G.itemById(DESK), slot = G.homeRoom(S).slots[desk.slot];
   if (item.id !== DESK && !G.isPlaced(S, DESK) && (overlap(LAPTOP_FLOOR_RECT, rect) || overlap(rectOf(desk, slot.x, slot.z, slot.rot || 0), rect))) return 'Chỗ này để dành cho bàn học';
   if (item.id !== DESK && G.isPlaced(S, DESK) && furnAt(DESK) && overlap(furnAt(DESK).rect, rect) && skip !== furnAt(DESK).index) return 'Vướng món khác';
@@ -815,10 +838,11 @@ function spotProblem(item, rect, skip){
 // the free spot nearest to you, for a fresh item (and for leftovers bought without a box)
 function freeSpot(item, rot, near = [player.g.position.x, player.g.position.z]){
   let best = null, bd = Infinity;
-  for (let x = 0; x <= W; x += SNAP) for (let z = 0; z <= D; z += SNAP) {
-    const r = rectOf(item, x, z, rot); if (spotProblem(item, r, -1)) continue;
-    const [cx, cz] = centerOf(r), d = Math.hypot(cx - near[0], cz - near[1]); if (d < bd) { bd = d; best = {x, z}; }
-  }
+  for (const ro of item.wall ? [0, 1] : [rot])   // a wall item: the nearest free spot on either wall
+    for (let x = 0; x <= W; x += SNAP) for (let z = 0; z <= D; z += SNAP) {
+      const r = rectOf(item, x, z, ro); if (spotProblem(item, r, -1)) continue;
+      const [cx, cz] = centerOf(r), d = Math.hypot(cx - near[0], cz - near[1]); if (d < bd) { bd = d; best = item.wall ? {x, z, rot:ro} : {x, z}; }
+    }
   return best;
 }
 // bought without a box but never placed (the page closed mid-way): put them down by themselves
@@ -827,7 +851,7 @@ function placeLeftovers(){
   for (const u of G.unplaced(S)) for (let i = 0; i < u.n; i++) placeAuto(u.item);
 }
 function placeAuto(item){ furn = G.placedHere(S).map((p, index) => ({index, item:G.itemById(p.id), rect:rectOf(G.itemById(p.id), p.x, p.z, p.rot)}));
-  const at = item.slot ? {x:0, z:0} : freeSpot(item, 0, [W/2, D/2]) || {x:3, z:4}; G.putItem(S, item.id, at.x, at.z, 0); save(); }
+  const at = item.slot ? {x:0, z:0} : freeSpot(item, 0, [W/2, D/2]) || {x:3, z:4}; G.putItem(S, item.id, at.x, at.z, at.rot || 0); save(); }
 function startPlace(item, {index = null, must = false} = {}){
   closeSheet(); closeCatalog(); keys.clear(); player.path = []; pendingHot = null;
   if (index == null && item.slot) {                                       // the desk: straight into its slot
@@ -852,6 +876,7 @@ function dropGhost(){ if (ghost) { scene.remove(ghost.g, ghost.plate); ghost = n
 function moveGhost(x, z){
   const it = placing.item, r0 = rectOf(it, 0, 0, placing.rot), w = r0.x1, d = r0.z1;
   x = Math.max(0, Math.min(W - w, snap(x))); z = Math.max(0, Math.min(D - d, snap(z)));
+  if (it.wall) { if (placing.rot % 2) x = 0; else z = 0; }   // a wall item slides along its wall
   placing.x = x; placing.z = z; if (!ghost) return;
   ghost.g.position.set(x + w/2, 0, z + d/2);
   ghost.plate.position.set(x + w/2, .03, z + d/2); ghost.plate.scale.set(w, d, 1);
@@ -859,7 +884,7 @@ function moveGhost(x, z){
   ghost.plate.material.color.set(why ? P.red : P.green); $('place-why').textContent = why || '';
   const ok = $('place-ok'); if (ok) ok.disabled = !!why;
 }
-function rotateGhost(){ placing.rot = (placing.rot + 1) % 4; buildGhost(); }
+function rotateGhost(){ placing.rot = (placing.rot + 1) % (placing.item.wall ? 2 : 4); buildGhost(); }   // a wall item: Xoay = the other wall
 function confirmPlace(){
   const pl = placing, why = spotProblem(pl.item, rectOf(pl.item, pl.x, pl.z, pl.rot), pl.index ?? -1); if (why) return toast(why);
   if (pl.index == null) G.putItem(S, pl.item.id, pl.x, pl.z, pl.rot); else G.moveItem(S, pl.index, pl.x, pl.z, pl.rot);
@@ -874,7 +899,7 @@ function renderPlace(){
   placeBar.hidden = !placing && !arranging; document.getElementById('hint').hidden = !placeBar.hidden || !sheet.hidden;
   if (placing) {
     const pl = placing; $('place-title').textContent = pl.item.name;
-    $('place-text').textContent = pl.fixed ? 'Món này có chỗ cố định, chỉ cất vào thùng được.' : 'Rê chuột rồi bấm để đặt. Điện thoại: chạm để chọn chỗ, chạm lần nữa để đặt. Phím mũi tên để nhích, R để xoay.';
+    $('place-text').textContent = pl.fixed ? 'Món này có chỗ cố định, chỉ cất vào thùng được.' : pl.item.wall ? 'Đồ treo tường: rê dọc tường rồi bấm để đặt. Xoay (phím R) để đổi sang tường bên kia.' : 'Rê chuột rồi bấm để đặt. Điện thoại: chạm để chọn chỗ, chạm lần nữa để đặt. Phím mũi tên để nhích, R để xoay.';
     if (pl.index != null && G.canStore(S, pl.index)) btn('Cất vào thùng', storePlaced, true);
     if (!pl.must) btn(pl.fixed ? 'Đóng' : 'Hủy', endPlace, true);
     if (!pl.fixed) { btn('Xoay', rotateGhost, true); btn('Đặt', confirmPlace, false, 'place-ok'); moveGhost(pl.x, pl.z); }
@@ -897,6 +922,7 @@ function placePointer(e, down){
   const r = renderer.domElement.getBoundingClientRect();
   ndc.set(((e.clientX - r.left)/r.width)*2 - 1, -((e.clientY - r.top)/r.height)*2 + 1); ray.setFromCamera(ndc, cam);
   const p = new T.Vector3(); if (!ray.ray.intersectPlane(floorPlane, p)) return;
+  if (placing.item.wall) { const ro = p.x < p.z ? 1 : 0; if (ro !== placing.rot) { placing.rot = ro; buildGhost(); } }   // the nearer wall: left or back
   const r0 = rectOf(placing.item, 0, 0, placing.rot), before = [placing.x, placing.z];
   moveGhost(p.x - r0.x1/2, p.z - r0.z1/2);
   // a mouse click puts it down right there (Lily 17/11); on a touch screen the first tap picks the spot, a second tap on the same spot puts it down
@@ -960,7 +986,7 @@ const updateSlots = Pl.mountSlots({map:'home', anchorOf:id => SPOTS[id]?.anchor,
 
 /* ---------- Arrival: the scene-change card from the office fades out on the room ---------- */
 wearLook(G.lookOf(S));
-G.ensureHome(S); placeLeftovers(); drawFurniture();
+G.ensureHome(S); if (G.completeStyles(S)) save(); placeLeftovers(); drawFurniture();   // a save that already owned a whole style gets its badge
 { const n = napSpot(); if (n.bed) catRest(n); else cat.g.position.set(n.walk[0], 0, n.walk[1]); }
 if (S.part === 'evening') {
   Wd.paintFade(Wd.homeCard(G.weekdayName(S.day), S.day));

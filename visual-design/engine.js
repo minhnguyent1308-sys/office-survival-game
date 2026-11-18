@@ -517,7 +517,19 @@ export function canBuy(s, id) {
 export function buyItem(s, id) {
   if (!canBuy(s, id).ok) return null;
   const it = itemById(id), h = s.home; h.wallet -= it.price; h.owned[id] = (h.owned[id] || 0) + 1;
-  return {item: it, mustPlace: mustPlace(s, id)};
+  return {item: it, mustPlace: mustPlace(s, id), badge: completeStyles(s)};
+}
+// Room styles (noi-that.json styles, Lily 18/11): own every item of a style (bought, placed or not) and its badge flag is yours, once.
+export const styleOf = id => NT?.styles?.find(st => st.items.includes(id)) || null;
+export const styleProgress = (s, st) => [st.items.filter(id => ownedCount(s, id) > 0).length, st.items.length];
+// gives the badges you have just completed; returns the first new one ({style, flag}) for the page's toast, or null
+export function completeStyles(s) {
+  let got = null;
+  for (const st of NT?.styles || []) {
+    const [n, all] = styleProgress(s, st);
+    if (n === all && !hasFlag(s, st.badge)) { addFlag(s, st.badge); got ||= {style: st, flag: st.badge}; }
+  }
+  return got;
 }
 // the box itself, and anything bought before the box, has nowhere to wait: it goes straight into the room
 export const mustPlace = (s, id) => !hasBox(s) || id === NT?.box;
@@ -630,7 +642,8 @@ export function checkMissions(s, handbook) {
 // Part 1: three badges from the dossier ("Nhân viên mới gương mẫu" first if you have it). Kept in the save so a reload shows the same.
 export function dossier(s, rv, rng = Math.random) {
   if (s.dossier) return s.dossier;
-  const have = Object.keys(rv.badges).filter(f => hasFlag(s, f)), always = have.includes(rv.dossier.always) ? [rv.dossier.always] : [];
+  // room-style badges (group "phong_cach") stay out of the review
+  const have = Object.keys(rv.badges).filter(f => hasFlag(s, f) && !rv.badges[f].group), always = have.includes(rv.dossier.always) ? [rv.dossier.always] : [];
   const rest = have.filter(f => !always.includes(f));
   for (let i = rest.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [rest[i], rest[j]] = [rest[j], rest[i]]; }
   s.dossier = [...always, ...rest].slice(0, rv.dossier.pick);
@@ -684,6 +697,12 @@ export function validateFurniture(data, cardData = null, models = null) {
     if (models && !models.includes(it.model)) problems.push(`${it.id}: noi-that.js chưa có hàm dựng "${it.model}"`);
   }
   if (data.box && !ids.has(data.box)) problems.push(`box "${data.box}" không phải một món`);
+  const inStyle = new Set();
+  for (const st of data.styles || []) {
+    if (!st.id || !st.name || !st.badge || !(st.items || []).length) problems.push(`bộ "${st.id}": cần id, name, badge, items`);
+    for (const id of st.items || []) { if (!ids.has(id)) problems.push(`bộ ${st.id}: món "${id}" không có`); if (inStyle.has(id)) problems.push(`món ${id} nằm ở hai bộ`); inStyle.add(id); }
+    if (cardData && !(cardData.flagsBadges || []).includes(st.badge)) problems.push(`bộ ${st.id}: cờ "${st.badge}" chưa có trong flagsBadges của cards.json`);
+  }
   for (const k of ['start', 'weekly', 'kpiBonus']) if (!(data.money?.[k] >= 0)) problems.push(`money.${k} thiếu`);
   const inv = data.unlock?.card;
   if (!data.unlock?.flag || !inv?.intro || !(inv.choices || []).length) problems.push('unlock cần flag và card (intro, choices)');

@@ -60,3 +60,4 @@
 .book .tile.off .nm{color:var(--muted);letter-spacing:.12em}
 .book .tile .pin.new{background:var(--yellow);color:var(--ink)}
 .book .detail .lock{font-style:italic}
+.book .detail .perk.set{color:var(--pin)}.book .detail .perk:empty{display:none}
