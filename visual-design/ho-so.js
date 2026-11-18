@@ -126,16 +126,16 @@ export async function open({badges = [], store = new BrowserProfileStore()} = {}
   };
 }
 
-/* ---------- Collection screen: five lists, "đã mở n/total"; what is not found yet shows ??? and one hint ---------- */
+/* ---------- Collection screen: the book of so.css with tabs Kết cục / Huy hiệu / Câu chuyện; what is not found yet is a "?" tile with one hint ---------- */
 // Every list: [{id, name, line?}] built from the game data, in the order the data has them.
 export function catalogue(rv, cards) {
-  const byType = t => cards.filter(c => c.type === t).map(c => ({id: c.id, name: c.title}));
+  const byType = t => cards.filter(c => c.type === t).map(c => ({id: c.id, name: c.title, line: c.intro}));
   return [
     {kind: 'e', name: 'Kết cục', items: [...rv.endings.map(e => ({id: e.id, name: e.title, line: e.verdict})), ...Object.entries(rv.early).map(([id, e]) => ({id, name: e.title, line: e.verdict}))]},
     {kind: 'b', name: 'Huy hiệu', items: Object.entries(rv.badges).map(([id, b]) => ({id, name: b.name, line: b.line}))},
-    {kind: 'p', name: 'Chuyện ở trọ và ở công ty', items: byType('event'), note: 'Sự kiện bất ngờ buổi tối ở phòng trọ và giữa buổi ở công ty'},
+    {kind: 'p', name: 'Chuyện ở trọ và ở công ty', items: byType('event'), short: 'Ở trọ, ở công ty', note: 'Sự kiện bất ngờ buổi tối ở phòng trọ và giữa buổi ở công ty'},
     {kind: 'p', name: 'Ngày đặc biệt', items: byType('special_day')},
-    {kind: 'p', name: 'Chuyện riêng của mỗi người', items: byType('character_event')},
+    {kind: 'p', name: 'Chuyện riêng của mỗi người', short: 'Chuyện riêng', items: byType('character_event')},
   ];
 }
 const has = (p, kind, id) => kind === 'e' ? (p.endings[id] || 0) > 0 : kind === 'b' ? p.badges.includes(id) : p.played.includes(id);
@@ -145,17 +145,11 @@ let cssDone = false;
 function css() {
   if (cssDone) return; cssDone = true;
   const st = document.createElement('style');
-  st.textContent = `.coll{max-height:min(62vh,560px);overflow-y:auto;padding-right:6px}
-.coll h3{font:700 15px var(--font-display);margin:14px 0 4px;display:flex;justify-content:space-between;gap:8px}
-.coll h3 span{font:600 12px var(--font-body);color:var(--muted)}
-.coll .it{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:6px 0;border-top:1px solid var(--rule);font-size:14px}
-.coll .it b{font-weight:600}
-.coll .it small{grid-column:1/-1;color:var(--muted);font-size:12.5px;line-height:1.35}
-.coll .it.off b{color:var(--muted);letter-spacing:.12em}
-.coll .tag{font:700 10px var(--font-body);background:var(--yellow);border:1.5px solid var(--ink);border-radius:999px;padding:1px 7px;align-self:start;text-transform:uppercase;letter-spacing:.06em}
-.coll .foot{font-size:12px;color:var(--muted);margin-top:12px}
-.coll .track{display:flex;gap:8px;align-items:flex-start;cursor:pointer}
-.coll .track input{margin:2px 0 0;width:16px;height:16px;flex:none}
+  st.textContent = `.book .page.more-tab{grid-template-rows:auto 1fr}
+.book .more{grid-column:1/-1;display:grid;gap:12px;align-content:start}
+.book .more .track{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.4;cursor:pointer}
+.book .more .track input{margin:2px 0 0;width:18px;height:18px;flex:none}
+.book .more .gy{margin-top:0}
 .gift{background:#fce6b6;display:grid;place-items:center;padding:24px 16px}
 .gift .box{width:min(520px,100%);display:grid;gap:14px;justify-items:start}
 .gift h1{font-size:clamp(30px,6vw,44px)}
@@ -169,31 +163,76 @@ function css() {
 }
 const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 
-// The node for a modal body. runId (this run) puts "Mới" on what this run opened first.
-// h (the handle from open()) adds the counting switch and the feedback box under the lists.
-export function collectionNode(p, rv, cards, runId = null, h = null, context) {
+// The book (so.css, same as Chợ Trọ): three tabs, a progress line, sticker tiles, and one detail line for the tile you tap.
+// Found first, then the empty slots; a hint shows only when you tap an empty slot. runId (this run) puts "Mới" on what this run opened first.
+const TABS = [{kind: 'e', name: 'Kết cục', secs: [0]}, {kind: 'b', name: 'Huy hiệu', secs: [1]}, {kind: 'p', name: 'Câu chuyện', secs: [2, 3, 4]}];
+const ICON = {   // one sticker per group until each item has its own picture
+  e: '<path d="M6 3v18"/><path d="M6 4h11l-2 4 2 4H6"/>',
+  b: '<circle cx="12" cy="9" r="5"/><path d="M9 13l-2 8 5-3 5 3-2-8"/>',
+  p: '<path d="M4 5c3-1 6-1 8 1 2-2 5-2 8-1v14c-3-1-6-1-8 1-2-2-5-2-8-1z"/><path d="M12 6v14"/>',
+};
+// The last tab, "Góp ý" (only with h, the handle from open()): the counting switch and the feedback box (gop-y.js). context(): see gop-y.js.
+function moreNode(p, h, context) {
+  const more = mk('div', 'more'), row = mk('label', 'track'), box = mk('input'); box.type = 'checkbox'; box.checked = !p.noTrack;
+  box.onchange = () => h.setTracking(box.checked);
+  row.append(box, mk('span', null, 'Cho game đếm lượt chơi ẩn danh (không tên, không IP) để làm game hay hơn.'));
+  const fb = h.feedback(context); if (fb) fb.open = true;
+  more.append(row, ...(fb ? [fb] : []));
+  return more;
+}
+// wrap: the page's empty, hidden <div class="cat-wrap">. The book closes with × or Escape; the page reads wrap.hidden to pause the game meanwhile.
+export function openCollection(wrap, p, rv, cards, runId = null, h = null, context) {
   css();
-  const cat = catalogue(rv, cards), root = mk('div', 'coll'), hints = rv.collection?.hints || {};
-  cat.forEach((sec, i) => {
-    const [got, total] = counts(p, [sec])[0], h = mk('h3', null, sec.name); h.appendChild(mk('span', null, `đã mở ${got}/${total}`)); root.appendChild(h);
-    for (const it of sec.items) {
-      const on = has(p, sec.kind, it.id), row = mk('div', 'it' + (on ? '' : ' off'));
-      row.appendChild(mk('b', null, on ? it.name : '???'));
-      if (on && runId && p.seen[keyOf(sec.kind, it.id)] === runId) row.appendChild(mk('span', 'tag', 'Mới'));
-      if (on && it.line) row.appendChild(mk('small', null, it.line));
-      if (!on && hints[it.id]) row.appendChild(mk('small', null, hints[it.id]));
-      root.appendChild(row);
-    }
-  });
-  root.appendChild(mk('p', 'foot', 'Bộ sưu tập lưu trên trình duyệt này, ván mới không làm mất.'));
-  if (h) {
-    const row = mk('label', 'foot track'), box = mk('input'); box.type = 'checkbox'; box.checked = !p.noTrack;
-    box.onchange = () => h.setTracking(box.checked);
-    row.append(box, mk('span', null, 'Cho game đếm lượt chơi ẩn danh (không tên, không IP) để làm game hay hơn.'));
-    const fbBox = h.feedback(context);
-    root.append(row, ...(fbBox ? [fbBox] : []));
+  const tabList = h ? [...TABS, {name: 'Góp ý', more: true}] : TABS;
+  let more = null;   // built once, so a half-written note survives switching tabs
+  const cat = catalogue(rv, cards), hints = rv.collection?.hints || {}, isNew = (k, id) => runId && p.seen[keyOf(k, id)] === runId;
+  const st = {tab: 0, sec: -1, sel: null};   // sec -1 = every list of the tab
+  const book = mk('div', 'book'), tabs = mk('nav', 'tabs'), page = mk('div', 'page card'), x = mk('button', 'x', '×');
+  const prog = mk('div', 'prog'), chips = mk('div', 'cats text'), grid = mk('div', 'grid'), detail = mk('div', 'detail');
+  book.setAttribute('role', 'dialog'); book.setAttribute('aria-modal', 'true'); book.setAttribute('aria-label', 'Bộ sưu tập');
+  tabs.setAttribute('role', 'tablist'); x.setAttribute('aria-label', 'Đóng'); chips.setAttribute('role', 'group');
+  const head = mk('header'); head.append(mk('h2', null, 'Bộ sưu tập'), mk('p', null, 'Mở thêm qua mỗi ván chơi. Ván mới không làm mất.'));
+  page.append(x, head, prog, chips, grid, detail); book.append(tabs, page); wrap.replaceChildren(book);
+  const all = counts(p, cat).reduce((a, [g, t]) => [a[0] + g, a[1] + t], [0, 0]);
+  const onKey = e => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };   // on the document: a re-render can drop the focus to <body>
+  const close = () => { wrap.hidden = true; wrap.replaceChildren(); document.removeEventListener('keydown', onKey, true); };
+  x.onclick = close; document.addEventListener('keydown', onKey, true);
+
+  function render() {
+    const tab = tabList[st.tab];
+    tabs.replaceChildren(...tabList.map((t, i) => { const b = mk('button', 'tab', t.name); b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', i === st.tab); b.onclick = () => { Object.assign(st, {tab: i, sec: -1, sel: null}); render(); }; return b; }));
+    prog.hidden = detail.hidden = !!tab.more; page.classList.toggle('more-tab', !!tab.more);
+    if (tab.more) { page.classList.add('no-cats'); chips.hidden = true; grid.replaceChildren(more ??= moreNode(p, h, context)); return; }
+    const secs = tab.secs.map(i => cat[i]);
+    // progress: this tab, and the whole collection
+    const [g, t] = counts(p, secs).reduce((a, [g, t]) => [a[0] + g, a[1] + t], [0, 0]), lbl = mk('div', 'lbl'), bar = mk('div', 'bar'), fill = mk('i');
+    const half = (k, v) => { const s = mk('span', null, k + ': '); s.appendChild(mk('b', null, v)); return s; };
+    lbl.append(half(tab.name, `${g}/${t}`), half('Cả bộ', `${all[0]}/${all[1]}`)); fill.style.width = (t ? 100 * g / t : 0) + '%'; bar.appendChild(fill); prog.replaceChildren(lbl, bar);
+    // chips only where a tab holds several lists
+    page.classList.toggle('no-cats', secs.length < 2); chips.hidden = secs.length < 2;
+    chips.replaceChildren(...(secs.length < 2 ? [] : [{name: 'Tất cả'}, ...secs].map((s, i) => {
+      const b = mk('button', null, (s.short || s.name) + ' '); b.setAttribute('aria-pressed', st.sec === i - 1);
+      if (s.items) { const [sg, stt] = counts(p, [s])[0]; b.appendChild(mk('small', null, `${sg}/${stt}`)); }
+      b.onclick = () => { Object.assign(st, {sec: i - 1, sel: null}); render(); }; return b; })));
+    // tiles: found first (in data order), then the empty slots
+    const items = (st.sec < 0 ? secs : [secs[st.sec]]).flatMap(s => s.items.map(i => ({...i, kind: s.kind, on: has(p, s.kind, i.id)})));
+    items.sort((a, b) => b.on - a.on);
+    grid.replaceChildren(...items.map(it => {
+      const b = mk('button', 'tile ' + (it.on ? 'got' : 'off') + (st.sel === it.id ? ' sel' : ''));
+      b.setAttribute('aria-label', it.on ? it.name : 'Chưa mở');
+      if (it.on && isNew(it.kind, it.id)) b.appendChild(mk('span', 'pin new', 'Mới'));
+      const pic = mk('span', 'pic', it.on ? null : '?'); if (it.on) pic.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${ICON[it.kind]}</svg>`;
+      b.append(pic, mk('span', 'nm', it.on ? it.name : '???'));
+      b.onclick = () => { st.sel = it.id; render(); grid.querySelector('.sel')?.focus(); };
+      return b;
+    }));
+    // detail: the line of what you found, or the hint for an empty slot
+    const it = items.find(i => i.id === st.sel), box = mk('div');
+    if (!it) detail.replaceChildren(mk('p', 'hint-line', 'Bấm một ô để xem chi tiết.'));
+    else if (it.on) { box.append(mk('b', null, it.name), mk('span', null, it.line || '')); detail.replaceChildren(box); }
+    else { box.append(mk('b', null, 'Chưa mở'), mk('span', 'lock', hints[it.id] ? 'Gợi ý: ' + hints[it.id] : 'Chơi thêm vài ván, biết đâu lại gặp.')); detail.replaceChildren(box); }
   }
-  return root;
+  render(); wrap.hidden = false; x.focus();
 }
 // one line for the end screen: "Ván này bạn mở thêm 1 kết cục, 3 huy hiệu. Tổng: 2/9 kết cục, 9/18 huy hiệu."
 export function summaryLine(p, rv, cards, s) {
