@@ -1360,7 +1360,7 @@ function showEnd(){
     el('p', 'note', `Sổ tay: ${S.missionsDone.length}/${HANDBOOK.missions.length} nhiệm vụ · Mini-game: ${mg.join(' · ') || 'chưa chơi'}`),
     el('p', 'note', Ho.summaryLine(PROFILE.p, REVIEW, CARDS, S) + (S.gift ? ` Quà mang theo: ${G.giftById(S.gift.id)?.name}${S.gift.npc ? ' (' + G.NPC_NAME[S.gift.npc] + ')' : ''}.` : '')),
     el('p', 'note', `${S.counters.actions.an_trua_co_ba || 0} bữa cơm cô Ba · ${S.counters.gossipWith.length} người cùng tám chuyện · thân nhất: ${G.NPC_NAME[closest]} (${S.close[closest]})` + (early ? ` · dừng ở ngày ${S.day}` : '')));
-  const cardData = () => { const cat = Ho.catalogue(REVIEW, CARDS), [e, bd] = Ho.counts(PROFILE.p, cat);
+  const cardData = () => { const cat = Ho.catalogue(REVIEW, CARDS), e = Ho.counts(PROFILE.p, cat)[0], bd = Ho.badgeCount(PROFILE.p, cat);
     return {name: S.name, title: end.title, verdict: early ? end.verdict : r.verdict, scene: end.scene, secret: !!end.secret, early: !!early, endDay: S.day, totalDays: G.TOTAL_DAYS, stats: S.stats, dayLog: S.dayLog,
       closest: {name: G.NPC_NAME[closest], value: S.close[closest]}, got: {badges: bd[0], badgesTotal: bd[1], endings: e[0], endingsTotal: e[1]},
       gift: S.gift ? G.giftById(S.gift.id)?.name : null, url: REVIEW.share?.url || ''}; };

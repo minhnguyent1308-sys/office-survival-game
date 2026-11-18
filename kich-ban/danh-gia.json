@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "Buổi đánh giá ngày 40. Nguồn: doc Kịch bản MVP tầng 1 (tab chính: bảng kết cục; tab Nội dung 4 ngày mốc: lật hồ sơ, màn kết). Kết cục xét từ trên xuống, khớp điều kiện đầu tiên thì dừng. Thêm kết cục = thêm một object vào `endings`. Điều kiện `when` dùng cùng cú pháp `requires` của lá (flags, anyFlags, notFlags, stats, closeness) cộng thêm: missionsAll (đủ nhiệm vụ sổ tay), notJunior, anyOf (danh sách điều kiện, chỉ cần một). `gather`: trước phán quyết, những người trong `people` (id kịch bản) vào phòng họp (mọi người trừ cô Ba, Lily chốt 14/11); anh Tuấn và người chơi đứng đầu phòng.",
+  "note": "Buổi đánh giá ngày 40. Nguồn: doc Kịch bản MVP tầng 1 (tab chính: bảng kết cục; tab Nội dung 4 ngày mốc: lật hồ sơ, màn kết). Kết cục xét từ trên xuống, khớp điều kiện đầu tiên thì dừng. Thêm kết cục = thêm một object vào `endings`. Điều kiện `when` dùng cùng cú pháp `requires` của lá (flags, anyFlags, notFlags, stats, closeness) cộng thêm: missionsAll (đủ nhiệm vụ sổ tay), notJunior, anyOf (danh sách điều kiện, chỉ cần một). `gather`: trước phán quyết, những người trong `people` (id kịch bản) vào phòng họp (mọi người trừ cô Ba, Lily chốt 14/11); anh Tuấn và người chơi đứng đầu phòng. Huy hiệu có `group: \"phong_cach\"` (Lily 18/11) là huy hiệu bộ nội thất phòng trọ (noi-that.json styles): nằm ở mục riêng trong Bộ sưu tập, không vào hồ sơ anh Tuấn đọc ngày 40.",
   "qhBonus": {
     "qh": 70,
     "effects": {
@@ -86,6 +86,26 @@
     "nhan_vien_kpi": {
       "name": "Nhân viên KPI",
       "line": "\"Tuần nào anh giao KPI em cũng làm. Anh bắt đầu thấy hơi áp lực.\""
+    },
+    "bo_tro_tieu_chuan": {
+      "name": "Trọ tiêu chuẩn",
+      "group": "phong_cach",
+      "line": "Chị Mai: \"Bàn học, ghế, thảm, bàn trà, chậu cây. Giờ mới gọi là ở trọ, trước là cắm trại.\""
+    },
+    "bo_am_cung": {
+      "name": "Tổ chăn cuối tuần",
+      "group": "phong_cach",
+      "line": "Chị Mai: \"Phòng em ấm như quán cà phê. Hôm nào chị ghé ngồi ké, em đừng tính tiền nước.\""
+    },
+    "bo_de_thuong": {
+      "name": "Kẹo bông",
+      "group": "phong_cach",
+      "line": "Chị Mai: \"Con gấu đó to hơn cả em. Chị nghi nó mới là người thuê phòng.\""
+    },
+    "bo_wibu": {
+      "name": "Góc otaku",
+      "group": "phong_cach",
+      "line": "Chị Mai: \"LED nhà em sáng tới tận cầu thang. Chị không phàn nàn, chị chỉ ghi lại.\""
     }
   },
   "endings": [
@@ -288,7 +308,11 @@
       "E4": "Thân với anh Minh đến 40 để mở.",
       "E5": "Thân với anh Tùng đến 40 để mở.",
       "E6": "Thân với chị Mai đến 40 để mở.",
-      "E7": "Thân với cô Ba đến 40 để mở."
+      "E7": "Thân với cô Ba đến 40 để mở.",
+      "bo_tro_tieu_chuan": "Mua đủ bộ Trọ tiêu chuẩn ở Chợ Trọ: bàn học, ghế gỗ, thảm, bàn trà, chậu cây.",
+      "bo_am_cung": "Mua đủ 5 món của bộ Ấm cúng ở Chợ Trọ.",
+      "bo_de_thuong": "Mua đủ 5 món của bộ Dễ thương ở Chợ Trọ.",
+      "bo_wibu": "Mua đủ 5 món của bộ Wibu ở Chợ Trọ."
     }
   },
   "share": {

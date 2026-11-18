@@ -49,6 +49,15 @@ G.useRhythm(rd('nhip-choi.json')); s.week = {n: 2, kpi: rd('nhip-choi.json').kpi
 s.counters.actions = {lam_task: 50, bao_cao_sep: 50, an_trua_co_ba: 50, hoi_senior: 50, tam_chuyen: 50, giup_chi_mai: 50}; s.stats.pin = 100; s.stats.xp = 150; s.stats.ut = 100; s.stats.qh = 100; s.week.low = {...s.stats};
 s.week.base.stats = {xp: 0, pin: 0, ut: 0, qh: 0};
 w = G.nextDay(s, CD.cards, () => .99); ok(w.kpi?.ok && w.pay.kpi === 50 && s.home.wallet === 600, 'đạt KPI thêm 50 ' + JSON.stringify(w.pay));
+// room styles (Lily 18/11): own every item of a style = its badge, once; not part of the day-40 review
+s = G.newGame({rng: () => .5}); G.ensureHome(s); G.answerShopInvite(Object.assign(s, {counters: {...s.counters, actions: {giup_chi_mai: 2}}}), 0); s.home.wallet = 9999;
+const wibu = NT.styles.find(x => x.id === 'wibu'), RV = rd('danh-gia.json');
+let got = null; for (const id of wibu.items) { got = G.buyItem(s, id).badge || got; if (id !== wibu.items.at(-1)) ok(!got && !G.hasFlag(s, wibu.badge), `chưa đủ bộ (${id}) chưa có huy hiệu`); }
+ok(got?.flag === 'bo_wibu' && G.hasFlag(s, 'bo_wibu'), 'mua món cuối của bộ Wibu thì có huy hiệu');
+ok(JSON.stringify(G.styleProgress(s, wibu)) === '[5,5]' && G.styleOf('led_rgb')?.id === 'wibu' && !G.styleOf('thung_do'), 'tiến độ bộ và bộ của từng món');
+ok(!G.completeStyles(s) && s.flags.filter(f => f === 'bo_wibu').length === 1, 'huy hiệu bộ chỉ nhận một lần');
+ok(NT.styles.every(st => RV.badges[st.badge]?.group === 'phong_cach' && RV.collection.hints[st.badge]), 'mỗi bộ có huy hiệu nhóm phong_cach và gợi ý');
+s.flags.push(...Object.keys(RV.badges).filter(f => !RV.badges[f].group)); ok(!G.dossier(s, RV).some(f => RV.badges[f].group), 'anh Tuấn không đọc huy hiệu phòng trọ ở buổi đánh giá');
 // no furniture data = no pay (other pages)
 console.log(fail ? `${fail} lỗi` : 'Tất cả đều qua');
 process.exit(fail ? 1 : 0);
