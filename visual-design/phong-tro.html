@@ -33,6 +33,7 @@ body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--font-b
 .where .goal{font-size:12px;font-weight:600;color:var(--accent);max-width:250px;line-height:1.35}
 .where .kpi{font-size:12px;color:var(--ink);max-width:250px;line-height:1.35} /* weekly KPI (same as tầng Intern) */
 .where .kpi.done{color:var(--pin);font-weight:600}
+.where .event{font-size:12px;font-weight:600;color:var(--ink);max-width:250px;line-height:1.35} /* live event (same as tầng Intern) */
 .seg{display:flex;padding:3px;gap:3px}
 .seg button{font:600 13px var(--font-body);border:0;background:transparent;color:var(--ink);padding:0 12px;border-radius:8px;cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
@@ -104,7 +105,7 @@ body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--font-b
 <div id="stage"></div>
 <div id="tags"></div>
 <div class="hud tl">
-  <div class="card where"><b id="room-name">Phòng trọ</b><span id="day-line"></span><span class="goal" id="goal"></span><span class="kpi" id="kpi-line" hidden></span><span class="money" id="wallet-line" hidden></span></div>
+  <div class="card where"><b id="room-name">Phòng trọ</b><span id="day-line"></span><span class="goal" id="goal"></span><span class="kpi" id="kpi-line" hidden></span><span class="event" id="event-line" hidden></span><span class="money" id="wallet-line" hidden></span></div>
   <div class="card stats" id="stats" aria-label="Chỉ số"></div>
 </div>
 <div class="hud tr">
@@ -579,10 +580,11 @@ const toastEl = document.getElementById('toast'); let toastT = 0;
 const toast = msg => { toastEl.textContent = msg; toastEl.hidden = false; toastT = 3.5; };
 
 /* ---------- Game: the evening at home. Rules live in engine.js, content in cards.json ---------- */
-const [CARD_DATA, HANDBOOK, MINIGAMES, RHYTHM, PLACEMENTS, OPENING, REVIEW, PERKS, FURNITURE] = await Promise.all(['cards.json', 'handbook.json', 'minigames.json', 'nhip-choi.json', 'placements.json', 'mo-dau.json', 'danh-gia.json', 'than-thiet.json', 'noi-that.json'].map(u => fetch(u).then(r => r.json())));
+const [CARD_DATA, HANDBOOK, MINIGAMES, RHYTHM, PLACEMENTS, OPENING, REVIEW, PERKS, FURNITURE, EVENTS] = await Promise.all(['cards.json', 'handbook.json', 'minigames.json', 'nhip-choi.json', 'placements.json', 'mo-dau.json', 'danh-gia.json', 'than-thiet.json', 'noi-that.json', 'su-kien.json'].map(u => fetch(u).then(r => r.json())));
 const CARDS = CARD_DATA.cards;
 G.useMinigames(MINIGAMES); // the next morning may be a mini-game day (nextDay/endWeekend draw it)
 G.usePerks(PERKS);        // closeness perks (than-thiet.json): the evening cards and the next wake-up use them too
+G.useEvents(EVENTS, new URLSearchParams(location.search).get('ngay'));   // live events (su-kien.json): the next morning may bring a shard
 G.useRhythm(RHYTHM);       // tonight's odds, and the next morning's special day / KPI / midday event (nhip-choi.json)
 Pl.usePlacements(PLACEMENTS);
 G.useFurniture(FURNITURE); // wallet, Friday pay, Chợ Trọ, what stands in the room (noi-that.json)
@@ -645,6 +647,8 @@ function renderHUD(){
   wEl.hidden = !home; if (home) wEl.textContent = `Ví: ${money(home.wallet)} nghìn`;
   const k = G.kpiStatus(S), kEl = document.getElementById('kpi-line');
   kEl.hidden = !k || !!S.week?.scored; if (k) { kEl.textContent = G.kpiLine(S); kEl.classList.toggle('done', k.done); }
+  const lines = G.eventLines(S), eEl = document.getElementById('event-line');   // live event (su-kien.json), same line as the office
+  eEl.hidden = !lines.length; eEl.textContent = lines.join(' · ');
   const ev = S.part === 'evening' && !S.today.nightDone && G.isStaged(G.tonightsCard(S, CARDS));
   goalEl.textContent = ev ? 'Có chuyện vừa xảy ra…' : c ? (c.npc === 'tuan' ? 'Sếp vừa nhắn tin. Mở laptop xem' : 'Có tin nhắn mới trên laptop') : S.part === 'weekend' ? 'Nghỉ cho lại sức, rồi lên giường ngủ tới thứ Hai' : S.part === 'evening' ? 'Lên giường đi ngủ để sang ngày mới' : 'Đến giờ đi làm';
 }

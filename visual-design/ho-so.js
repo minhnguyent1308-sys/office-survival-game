@@ -130,7 +130,9 @@ export async function open({badges = [], store = new BrowserProfileStore()} = {}
 /* ---------- Collection screen: the book of so.css with tabs Kết cục / Huy hiệu / Câu chuyện; what is not found yet is a "?" tile with one hint ---------- */
 // Every list: [{id, name, line?}] built from the game data, in the order the data has them.
 export function catalogue(rv, cards) {
-  const byType = t => cards.filter(c => c.type === t).map(c => ({id: c.id, name: c.title, line: c.intro}));
+  const item = c => ({id: c.id, name: c.title, line: c.intro});
+  const byType = t => cards.filter(c => c.type === t && !c.event).map(item);   // event cards have their own list
+  const ofEvent = cards.filter(c => c.event).map(item);
   return [
     {kind: 'e', name: 'Kết cục', items: [...rv.endings.map(e => ({id: e.id, name: e.title, line: e.verdict})), ...Object.entries(rv.early).map(([id, e]) => ({id, name: e.title, line: e.verdict}))]},
     {kind: 'b', name: 'Huy hiệu', short: 'Ở công ty', items: badgeList(rv, null)},
@@ -138,6 +140,8 @@ export function catalogue(rv, cards) {
     {kind: 'p', name: 'Ngày đặc biệt', items: byType('special_day')},
     {kind: 'p', name: 'Chuyện riêng của mỗi người', short: 'Chuyện riêng', items: byType('character_event')},
     {kind: 'b', name: 'Phong cách phòng trọ', short: 'Phòng trọ', items: badgeList(rv, 'phong_cach')},   // Lily 18/11: a whole room style bought in Chợ Trọ
+    {kind: 'p', name: 'Chuyện trong event', short: 'Event', items: ofEvent, note: 'Chỉ gặp khi event đang diễn ra (su-kien.json)'},   // Lily 19/11: Giếng thần
+    {kind: 'b', name: 'Huy hiệu event', short: 'Event', items: badgeList(rv, 'su_kien')},
   ];
 }
 // badges of one group (danh-gia.json badges[].group; null = the work badges anh Tuấn reads)
@@ -171,7 +175,7 @@ const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls)
 
 // The book (so.css, same as Chợ Trọ): three tabs, a progress line, sticker tiles, and one detail line for the tile you tap.
 // Found first, then the empty slots; a hint shows only when you tap an empty slot. runId (this run) puts "Mới" on what this run opened first.
-const TABS = [{kind: 'e', name: 'Kết cục', secs: [0]}, {kind: 'b', name: 'Huy hiệu', secs: [1, 5]}, {kind: 'p', name: 'Câu chuyện', secs: [2, 3, 4]}];
+const TABS = [{kind: 'e', name: 'Kết cục', secs: [0]}, {kind: 'b', name: 'Huy hiệu', secs: [1, 5, 7]}, {kind: 'p', name: 'Câu chuyện', secs: [2, 3, 4, 6]}];
 // The last tab, "Góp ý" (only with h, the handle from open()): the counting switch and the feedback box (gop-y.js). context(): see gop-y.js.
 function moreNode(p, h, context) {
   const more = mk('div', 'more'), row = mk('label', 'track'), box = mk('input'); box.type = 'checkbox'; box.checked = !p.noTrack;
@@ -204,7 +208,7 @@ export function openCollection(wrap, p, rv, cards, runId = null, h = null, conte
     tabs.replaceChildren(...tabList.map((t, i) => { const b = mk('button', 'tab', t.name); b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', i === st.tab); b.onclick = () => { Object.assign(st, {tab: i, sec: -1, sel: null}); render(); }; return b; }));
     prog.hidden = detail.hidden = !!tab.more; page.classList.toggle('more-tab', !!tab.more);
     if (tab.more) { page.classList.add('no-cats'); chips.hidden = true; grid.replaceChildren(more ??= moreNode(p, h, context)); return; }
-    const secs = tab.secs.map(i => cat[i]);
+    const secs = tab.secs.map(i => cat[i]).filter(sec => sec.items.length);   // a list with nothing in it (no event yet) stays out
     // progress: this tab, and the whole collection
     const [g, t] = counts(p, secs).reduce((a, [g, t]) => [a[0] + g, a[1] + t], [0, 0]), lbl = mk('div', 'lbl'), bar = mk('div', 'bar'), fill = mk('i');
     const half = (k, v) => { const s = mk('span', null, k + ': '); s.appendChild(mk('b', null, v)); return s; };

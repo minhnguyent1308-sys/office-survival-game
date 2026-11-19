@@ -69,6 +69,9 @@ body{background:var(--ground);color:var(--ink);font-family:var(--font-body);over
 .where .goal{font-size:12px;font-weight:600;color:var(--accent);max-width:250px;line-height:1.35}
 .where .kpi{font-size:12px;color:var(--ink);max-width:250px;line-height:1.35} /* weekly KPI from anh Tuấn (nhip-choi.json) */
 .where .kpi.done{color:var(--pin);font-weight:600}
+.where .event{font-size:12px;font-weight:600;color:var(--ink);max-width:250px;line-height:1.35} /* live event (su-kien.json): name, end date, shards */
+body.look-gieng_than{--accent:#b3322b} /* Giếng thần day: crimson accent, same tokens */
+body.look-gieng_than .where .today{background:#e9dcf7}
 .where .today{font-size:12px;font-weight:600;color:var(--ink);background:var(--yellow);border-radius:6px;padding:1px 6px;justify-self:start;max-width:250px} /* special day */
 .stats{padding:8px 12px;display:grid;grid-template-columns:auto 92px 30px;gap:5px 8px;align-items:center;font-size:12px}
 .stats .bar{height:8px;border-radius:99px;background:var(--rule);border:1.5px solid var(--ink);overflow:hidden;position:relative}
@@ -144,7 +147,7 @@ body.opening .hud,body.opening #tags,body.opening .hint,body.opening .toast{disp
 <div id="stage"></div>
 <div id="tags"></div>
 <div class="hud tl">
-  <div class="card where"><b id="room-name">Tầng 1 · Hành lang</b><span id="day-line">Ngày 1 / 40 · Thứ Hai, 08:29</span><span id="who-line"></span><span class="today" id="day-note" hidden></span><span class="goal" id="goal"></span><span class="kpi" id="kpi-line" hidden></span></div>
+  <div class="card where"><b id="room-name">Tầng 1 · Hành lang</b><span id="day-line">Ngày 1 / 40 · Thứ Hai, 08:29</span><span id="who-line"></span><span class="today" id="day-note" hidden></span><span class="goal" id="goal"></span><span class="kpi" id="kpi-line" hidden></span><span class="event" id="event-line" hidden></span></div>
   <div class="card stats" id="stats" aria-label="Chỉ số"></div>
 </div>
 <div class="hud tr">
@@ -202,7 +205,7 @@ const cam = new T.OrthographicCamera(-1,1,1,-1,0.1,200);
 const camOffset = new T.Vector3(20, 19, 20);
 const CENTER = new T.Vector3(W/2, 0, 8.5);
 const camTarget = CENTER.clone();
-scene.add(new T.HemisphereLight('#ffffff', '#c9b89b', 1.6));
+const hemi = new T.HemisphereLight('#ffffff', '#c9b89b', 1.6); scene.add(hemi);
 const sun = new T.DirectionalLight('#fff5e3', 2.15);
 sun.position.set(W/2 + 8, 18, D/2 - 6); sun.target.position.set(W/2, 0, D/2); scene.add(sun.target);
 sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0006;
@@ -588,6 +591,8 @@ const LINES = {
     '"Chào em, anh đến sớm hơn giờ hẹn hai tiếng. Sếp em rảnh luôn chứ?"',
   ],
 };
+let lookNow = null;          // today's look (rules.look), set by dayLook
+const WELL = [10.05, 2.35];   // Giếng thần well: lobby, back left corner between the plant and the sofa (shown on that day only, see dayLook)
 const HOT = {
   desk:     {at:[4.2,12.5],  tag:'Bàn của bạn', act:'Làm task', eyebrow:'Hoạt động: làm task', title:'Bàn intern', text:'Màn hình hiện 47 email chưa đọc. Tờ note vàng dán trên màn hình ghi: "Em ơi làm giúp chị file này nhé ❤".'},
   copier:   {at:[1.3,11.8],  tag:'Máy photo', act:'Sửa máy photo', eyebrow:'Sự kiện ngẫu nhiên', title:'Máy photo kẹt giấy', text:'Máy báo kẹt giấy lần thứ ba trong ngày. Theo truyền thống của phòng, người sửa luôn là intern.'},
@@ -603,12 +608,14 @@ const HOT = {
   lock_canteen:  {at:[17,7.3],   lock:'canteen', tag:'Chưa mở', act:'Xem biển', eyebrow:'Căng tin · tạm đóng', title:'Biển dán trên cửa căng tin'},
   lock_canteen2: {at:[13.3,12],  lock:'canteen', tag:'Chưa mở', act:'Xem biển', eyebrow:'Căng tin · tạm đóng', title:'Biển dán trên cửa căng tin'},
   lock_meeting:  {at:[27.2,6.7], lock:'meeting', tag:'Chưa mở', act:'Xem biển', eyebrow:'Phòng họp · tạm đóng', title:'Biển dán trên cửa phòng họp'},
+  well:     {at:[11.4,4.0],  look:'gieng_than', tag:'Giếng thần', act:'Xem giếng', eyebrow:'Event Giếng thần · năm 2005', title:'Giếng thần kho hồ sơ', guide:true},
   client:   {at:[0,0],       tag:'Khách hàng', eyebrow:'Nhân vật ngẫu nhiên', title:'Khách hàng', dynamic:true, intro:'"Chào em, anh là khách hàng bên đối tác."'},
 };
-const ANCHOR = {desk:[4.2,2.0,10.7], copier:[1.3,1.6,9.6], elevator:[11.3,2.95,.1], water:[22.7,1.9,8.45], lock_canteen:[17,1.25,8], lock_canteen2:[14,1.25,12], lock_meeting:[27.2,1.25,6]};
+const ANCHOR = {well:[WELL[0],1.7,WELL[1]], desk:[4.2,2.0,10.7], copier:[1.3,1.6,9.6], elevator:[11.3,2.95,.1], water:[22.7,1.9,8.45], lock_canteen:[17,1.25,8], lock_canteen2:[14,1.25,12], lock_meeting:[27.2,1.25,6]};
 const anchorOf = id => { if (ANCHOR[id]) return ANCHOR[id]; const g = (id === 'client' ? client : NPCS[id].c).g; return [g.position.x, (isGossip(id) ? 1.95 : id === questId ? 2.2 : 2.3) + g.position.y, g.position.z]; }; // gossip bubble tail touches the head
 const hotActive = id => { if (id === 'client') return client.g.visible;
   if (HOT[id].lock) return !G.roomOpen(S, HOT[id].lock);
+  if (HOT[id].look) return lookNow === HOT[id].look;                   // a thing that only exists on that day's look (the well)
   return G.roomOpen(S, roomAt(...HOT[id].at)?.id); }; // a closed room's people and things are out of reach
 const hotAt = id => { if (id === 'client') return [client.g.position.x + .5, client.g.position.z + .6];
   const n = NPCS[id]; if (n?.quest) { const p = n.c.g.position; return [p.x + .5, p.z + .6]; }
@@ -664,11 +671,30 @@ const nextLine = Wd.makeLineBag(); // shuffle bag (world.js)
 // a character you clicked (or are talking to) stops what they are doing and turns to you
 const engaged = id => pendingHot === id || (!sheet.hidden && talkId === id);
 const faceP = c => { const p = player.g.position, q = c.g.position; c.g.rotation.y = Math.atan2(p.x - q.x, p.z - q.z); };
+// the well (event Giếng thần, Lily 19/11): a wooden sign on its rim says how to get back to 2026; steps already done today get a tick
+const WELL_GUIDE = {
+  intro: 'Lòng giếng sáng xanh. Trên thành giếng có tấm biển gỗ, nét chữ run run: "CÁCH VỀ LẠI HIỆN TẠI".',
+  steps: [
+    ['Xong chuyện buổi sáng với người đang chờ bạn (người có dấu ! trên đầu).', s => s.today.cardDone],
+    ['Buổi chiều làm một việc như mọi ngày: làm task, hỏi senior, ăn trưa, tám chuyện, báo cáo hay giúp chị Mai.', s => !!s.today.action],
+    ['17:55 bấm "Tan làm". Bước qua cửa là bạn về lại năm 2026, ngay phòng trọ của mình.', s => s.part === 'evening'],
+  ],
+  warn: 'Ghi chú bên dưới, chữ nhỏ hơn: "Đừng nhảy xuống giếng lần nữa. Lần trước có người về nhầm năm 1998, giờ vẫn đang làm kế toán ở đó."',
+};
+function wellGuide(body){
+  const list = el('div', 'choices');
+  WELL_GUIDE.steps.forEach(([text, done], i) => { const row = el('div', 'mission'); const ok = done(S);
+    row.innerHTML = `<i class="tick">${ok ? '✓' : i + 1}</i><span></span><small></small>`; row.querySelector('span').textContent = text; if (ok) row.classList.add('done'); list.appendChild(row); });
+  body.append(el('p', null, WELL_GUIDE.intro), list, el('p', 'note', WELL_GUIDE.warn));
+  for (const k of ['sheet-eyebrow', 'sheet-title']) document.getElementById(k).hidden = false;
+  sheet.hidden = false; document.getElementById('hint').hidden = true;
+}
 function openSheet(id){
   if (gameTalk(id)) return; // today's card takes over the conversation
   talkId = id; sheetAction(null);
   const h = HOT[id]; document.getElementById('sheet-eyebrow').textContent = h.eyebrow; document.getElementById('sheet-title').textContent = h.title;
   const body = document.getElementById('sheet-body'); body.replaceChildren();
+  if (h.guide) return wellGuide(body);
   if (h.elevator){
     const list = document.createElement('div'); list.className = 'floors';
     for (const [n, name, note] of FLOORS){
@@ -825,10 +851,11 @@ function updateSeniors(dt){
 }
 
 /* ---------- Game: the 40-day loop. Rules live in engine.js, content in cards.json + handbook.json ---------- */
-const [CARD_DATA, HANDBOOK, MINIGAMES, REVIEW, RHYTHM, PLACEMENTS, OPENING, PERKS] = await Promise.all(['cards.json', 'handbook.json', 'minigames.json', 'danh-gia.json', 'nhip-choi.json', 'placements.json', 'mo-dau.json', 'than-thiet.json'].map(u => fetch(u).then(r => r.json())));
+const [CARD_DATA, HANDBOOK, MINIGAMES, REVIEW, RHYTHM, PLACEMENTS, OPENING, PERKS, EVENTS] = await Promise.all(['cards.json', 'handbook.json', 'minigames.json', 'danh-gia.json', 'nhip-choi.json', 'placements.json', 'mo-dau.json', 'than-thiet.json', 'su-kien.json'].map(u => fetch(u).then(r => r.json())));
 const CARDS = CARD_DATA.cards;
 G.useMinigames(MINIGAMES); G.useRhythm(RHYTHM); G.usePerks(PERKS); Pl.usePlacements(PLACEMENTS);
-{ const bad = [...G.validateCards(CARD_DATA), ...validateMinigames(MINIGAMES), ...G.validateRhythm(RHYTHM, CARD_DATA)]; if (bad.length) console.warn('cards.json / minigames.json / nhip-choi.json:', bad); }
+G.useEvents(EVENTS, new URLSearchParams(location.search).get('ngay'));   // live events on real dates (su-kien.json); ?ngay=2026-12-02 tries another date
+{ const bad = [...G.validateCards(CARD_DATA), ...validateMinigames(MINIGAMES), ...G.validateRhythm(RHYTHM, CARD_DATA), ...G.validateEvents(EVENTS, CARD_DATA, MINIGAMES)]; if (bad.length) console.warn('cards.json / minigames.json / nhip-choi.json / su-kien.json:', bad); }
 // cards.json names people by their story id; the 3D scene uses its own ids for three of them
 const TO_3D = {tuan:'boss', mai:'letan', coba:'chef'}, FROM_3D = {boss:'tuan', letan:'mai', chef:'coba'};
 const id3d = n => TO_3D[n] || n, storyId = id => FROM_3D[id] || id;
@@ -904,6 +931,8 @@ function renderHUD(){
   kEl.hidden = !k || S.part === 'over'; if (k) { kEl.textContent = G.kpiLine(S); kEl.classList.toggle('done', k.done); }
   const note = G.todaysSpecial(S, CARDS) ? null : G.cardById(CARDS, S.today.specialId)?.note, nEl = document.getElementById('day-note');
   nEl.hidden = !note; nEl.textContent = note || '';
+  const ev = standIn || S.part === 'over' ? [] : G.eventLines(S), eEl = document.getElementById('event-line');
+  eEl.hidden = !ev.length; eEl.textContent = ev.join(' · ');
 }
 function goalText(){
   if (S.part === 'morning' && !S.today.cardDone) {
@@ -960,6 +989,7 @@ function setupMorning(){
   const u = G.todaysUnlock(S, CARDS); if (u) return showUnlock(u);
   const sp = G.todaysSpecial(S, CARDS); if (sp) return showSpecial(sp);
   const k = G.kpiToAnnounce(S); if (k) return showKpi(k);
+  const eg = G.eventGameToPlay(S); if (eg) return showEventGame(eg);
   if (S.day === G.TOTAL_DAYS && !S.today.dossierSeen) return showDossier();
   if (S.today.minigame) return showMinigame();
   const c = G.todaysCard(S, CARDS);
@@ -973,7 +1003,7 @@ function setupMorning(){
 }
 // 08:29 special day (cards.json type special_day): the news, one choice, today's rules in a note; then the normal morning
 function showSpecial(c){
-  const eyebrow = `Ngày ${S.day} · 08:29 · Ngày đặc biệt`, note = c.note ? [el('p', 'note', c.note)] : [];
+  const eyebrow = `Ngày ${S.day} · 08:29 · ${c.event ? 'Event ' + (G.eventById(c.event)?.name || '') : 'Ngày đặc biệt'}`, note = c.note ? [el('p', 'note', c.note)] : [];
   modal({eyebrow, title:c.title, nodes:[el('p', null, c.intro), ...note, choiceList(c, i => {
     const res = G.chooseOption(S, c, i); S.today.specialPick = i; afterChange(); dressForToday();
     modal({eyebrow, title:c.title, nodes:[...resultNodes(res), ...note], actions:[{label:'Vào làm', onClick:() => { closeModal(); setupMorning(); }}]});
@@ -996,13 +1026,63 @@ function showKpi(k){
                  actions:[{label:'Vào làm', onClick:() => { closeModal(); setupMorning(); }}]});
              }}]});
 }
-// "Thứ Sáu áo cam": colleagues (and you, if you said yes) wear the day's shirt colour; any other day, back to their own
+// "Thứ Sáu áo cam": colleagues (and you, if you said yes) wear the day's shirt colour; any other day, back to their own.
+// rules.look dresses the whole floor for the day (dayLook below)
 function dressForToday(){
+  dayLook(G.rulesToday(S, CARDS).look);
   const color = G.rulesToday(S, CARDS).shirt || null, who = [['boss', NPCS.boss.c], ['hang', NPCS.hang.c], ['linh', NPCS.linh.c], ['minh', NPCS.minh.c], ['tung', NPCS.tung.c], ['letan', NPCS.letan.c], ['player', player]];
   for (const [id, c] of who) {
     const own = (id === 'player' ? P.shirt : NPCS[id].look.shirt) || P.shirt, wear = color && (id !== 'player' || S.today.specialPick === 0) ? color : own;
     c.g.traverse(m => { if (!m.isMesh || !m.material?.color) return; m.userData.shirt ??= m.material.color.getHexString() === new T.Color(own).getHexString(); if (m.userData.shirt) m.material = mat(wear); });
   }
+}
+// rules.look "gieng_than" (event Giếng thần, Lily 19/11): the floor of 2005 seen through an old legend. Dusk indigo sky, warm lantern
+// light, crimson uniforms (rules.shirt), paper lanterns over the corridor, the stone well in the lobby with glowing shards (decor only, nothing to click) above it.
+// Inspired by the mood only: no names, characters or logos from any existing work. Built once, shown only on that day.
+const LOOKS3D = {gieng_than: {bg:'#2e2748', sky:'#d9c8ff', ground:'#6b3f3a', hemi:1.25, sun:'#ffbf80', sunI:1.9, accent:'#b3322b', build:buildLegend}};
+const DEFAULT_LOOK = {bg:scene.background.clone(), sky:hemi.color.clone(), ground:hemi.groundColor.clone(), hemi:hemi.intensity, sun:sun.color.clone(), sunI:sun.intensity};
+const lookProps = {};
+function dayLook(id){
+  const L = LOOKS3D[id] || null; if ((L ? id : null) === lookNow) return; lookNow = L ? id : null;
+  const v = L || DEFAULT_LOOK;
+  scene.background.set(v.bg); hemi.color.set(v.sky); hemi.groundColor.set(v.ground); hemi.intensity = v.hemi; sun.color.set(v.sun); sun.intensity = v.sunI;
+  for (const [k, g] of Object.entries(lookProps)) g.visible = k === lookNow;
+  if (L && !lookProps[id]) { lookProps[id] = L.build(); scene.add(lookProps[id]); }
+  for (const k of Object.keys(LOOKS3D)) document.body.classList.toggle('look-' + k, k === lookNow);   // page tokens follow (CSS body.look-…)
+}
+const legendShards = [];
+function buildLegend(){
+  const [wx, wz] = WELL, g = new T.Group(), add = (geo, m, x, y, z) => { const o = new T.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; };
+  const stone = mat('#8d8a96'), stoneDark = mat('#6c6878'), wood = mat('#6b3b22'), roof = mat('#3b2a3f'), rope = mat('#e9dcb8');
+  const glow = (c, i = 1.2) => new T.MeshStandardMaterial({color:c, emissive:c, emissiveIntensity:i, roughness:.4});
+  // the well: a ring of stones, a wooden frame with a little roof, blue light rising from inside (lobby, right corner)
+  const ring = add(new T.CylinderGeometry(.62, .66, .55, 18, 1, true), new T.MeshStandardMaterial({color:'#8d8a96', roughness:.8, side:T.DoubleSide}), wx, .28, wz);
+  ring.userData.hot = 'well'; hotMeshes.push(ring);                                                   // click the well: how to get back
+  add(new T.TorusGeometry(.62, .07, 8, 24), stoneDark, wx, .56, wz).rotation.x = Math.PI / 2;
+  add(new T.CircleGeometry(.58, 24), glow('#6fd2ff', 1.6), wx, .45, wz).rotation.x = -Math.PI / 2;
+  for (const dx of [-.62, .62]) add(new T.BoxGeometry(.09, 1.25, .09), wood, wx + dx, .62, wz);
+  add(new T.BoxGeometry(1.45, .08, .1), wood, wx, 1.2, wz);
+  const r1 = add(new T.BoxGeometry(1.6, .06, .62), roof, wx, 1.36, wz - .2); r1.rotation.x = .55;
+  const r2 = add(new T.BoxGeometry(1.6, .06, .62), roof, wx, 1.36, wz + .2); r2.rotation.x = -.55;
+  add(new T.CylinderGeometry(.11, .11, .1, 10), wood, wx, .95, wz).rotation.z = Math.PI / 2;
+  add(new T.TorusGeometry(.66, .025, 6, 28), rope, wx, .4, wz).rotation.x = Math.PI / 2;               // a sacred rope around the stones
+  for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2;                                          // paper tassels on the rope
+    add(new T.BoxGeometry(.07, .2, .01), mat('#fdfdfb'), wx + Math.cos(a) * .67, .27, wz + Math.sin(a) * .67).rotation.y = -a; }
+  const well = new T.PointLight('#7fd4ff', 2.2, 4.5, 1.6); well.position.set(wx, .9, wz); g.add(well);
+  // five shards of the lost report, floating above the well
+  for (let i = 0; i < 5; i++) { const m = add(new T.OctahedronGeometry(.11), glow('#e58bd8', 1.4), wx, 1.9, wz); m.castShadow = false; legendShards.push({m, a: i / 5 * Math.PI * 2}); }
+  // paper lanterns over the corridor between the rooms
+  for (const x of [2.5, 5.5, 8.5, 13, 16, 19.5, 23, 26]) {
+    add(new T.CylinderGeometry(.008, .008, .5, 4), mat(P.ink), x, 2.85, 7);
+    add(new T.CylinderGeometry(.1, .1, .05, 12), mat(P.ink), x, 2.6, 7);
+    add(new T.SphereGeometry(.22, 14, 10).scale(1, 1.25, 1), glow('#e8473e', .9), x, 2.33, 7);
+    add(new T.CylinderGeometry(.1, .1, .05, 12), mat(P.ink), x, 2.05, 7);
+  }
+  return g;
+}
+function animateLook(t){
+  if (lookNow !== 'gieng_than' || reduce) return;
+  for (const s of legendShards) { const a = s.a + t * .6; s.m.position.x = WELL[0] + Math.cos(a) * .45; s.m.position.z = WELL[1] + Math.sin(a) * .45; s.m.position.y = 1.85 + Math.sin(t * 2 + s.a) * .08; s.m.rotation.y = t * 1.5; }
 }
 // 08:29 room opening (MO_CANTEEN, MO_MEETING): a modal announcement, then the normal morning
 function showUnlock(u){
@@ -1075,6 +1155,18 @@ async function showMinigame(){
   modal({eyebrow, title:`${game.name}: ${gradeName}`, nodes:[el('p', null, res.detail), el('p', 'comment', game.lines?.[grade] || ''), deltaChips(got),
       el('p', 'note', S.part === 'evening' ? 'Tiếp theo: phán quyết của anh Tuấn.' : afternoonPlaces() + '.')],
     actions:[{label:'Tiếp tục', onClick:() => { closeModal(); if (S.part === 'evening') showEvening(); else renderHUD(); }}]});
+}
+// live event (su-kien.json): every shard found, so this morning the pieces get put together. Once per run; no perks (they belong to milestone games)
+async function showEventGame({event, game}){
+  if (mgRunning) return; mgRunning = true; closeSheet();
+  const eyebrow = `Ngày ${S.day} · Event ${event.name}`;
+  const res = await runMinigame(game, {eyebrow, hasFlag: f => G.hasFlag(S, f), badgeName});
+  mgRunning = false;
+  const grade = G.gradeOf(game, res.score), gradeName = Object.fromEntries(G.minigameGrades())[grade];
+  const got = G.playEventGame(S, event.id, grade, res.extras || []); afterChange();
+  const won = G.hasFlag(S, event.shards.badge) ? [el('p', 'note', `Huy hiệu mới: ${badgeName(event.shards.badge)}. Xem trong Bộ sưu tập.`)] : [];
+  modal({eyebrow, title:`${game.name}: ${gradeName}`, nodes:[el('p', null, res.detail), el('p', 'comment', game.lines?.[grade] || ''), deltaChips(got), ...won],
+    actions:[{label:'Vào làm', onClick:() => { closeModal(); setupMorning(); }}]});
 }
 // day 40, part 1: anh Tuấn reads three badges from your file (danh-gia.json)
 function showDossier(){
@@ -1634,6 +1726,7 @@ function tick(now){
     if (cutscene) el.hidden = true;                                                     // verdict scene: no prompts over the meeting
   }
   leaveBtn.hidden = !(S.part === 'evening' && sheet.hidden && modalWrap.hidden && collEl.hidden);
+  animateLook(performance.now() / 1000);
   if (!opening) renderer.render(scene, cam);                                  // an opening screen covers the floor
   requestAnimationFrame(tick);
 }

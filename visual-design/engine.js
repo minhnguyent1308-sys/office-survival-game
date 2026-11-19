@@ -61,6 +61,64 @@ let RH = {events: {midday: 0}, specialDays: {weeks: [], chance: 0}, kpi: {weeks:
 export function useRhythm(data) { if (!data) return; RH = {...RH, ...data}; if (data.events?.night != null) NIGHT_CARD_CHANCE = data.events.night; }
 export const rhythm = () => RH;
 
+/* ---------- Live events on real dates (su-kien.json, Lily 19/11): on from 00:00 of `from` to the end of `to`, the player's clock ---------- */
+// Each page loads su-kien.json and calls useEvents(data, today?) once. Without it (the simulator): no event, the game is as before.
+// today: 'YYYY-MM-DD' to try another date (the page passes ?ngay=...); left out = the device's date when asked.
+// A card or mini-game with `event` only shows while that event is on; a card with `deck` only on a special day whose rules.deck names it.
+let EV = {events: []}, TODAY = null;
+export function useEvents(data, today = null) { if (data) EV = {...EV, ...data}; TODAY = /^\d{4}-\d{2}-\d{2}$/.test(today || '') ? today : null; }
+const isoToday = () => { if (TODAY) return TODAY; const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
+export const eventById = id => EV.events.find(e => e.id === id) || null;
+export const eventOn = id => { const e = eventById(id), t = isoToday(); return !!e && t >= e.from && t <= e.to; };
+export const liveEvents = () => EV.events.filter(e => eventOn(e.id));
+const eventOk = c => !c.event || eventOn(c.event);
+// shards (event.shards): one may turn up each ordinary working morning; enough of them = the event's mini-game, once per run
+const eventState = (s, id) => ((s.events ||= {})[id] ||= {shards: 0});
+function rollShards(s, cards, rng) {
+  if (!ordinaryDay(s, cards, s.day)) return;
+  const sure = rulesToday(s, cards).shard;                          // the well day: always one
+  for (const e of liveEvents()) {
+    const sh = e.shards, st = eventState(s, e.id); if (!sh || st.shards >= sh.count) continue;
+    if (!sure && rng() >= sh.chance) continue;
+    st.shards += 1; s.today.shard = e.id;
+    say(s, `${sh.name} ${st.shards}/${sh.count}: ${sh.lines[Math.floor(rng() * sh.lines.length)]}`);
+    if (st.shards >= sh.count) say(s, sh.full);
+  }
+}
+// HUD line, same on every map: "Event Giếng thần · đến hết 1/12 · Mảnh báo cáo 2/5"
+export function eventLines(s) {
+  return liveEvents().map(e => { const sh = e.shards, st = s.events?.[e.id];
+    const tail = !sh ? '' : st?.game ? ` · ${sh.name}: đã ghép` : ` · ${sh.name} ${Math.min(st?.shards || 0, sh.count)}/${sh.count}`;
+    return e.hud + tail; });
+}
+// the mini-game waiting this morning: shards complete, not played yet (it stays playable if the event ended the same week)
+export function eventGameToPlay(s) {
+  if (s.part !== 'morning') return null;
+  for (const e of EV.events) { const sh = e.shards, st = s.events?.[e.id];
+    if (sh && st && st.shards >= sh.count && !st.game) { const game = minigameById(sh.game); if (game) return {event: e, game}; } }
+  return null;
+}
+export function playEventGame(s, eventId, result, extras = []) {
+  const e = eventById(eventId), st = eventState(s, eventId), game = minigameById(e.shards.game);
+  const got = gameEffects(s, game, result, extras); st.game = result;
+  if ((e.shards.badgeAt || []).includes(result)) addFlag(s, e.shards.badge);
+  if (game.lines?.[result]) s.today.notes.push(game.lines[result]);
+  return got;
+}
+export function validateEvents(data, cardData, mgData) {
+  const problems = [], flags = cardData?.flagsBadges || [], ids = new Set();
+  for (const e of data.events || []) {
+    if (!e.id || ids.has(e.id)) problems.push(`event "${e.id}" thiếu id hoặc trùng`); ids.add(e.id);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(e.from || '') || !/^\d{4}-\d{2}-\d{2}$/.test(e.to || '') || e.from > e.to) problems.push(`${e.id}: from/to phải là YYYY-MM-DD và from ≤ to`);
+    const sh = e.shards; if (!sh) continue;
+    if (!(sh.count > 0) || !(sh.chance >= 0 && sh.chance <= 1) || !(sh.lines || []).length) problems.push(`${e.id}: shards cần count > 0, chance 0–1, lines`);
+    if (mgData && !(mgData.games || []).some(g => g.id === sh.game)) problems.push(`${e.id}: mini-game "${sh.game}" không có trong minigames.json`);
+    if (cardData && !flags.includes(sh.badge)) problems.push(`${e.id}: huy hiệu "${sh.badge}" chưa có trong flagsBadges của cards.json`);
+  }
+  for (const c of cardData?.cards || []) if (c.event && !ids.has(c.event)) problems.push(`${c.id}: event "${c.event}" không có trong su-kien.json`);
+  return problems;
+}
+
 /* ---------- Closeness perks (than-thiet.json): two per person, on at closeness 40 and 60; data-driven ---------- */
 // effect.kind decides what the engine does with it (see the note in than-thiet.json). A perk is on while closeness >= at.
 let PK = {perks: [], headsUp: {}, eventHints: {}, tiers: [40, 60, 80], title80: ''};
@@ -237,8 +295,10 @@ export function drawCard(s, cards, rng = Math.random) {
     if (c && requiresOk(s, c.requires)) return c;
   }
   const phase = phaseOf(s.day);
-  let pool = cards.filter(c => DRAWABLE.has(c.type) && !c.when && (c.phases || []).includes(phase) && requiresOk(s, c.requires)
-    && roomOpen(s, c.room) && (!s.used.includes(c.id) || c.repeatable) && (c.weight ?? 0) > 0);
+  const deck = rulesToday(s, cards).deck;                    // special day with its own deck (Giếng thần): only those cards; deck cards never come otherwise
+  let pool = cards.filter(c => DRAWABLE.has(c.type) && !c.when && (c.phases || []).includes(phase) && requiresOk(s, c.requires) && eventOk(c)
+    && roomOpen(s, c.room) && (!s.used.includes(c.id) || c.repeatable) && (c.weight ?? 0) > 0 && (!c.deck || c.deck === deck));
+  if (deck && pool.some(c => c.deck === deck)) return weighted(pool.filter(c => c.deck === deck), rng);
   const only = rulesToday(s, cards).npc;                     // special day (e.g. sếp tổng ghé): the morning belongs to this person
   if (only && pool.some(c => c.npc === only)) return weighted(pool.filter(c => c.npc === only), rng);
   const event = pool.find(c => c.type === 'character_event');
@@ -270,8 +330,10 @@ export function startMorning(s, cards, rng = Math.random) {
   const unlock = cards.find(c => c.type === 'unlock' && c.day === s.day && !roomOpen(s, c.unlocks));
   if (unlock) s.today.unlockId = unlock.id;
   if (s.week?.n !== weekOf(s.day)) startWeek(s, cards, rng);
+  if (s.week.specialDay === s.day && !eventOk(cardById(cards, s.week.specialId) || {})) s.week.specialDay = null;   // its event ended before the day came
   if (s.week.specialDay === s.day) { s.today.specialId = s.week.specialId; s.today.specialRules = cardById(cards, s.week.specialId)?.rules?.actions || {}; } // 08:29, after a room opening, before the card
   if (s.day === 1) { s.today.cardId = DAY_ONE.id; return; }
+  rollShards(s, cards, rng);                                 // live event (su-kien.json): maybe a shard this morning
   const mg = drawMinigame(s, rng);
   if (mg) { s.today.minigame = mg.id; return; }             // milestone morning: a mini-game instead of a card
   drawMidday(s, cards, rng);
@@ -287,7 +349,7 @@ const ordinaryDay = (s, cards, day) => day > 1 && day < TOTAL_DAYS && !isWeekend
 function drawMidday(s, cards, rng) {
   if (!ordinaryDay(s, cards, s.day) || rng() >= (RH.events.midday || 0)) return;
   const phase = phaseOf(s.day);
-  const pool = cards.filter(c => isMidday(c) && (c.phases || []).includes(phase) && !s.used.includes(c.id) && roomOpen(s, c.room) && requiresOk(s, c.requires));
+  const pool = cards.filter(c => isMidday(c) && (c.phases || []).includes(phase) && !s.used.includes(c.id) && roomOpen(s, c.room) && requiresOk(s, c.requires) && eventOk(c));
   const c = weighted(pool, rng);
   if (c) { s.today.eventId = c.id; addUnique(s.used, c.id); }
 }
@@ -309,11 +371,12 @@ function startWeek(s, cards, rng) {
     const head = k?.goal.type === 'action_count' && perksOf(s, 'kpi_head')[0];            // anh Tùng sits next to you: one done already
     if (head) s.week.base.actions[k.goal.action] = (s.week.base.actions[k.goal.action] || 0) - head.effect.count;
   }
-  if (RH.specialDays.weeks.includes(n) && rng() < RH.specialDays.chance) {
+  if (RH.specialDays.weeks.includes(n)) {
     const phase = phaseOf(s.day), days = [0, 1, 2, 3, 4].map(w => (n - 1) * 7 + 1 + w).filter(d => d >= s.day && ordinaryDay(s, cards, d));
-    const pool = cards.filter(c => isSpecialDay(c) && !s.used.includes(c.id) && (c.phases || [1, 2, 3]).includes(phase) && requiresOk(s, c.requires) && roomOpen(s, c.room)
+    const pool = cards.filter(c => isSpecialDay(c) && !s.used.includes(c.id) && (c.phases || [1, 2, 3]).includes(phase) && requiresOk(s, c.requires) && roomOpen(s, c.room) && eventOk(c)
       && days.some(d => c.weekday == null || weekday(d) === c.weekday));
-    const c = weighted(pool, rng);
+    const live = pool.filter(c => c.event);                     // a live event's special day comes first, every time (once per run)
+    const c = live.length ? weighted(live, rng) : rng() < RH.specialDays.chance ? weighted(pool, rng) : null;
     if (c) { const fit = days.filter(d => c.weekday == null || weekday(d) === c.weekday); s.week.specialDay = fit[Math.floor(rng() * fit.length)]; s.week.specialId = c.id; addUnique(s.used, c.id); }
   }
 }
@@ -404,12 +467,16 @@ export function chooseOption(s, c, index) {
 }
 
 // result: a grade id. extras: side effects the game itself earned, e.g. [{effects: {qh: 2}, npc: 'linh'}] for a favour done.
-export function playMinigame(s, result, extras = []) {
-  const id = s.today.minigame, game = minigameById(id) || {};
+// cost + reward of a grade, plus the extras: shared by milestone mini-games and event mini-games
+function gameEffects(s, game, result, extras) {
   const got = {}, add = g => { for (const [k, v] of Object.entries(g)) if (k === 'close') for (const [n, d] of Object.entries(v)) (got.close ||= {})[n] = (got.close[n] || 0) + d; else got[k] = (got[k] || 0) + v; };
   const base = {}; for (const e of [game.cost, game.rewards?.[result]]) for (const [k, v] of Object.entries(e || {})) base[k] = (base[k] || 0) + v;
   add(applyEffects(s, base));
   for (const x of extras) add(applyEffects(s, x.effects, x.npc || null));
+  return got;
+}
+export function playMinigame(s, result, extras = []) {
+  const id = s.today.minigame, game = minigameById(id) || {}, got = gameEffects(s, game, result, extras);
   s.counters.minigames[id] = result; (s.counters.minigameDays ||= {})[s.day] = result; s.today.cardDone = true;
   if (game.lines?.[result]) s.today.notes.push(game.lines[result]);
   s.part = s.day === TOTAL_DAYS ? 'evening' : 'afternoon';
@@ -565,7 +632,7 @@ export function drawNight(s, cards, rng = Math.random) {
   s.today.nightDrawn = true;
   if (weekday(s.day) === 4) return null;
   const phase = phaseOf(s.day);
-  const pool = cards.filter(c => isNightCard(c) && (c.phases || []).includes(phase) && !s.used.includes(c.id) && requiresOk(s, c.requires));
+  const pool = cards.filter(c => isNightCard(c) && (c.phases || []).includes(phase) && !s.used.includes(c.id) && requiresOk(s, c.requires) && eventOk(c));
   // type 'visit': a colleague comes over to work. The first one arrives the first evening it is unlocked (Quan hệ >= 70),
   // and it is the colleague you are closest to; later visits wait in the normal pool.
   const visits = pool.filter(isVisit), firstVisit = !cards.some(c => isVisit(c) && s.used.includes(c.id));
@@ -585,7 +652,7 @@ export function nextDay(s, cards, rng = Math.random) {
     s.part = 'weekend'; s.today = freshToday(); s.today.kpiResult = kpi;
     const got = applyEffects(s, {pin: 20});
     const phase = phaseOf(s.day + 3);
-    const pool = cards.filter(c => c.type === 'weekend' && (c.phases || []).includes(phase) && !s.used.includes(c.id) && requiresOk(s, c.requires));
+    const pool = cards.filter(c => c.type === 'weekend' && (c.phases || []).includes(phase) && !s.used.includes(c.id) && requiresOk(s, c.requires) && eventOk(c));
     const c = pool.length && rng() < WEEKEND_CARD_CHANCE ? weighted(pool, rng) : null;
     if (c) { s.today.cardId = c.id; addUnique(s.used, c.id); }
     return {weekend: true, got, card: c, kpi, pay};
