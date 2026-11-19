@@ -1009,7 +1009,7 @@ function setupMorning(){
 function showSpecial(c){
   const eyebrow = `Ngày ${S.day} · 08:29 · ${c.event ? 'Event ' + (G.eventById(c.event)?.name || '') : 'Ngày đặc biệt'}`, note = c.note ? [el('p', 'note', c.note)] : [];
   modal({eyebrow, title:c.title, nodes:[el('p', null, c.intro), ...note, choiceList(c, i => {
-    const res = G.chooseOption(S, c, i); S.today.specialPick = i; afterChange(); dressForToday();
+    const res = G.chooseOption(S, c, i); S.today.specialPick = i; if (c.event && !DRAFT) PROFILE.markEvent(c.event, S.runId); afterChange(); dressForToday();
     modal({eyebrow, title:c.title, nodes:[...resultNodes(res), ...note], actions:[{label:'Vào làm', onClick:() => { closeModal(); setupMorning(); }}]});
   })]});
 }
@@ -1486,6 +1486,7 @@ async function newRun({look, name, gift = null}){
   cutscene = false; camFocus = null; fainted = false; sceneSit = null; pendingHot = null; focusHalf = [6, 5.6]; document.getElementById('sheet-close').hidden = false;
   arriveByElevator();                          // the old run may have ended in a room the new run starts with closed (the meeting room)
   standIn = false; PROFILE.track('run_start'); await store.clear(); S = G.newGame({look, name, startRooms: CARD_DATA.rooms?.start}); if (gift) G.applyGift(S, gift.id, gift.npc); G.startMorning(S, CARDS); applyRooms(); wearLook(look);
+  eventDayCheck();                             // a live event's day waits for day 2 (day 1 is chị Mai's tutorial)
   for (const id of Object.keys(NPCS)) if (NPCS[id].quest) release(id);
   if (questId === 'client') release('client');
   met.clear(); elapsed = 0; tut.reset();       // everyone introduces themselves again; the desk label bounces again
@@ -1644,7 +1645,20 @@ wearLook(G.lookOf(S));
 for (const id of ['lock_canteen', 'lock_canteen2', 'lock_meeting']) HOT[id].text = CARD_DATA.rooms?.lockedSigns?.[HOT[id].lock] || 'Phòng này chưa mở.';
 applyRooms(); dressForToday();
 // resume exactly where the save left off
+// live event with firstOpen (su-kien.json, Lily 19/11): each player meets its special day once, on this morning if the story has not
+// started yet, otherwise on the next ordinary working morning. The profile remembers it once played; a draft (?thu=) never counts.
+function eventDayCheck(){
+  if (standIn || DRAFT) return;
+  for (const e of G.liveEvents()) {
+    if (!e.firstOpen || PROFILE.eventDone(e.id)) continue;
+    const r = G.queueEventDay(S, CARDS, e.firstOpen);
+    if (r === 'done') PROFILE.markEvent(e.id, S.runId);
+    if (r === 'later' && S.part !== 'over' && S.day > 1 && !S.today.eventSoonTold) { S.today.eventSoonTold = true; notify(e.soon); }
+    save();
+  }
+}
 function resumeRun(){
+  eventDayCheck();
   if (G.isAtHome(S)) goHome();                  // evening after 17:55 or the weekend: that happens in the rented room
   else if (S.part === 'evening' && !fromShop) showEvening(); // back from the shop after the afternoon: "Tan làm" waits on its button
   else if (S.part === 'over') showFinale();
