@@ -380,6 +380,14 @@ function startWeek(s, cards, rng) {
     if (c) { const fit = days.filter(d => c.weekday == null || weekday(d) === c.weekday); s.week.specialDay = fit[Math.floor(rng() * fit.length)]; s.week.specialId = c.id; addUnique(s.used, c.id); }
   }
 }
+// A draft run that starts on the morning of one special day (?thu=<event id>, Lily 19/11: to see an event at once). Never saved by the page.
+// day 11 = Thursday of week 2: not a room opening, not a mini-game day. The week's KPI counts as already read so the day opens on the special day.
+export function tryDay(cards, specialId, {name = '', look = null, day = 11, rng = Math.random} = {}) {
+  const s = newGame({name, look, rng}); s.day = day; addFlag(s, 'co_so_tay');
+  startWeek(s, cards, rng); Object.assign(s.week, {specialDay: day, specialId, kpiSeen: true}); addUnique(s.used, specialId);
+  startMorning(s, cards, rng);
+  return s;
+}
 export const todaysSpecial = (s, cards) => (s.today.specialId && !s.today.specialDone ? cardById(cards, s.today.specialId) : null);
 // the special day's rules apply all day once it is announced (and also before, so a reload cannot dodge them)
 export const rulesToday = (s, cards) => (s.today.specialId ? cardById(cards, s.today.specialId)?.rules || {} : {});

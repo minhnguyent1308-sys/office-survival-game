@@ -867,13 +867,16 @@ const ROOM_SPOT = {canteen:'chef', lobby:'letan', boss:'boss', intern:'desk'};  
 const HOT_PLACE = {desk:'desk', chef:'canteen', boss:'boss', letan:'lobby'};          // afternoon places in the 3D world
 const TASK_TAG = {desk:'Làm việc', chef:'Ăn trưa · tám', boss:'Báo cáo sếp', letan:'Giúp chị Mai'};
 const TIME = {morning:'08:29', afternoon:'13:30', evening:'17:55', weekend:'Cuối tuần', over:'17:55'};
-const store = new G.BrowserSaveStore();
+// ?thu=gieng_than (an event id): a draft run on the morning of that event's special day. Nothing is saved, nothing goes to the collection (Lily 19/11)
+const DRAFT = (() => { const id = new URLSearchParams(location.search).get('thu'); return id && G.eventById(id) ? CARDS.find(c => G.isSpecialDay(c) && c.event === id) || null : null; })();
+const realStore = new G.BrowserSaveStore(), store = DRAFT ? {load: () => realStore.load(), save: async () => {}, clear: async () => {}} : realStore;
 const PROFILE = await Ho.open({badges: CARD_DATA.flagsBadges});   // survives "Chơi lại"; filled from whatever save is in hand
 // the run comes back from the rented room in storage; the URL carries a copy for browsers that block storage
 const fromHash = () => { try { const m = location.hash.match(/s=([^&]+)/); return m ? JSON.parse(decodeURIComponent(m[1])) : null; } catch { return null; } };
 let S = (await store.load()) || fromHash();
 const fromHome = location.hash.includes('from=home'), fromShop = location.hash.includes('from=trasua');
 if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+if (DRAFT) S = G.tryDay(CARDS, DRAFT.id, {name: S?.name || '', look: S?.look || null});   // the real save's name and look, on a copy of nothing else
 const hadSave = !!S;
 // no save yet: a stand-in run keeps the floor alive behind the welcome screen; it is never saved (the opening starts the real one)
 let standIn = !S;
@@ -923,7 +926,7 @@ function renderHUD(){
     const on = statsEl.dataset.focus === k ? ' on' : '';                                  // tutorial points at one bar
     return `<span class="${warn ? 'warn' : ''}${on}">${G.STAT_NAME[k]}</span><span class="bar${on}" style="--c:var(--${k})"><i style="width:${v / max * 100}%"></i>${extra}</span><span class="val ${warn ? 'warn' : ''}${on}">${v}</span>`; };
   statsEl.innerHTML = row('xp', 150, `<s style="left:${G.JUNIOR_XP / 150 * 100}%"></s>`) + row('pin', 100) + row('ut', 100) + row('qh', 100);
-  document.getElementById('who-line').textContent = 'Intern · ' + G.playerName(S);
+  document.getElementById('who-line').textContent = 'Intern · ' + G.playerName(S) + (DRAFT ? ' · Ván nháp, không lưu' : '');
   hbBtn.hidden = !G.hasFlag(S, 'co_so_tay');
   hbBtn.textContent = `Sổ tay ${S.missionsDone.length}/${HANDBOOK.missions.length}`;
   hbBtn.classList.toggle('flash', S.day >= 30 && S.missionsDone.length < HANDBOOK.missions.length);
@@ -955,7 +958,7 @@ const effectText = e => G.STATS.filter(k => e[k]).map(k => `${G.STAT_NAME[k]} ${
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = G.fillName(text, S); return e; };
 let toastQueue = [];
 const notify = msg => { toastQueue.push(msg); };
-function afterChange(){ for (const f of G.checkMissions(S, HANDBOOK)) notify(`Xong nhiệm vụ: ${f.mission.title}`); renderHUD(); if (!standIn) for (const m of G.perkNews(S, CARDS)) notify(m); save(); if (!standIn) PROFILE.sync(S); }
+function afterChange(){ for (const f of G.checkMissions(S, HANDBOOK)) notify(`Xong nhiệm vụ: ${f.mission.title}`); renderHUD(); if (!standIn) for (const m of G.perkNews(S, CARDS)) notify(m); save(); if (!standIn && !DRAFT) PROFILE.sync(S); }
 
 /* -- modal (17:55, weekend, mini-game, handbook, closeness, end) -- */
 const modalWrap = document.getElementById('modal-wrap'), modalEl = document.getElementById('modal');
@@ -1221,7 +1224,13 @@ function showEvening(){
 }
 // 17:55 -> the rented room (phong-tro.html): night messages, the bed, the weekend. It sends the player back here in the morning.
 const fadeEl = document.getElementById('fade');
+// the draft ends at 17:55: no rented room, no shop (both would carry the draft into the real save)
+function endDraft(){
+  modal({eyebrow:'Ván nháp · không lưu', title:'Về lại năm 2026', nodes:['Ngày thử Giếng thần kết thúc ở đây. Ván nháp không được lưu, ván thật của bạn vẫn nguyên như cũ.'],
+    actions:[{label:'Về ván thật', onClick:() => { location.href = location.pathname; }}, {label:'Thử lại từ đầu', ghost:true, onClick:() => location.reload()}]});
+}
 async function goHome(){
+  if (DRAFT) return endDraft();
   const card = Wd.homeCard(G.weekdayName(S.day), S.day);
   Wd.paintFade(card); Wd.carryFade(card); fadeEl.classList.add('on'); await store.save(S); await new Promise(r => setTimeout(r, 600));
   location.href = 'phong-tro.html#s=' + encodeURIComponent(JSON.stringify(S));
@@ -1229,6 +1238,7 @@ async function goHome(){
 // the milk tea shop downstairs (tra-sua.html): with today's card (its choices play there), or a free visit once it is known
 const withWhom = n => n === 'tuan' ? 'sếp' : G.NPC_NAME[n].replace(/^./, ch => ch.toLowerCase()); // "chị Hằng", "anh Tùng", "sếp"
 async function goShop(c = null){
+  if (DRAFT) return endDraft();
   const card = c ? {eyebrow:`${G.weekdayName(S.day)} · 10:15`, title:'Quán trà sữa', sub:`Xuống tầng trệt cùng ${withWhom(c.npc)}.`}
                  : {eyebrow:`${G.weekdayName(S.day)} · ${S.part === 'afternoon' ? '15:00' : '17:30'}`, title:'Quán trà sữa', sub:'Thang máy xuống tầng trệt. Mùi trân châu lên tận cửa.'};
   closeSheet(); Wd.paintFade(card); Wd.carryFade(card); fadeEl.classList.add('on'); await store.save(S); await new Promise(r => setTimeout(r, 600));
@@ -1640,7 +1650,7 @@ function resumeRun(){
   else if (S.part === 'over') showFinale();
   else setupMorning();
 }
-if (fromHome || fromShop) resumeRun(); else welcomeScreen();
+if (fromHome || fromShop || DRAFT) resumeRun(); else welcomeScreen();
 afterChange();
 if (S.today.wake?.pin && !S.today.wakeShown) { S.today.wakeShown = true; notify(`Ngủ dậy: Pin +${S.today.wake.pin}`); save(); } // the room sent us here the morning after
 // arriving from the rented room: the room's "Sáng hôm sau" card (already on screen) fades out on the office
