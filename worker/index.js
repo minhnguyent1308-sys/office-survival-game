@@ -14,6 +14,8 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS su_kien (t INTEGER NOT NULL, ngay TEXT NOT NULL, id TEXT NOT NULL, run TEXT, e TEXT NOT NULL, day INTEGER, k TEXT, r TEXT, n INTEGER)`,
   `CREATE INDEX IF NOT EXISTS su_kien_e_ngay ON su_kien (e, ngay)`,
   `CREATE INDEX IF NOT EXISTS su_kien_ngay ON su_kien (ngay)`,
+  `CREATE INDEX IF NOT EXISTS su_kien_id_ngay ON su_kien (id, ngay)`,
+  `CREATE INDEX IF NOT EXISTS su_kien_run ON su_kien (run, e)`,
   `CREATE TABLE IF NOT EXISTS gop_y (t INTEGER NOT NULL, ngay TEXT NOT NULL, id TEXT NOT NULL, sao INTEGER, nhan TEXT, noi_dung TEXT, day INTEGER, ket_cuc TEXT, trang TEXT, an INTEGER NOT NULL DEFAULT 0)`,
   `CREATE INDEX IF NOT EXISTS gop_y_ngay ON gop_y (ngay)`,
 ];
@@ -71,39 +73,43 @@ function allowed(req, env) {
   return null;
 }
 
+const inOrder = async jobs => { const out = []; for (const job of jobs) out.push(await job()); return out; };
+
 // Mọi con số của dashboard trong một lần gọi. days: số ngày gần nhất (theo giờ Việt Nam), tối đa 90.
 export async function stats(db, days = 30, now = Date.now()) {
   const from = vnDay(now - (days - 1) * 86400e3), to = vnDay(now);
-  const all = (sql, ...args) => db.prepare(sql).bind(...args).all().then(r => r.results);
-  const one = (sql, ...args) => db.prepare(sql).bind(...args).first();
+  // one query at a time, each with a name: when one fails, the error says which (shown on the dashboard, which needs the key)
+  const named = (name, run) => () => run().catch(e => { throw new Error(`${name}: ${e.message}`); });
+  const all = (name, sql, ...args) => named(name, () => db.prepare(sql).bind(...args).all().then(r => r.results));
+  const one = (name, sql, ...args) => named(name, () => db.prepare(sql).bind(...args).first());
   const runs = `SELECT run FROM su_kien WHERE e = 'run_start' AND ngay BETWEEN ?1 AND ?2`;
-  const [perDay, funnel, quit, endings, kpi, minigames, buys, pages, time, firstSeen, back, others, fbStars, fbTags, fbList] = await Promise.all([
-    all(`SELECT ngay, COUNT(DISTINCT id) AS nguoi, SUM(e = 'open') AS mo, SUM(e = 'run_start') AS van, SUM(e = 'run_end') AS xong
+  const [perDay, funnel, quit, endings, kpi, minigames, buys, pages, time, firstSeen, back, others, fbStars, fbTags, fbList] = await inOrder([
+    all('nguoi_theo_ngay', `SELECT ngay, COUNT(DISTINCT id) AS nguoi, SUM(e = 'open') AS mo, SUM(e = 'run_start') AS van, SUM(e = 'run_end') AS xong
          FROM su_kien WHERE ngay BETWEEN ?1 AND ?2 GROUP BY ngay ORDER BY ngay`, from, to),
-    one(`SELECT COUNT(*) AS bat_dau, SUM(d >= 5) AS ngay5, SUM(d >= 15) AS ngay15, SUM(d >= 30) AS ngay30, SUM(d >= 40) AS ngay40, SUM(xong) AS xong FROM (
+    one('pheu', `SELECT COUNT(*) AS bat_dau, SUM(d >= 5) AS ngay5, SUM(d >= 15) AS ngay15, SUM(d >= 30) AS ngay30, SUM(d >= 40) AS ngay40, SUM(xong) AS xong FROM (
            SELECT run, MAX(day) AS d, MAX(e = 'run_end') AS xong FROM su_kien WHERE run IN (${runs}) AND e IN ('day', 'run_end') GROUP BY run)`, from, to),
     // ván bỏ dở: chưa có kết cục và đã im hơn 1 ngày; nhóm theo ngày cuối cùng chơi tới
-    all(`SELECT d AS day, COUNT(*) AS n FROM (
+    all('bo_do', `SELECT d AS day, COUNT(*) AS n FROM (
            SELECT run, MAX(day) AS d, MAX(t) AS cuoi, MAX(e = 'run_end') AS xong FROM su_kien WHERE run IN (${runs}) AND e IN ('day', 'run_end') GROUP BY run)
          WHERE xong = 0 AND cuoi < ?3 GROUP BY d ORDER BY d`, from, to, now - 86400e3),
-    all(`SELECT k, COUNT(*) AS n FROM su_kien WHERE e = 'run_end' AND ngay BETWEEN ?1 AND ?2 GROUP BY k ORDER BY n DESC`, from, to),
-    all(`SELECT k, r, COUNT(*) AS n FROM su_kien WHERE e = 'kpi' AND ngay BETWEEN ?1 AND ?2 GROUP BY k, r`, from, to),
-    all(`SELECT k, r, COUNT(*) AS n FROM su_kien WHERE e = 'minigame' AND ngay BETWEEN ?1 AND ?2 GROUP BY k, r`, from, to),
-    all(`SELECT k, COUNT(*) AS n FROM su_kien WHERE e = 'buy' AND ngay BETWEEN ?1 AND ?2 GROUP BY k ORDER BY n DESC`, from, to),
-    all(`SELECT k, COUNT(*) AS n, COUNT(DISTINCT id) AS nguoi FROM su_kien WHERE e = 'open' AND ngay BETWEEN ?1 AND ?2 GROUP BY k ORDER BY n DESC`, from, to),
-    one(`SELECT SUM(n) AS giay, COUNT(DISTINCT id || ngay) AS luot FROM su_kien WHERE e = 'time' AND ngay BETWEEN ?1 AND ?2`, from, to),
+    all('ket_cuc', `SELECT k, COUNT(*) AS n FROM su_kien WHERE e = 'run_end' AND ngay BETWEEN ?1 AND ?2 GROUP BY k ORDER BY n DESC`, from, to),
+    all('kpi', `SELECT k, r, COUNT(*) AS n FROM su_kien WHERE e = 'kpi' AND ngay BETWEEN ?1 AND ?2 GROUP BY k, r`, from, to),
+    all('minigame', `SELECT k, r, COUNT(*) AS n FROM su_kien WHERE e = 'minigame' AND ngay BETWEEN ?1 AND ?2 GROUP BY k, r`, from, to),
+    all('cho_tro', `SELECT k, COUNT(*) AS n FROM su_kien WHERE e = 'buy' AND ngay BETWEEN ?1 AND ?2 GROUP BY k ORDER BY n DESC`, from, to),
+    all('trang', `SELECT k, COUNT(*) AS n, COUNT(DISTINCT id) AS nguoi FROM su_kien WHERE e = 'open' AND ngay BETWEEN ?1 AND ?2 GROUP BY k ORDER BY n DESC`, from, to),
+    one('thoi_gian', `SELECT SUM(n) AS giay, COUNT(DISTINCT id || ngay) AS luot FROM su_kien WHERE e = 'time' AND ngay BETWEEN ?1 AND ?2`, from, to),
     // người mới theo ngày (ngày đầu tiên từng thấy mã này)
-    all(`SELECT ngay, COUNT(*) AS n FROM (SELECT id, MIN(ngay) AS ngay FROM su_kien GROUP BY id) WHERE ngay BETWEEN ?1 AND ?2 GROUP BY ngay ORDER BY ngay`, from, to),
+    all('nguoi_moi', `SELECT ngay, COUNT(*) AS n FROM (SELECT id, MIN(ngay) AS ngay FROM su_kien GROUP BY id) WHERE ngay BETWEEN ?1 AND ?2 GROUP BY ngay ORDER BY ngay`, from, to),
     // quay lại: trong số người mới, bao nhiêu người có mặt lại sau 1 ngày và sau 7 ngày (chỉ tính người đã đủ thời gian để quay lại)
-    one(`WITH dau AS (SELECT id, MIN(ngay) AS d0 FROM su_kien GROUP BY id HAVING d0 BETWEEN ?1 AND ?2),
+    one('quay_lai', `WITH dau AS (SELECT id, MIN(ngay) AS d0 FROM su_kien GROUP BY id HAVING d0 BETWEEN ?1 AND ?2),
               co AS (SELECT DISTINCT id, ngay FROM su_kien WHERE ngay >= ?1)
          SELECT SUM(d0 <= date(?2, '-1 day')) AS du1, SUM(d0 <= date(?2, '-1 day') AND EXISTS (SELECT 1 FROM co WHERE co.id = dau.id AND co.ngay = date(d0, '+1 day'))) AS lai1,
                 SUM(d0 <= date(?2, '-7 day')) AS du7, SUM(d0 <= date(?2, '-7 day') AND EXISTS (SELECT 1 FROM co WHERE co.id = dau.id AND co.ngay BETWEEN date(d0, '+7 day') AND date(d0, '+13 day'))) AS lai7
          FROM dau`, from, to),
-    one(`SELECT SUM(e = 'share') AS chia_se, SUM(e = 'second_run') AS van_hai FROM su_kien WHERE e IN ('share', 'second_run') AND ngay BETWEEN ?1 AND ?2`, from, to),
-    all(`SELECT sao, COUNT(*) AS n FROM gop_y WHERE an = 0 AND sao IS NOT NULL AND ngay BETWEEN ?1 AND ?2 GROUP BY sao ORDER BY sao`, from, to),
-    all(`SELECT nhan, COUNT(*) AS n FROM gop_y WHERE an = 0 AND ngay BETWEEN ?1 AND ?2 GROUP BY nhan ORDER BY n DESC`, from, to),
-    all(`SELECT rowid AS so, t, sao, nhan, noi_dung, day, ket_cuc, trang FROM gop_y WHERE an = 0 AND ngay BETWEEN ?1 AND ?2 ORDER BY t DESC LIMIT 100`, from, to),
+    one('khac', `SELECT SUM(e = 'share') AS chia_se, SUM(e = 'second_run') AS van_hai FROM su_kien WHERE e IN ('share', 'second_run') AND ngay BETWEEN ?1 AND ?2`, from, to),
+    all('gop_y_sao', `SELECT sao, COUNT(*) AS n FROM gop_y WHERE an = 0 AND sao IS NOT NULL AND ngay BETWEEN ?1 AND ?2 GROUP BY sao ORDER BY sao`, from, to),
+    all('gop_y_nhan', `SELECT nhan, COUNT(*) AS n FROM gop_y WHERE an = 0 AND ngay BETWEEN ?1 AND ?2 GROUP BY nhan ORDER BY n DESC`, from, to),
+    all('gop_y_list', `SELECT rowid AS so, t, sao, nhan, noi_dung, day, ket_cuc, trang FROM gop_y WHERE an = 0 AND ngay BETWEEN ?1 AND ?2 ORDER BY t DESC LIMIT 100`, from, to),
   ]);
   const newByDay = Object.fromEntries(firstSeen.map(r => [r.ngay, r.n]));
   return {
@@ -145,6 +151,11 @@ export default {
     if (!route) return env.ASSETS ? env.ASSETS.fetch(req) : new Response('Không tìm thấy', {status: 404});
     if (!env.DB) return json({ok: false, why: 'Chưa gắn database D1 (xem README).'}, 503);
     try { return await route(req, env); }
-    catch (e) { console.error(e); return json({ok: false, why: 'Máy chủ gặp lỗi, thử lại sau.'}, 500); }
+    catch (e) {
+      console.error(e);
+      // the dashboard (behind the key) shows the real error, so the owner can pass it on; players only see the short line
+      const owner = url.pathname === '/api/so-lieu' || url.pathname === '/api/gop-y/an';
+      return json({ok: false, why: 'Máy chủ gặp lỗi, thử lại sau.' + (owner ? ` (Chi tiết: ${e.message})` : '')}, 500);
+    }
   },
 };
