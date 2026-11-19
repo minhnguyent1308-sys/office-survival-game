@@ -278,9 +278,9 @@ const REGULAR_LINES = {
 };
 const REGULARS = Object.keys(REGULAR_LINES);
 const SPOTS = {queue:[2.8, 3.4, Math.PI], pickup:[6.6, 1.3, Math.PI]}; // where a regular waits (x, z, facing)
-const ANCHOR = {counter:[2.8, 2.35, .95], shelf:[6.6, 1.85, .35], table:[2.3, 1.2, 4.6], shipper:[5.0, 2.3, 7.15], exit:[7.3, 2.25, 6.55]};
+const ANCHOR = {counter:[2.8, Wd.TAG_Y, .95], shelf:[6.6, 1.85, .35], table:[2.3, 1.2, 4.6], shipper:[5.0, Wd.TAG_Y, 7.15], exit:[7.3, 2.25, 6.55]};
 const anchorOf = id => { const c = id === 'guest' ? guest?.c : id === 'regular' ? regular?.c : null;
-  if (id === 'guest' || id === 'regular') return c?.g.visible ? [c.g.position.x, c.g.position.y + 2.3, c.g.position.z] : [-99, 0, -99];
+  if (id === 'guest' || id === 'regular') return c?.g.visible ? [c.g.position.x, c.g.position.y + Wd.TAG_Y, c.g.position.z] : [-99, 0, -99];
   return ANCHOR[id]; };
 const hotAt = id => { const c = id === 'guest' ? guest?.c : id === 'regular' ? regular?.c : null;
   if (id === 'guest' || id === 'regular') return c?.g.visible ? [c.g.position.x + .7, c.g.position.z + .75] : [-99, -99];
@@ -466,7 +466,7 @@ async function backToOffice(){
 
 /* ---------- Arrival: the office's card fades out on the shop ---------- */
 wearLook(G.lookOf(S));
-if (eventCard()) { arrivedForEvent = true; spawnGuest(eventCard().npc); player.g.position.set(2.0, 0, 2.55); player.g.rotation.y = Math.PI; }   // 1.5 from the guest: voxel heads side by side
+if (eventCard()) { arrivedForEvent = true; spawnGuest(eventCard().npc); player.g.position.set(2.5, 0, 2.55); player.g.rotation.y = Math.PI; }
 else { spawnRegular(); player.g.position.set(ENTRY[0], 0, ENTRY[1]); planPath(player, 4.2, 3.0); }
 afterChange();
 if (location.hash) history.replaceState(null, '', location.pathname + location.search);

@@ -28,6 +28,11 @@ export const ICON = {
   alert: '<svg class="bubble" viewBox="0 0 48 46" aria-hidden="true"><path d="M24 3C12.4 3 4 10.6 4 20c0 6 3.4 11.2 8.6 14.2L10.5 43l9.3-6.4c1.4.3 2.8.4 4.2.4 11.6 0 20-7.6 20-17S35.6 3 24 3z" fill="#f2d058" stroke="#111" stroke-width="2.2" stroke-linejoin="round"/><rect x="21.8" y="10" width="4.4" height="12.5" rx="2.2" fill="#111"/><circle cx="24" cy="27.6" r="2.5" fill="#111"/></svg>',
 };
 
+/* ---------- People's size (Lily 19/11: a little smaller so they fit the desks and doors) ----------
+   BODY_SCALE shrinks every voxel person evenly (big-head proportions stay); TAG_Y is where a label or bubble sits above a standing person's feet. */
+export const BODY_SCALE = .8;
+export const TAG_Y = 1.95;
+
 /* ---------- Builders + characters, bound to one scene ---------- */
 export function makeKit(scene){
   const matCache = {};
@@ -62,7 +67,7 @@ export function makeKit(scene){
   /* Voxel people (Lily 19/11, approved from the preview in nhan-vat-voxel/): flat cubes, big head, big white eyes, short body,
      stepped hair. Same options and same parts as before, so every page keeps walking, sitting and talking the same way.
      Boxes of one colour inside one moving part are merged into one mesh: about 15 meshes per person instead of 60. */
-  const HIP = .36, SHOULDER = .86, HEAD_W = .92, HEAD_H = .8, HEAD_D = .82;
+  const HIP = .36, SHOULDER = .86, HEAD_W = .92, HEAD_H = .8, HEAD_D = .82, K = BODY_SCALE;
   const shade = (hex, k) => '#' + new T.Color(hex).multiplyScalar(k).getHexString();
   function makeChar({hair=P.hair, shirt=P.shirt, pants=P.pants, tie=null, lanyard=false, style='short', bag=false, chefHat=false, helmet=null,
                      glasses=null, sunglasses=false, mustache=false, headphones=null, scarf=null, apron=false, clip=null, blush=false, scale=[1,1,1]}={}){
@@ -136,10 +141,10 @@ export function makeKit(scene){
       flush(Hg); };
     parts.setHair(helmet ? 'none' : style);                                              // hair stays under the helmet
     for (const p of [g, parts.legL, parts.legR, parts.armL, parts.armR]) flush(p);
-    g.scale.set(...scale);
+    g.scale.set(...scale.map(v => v * K));
     scene.add(g);
     // hip: leg pivot height (sitting puts it on the seat); headY: resting head height; lie: lift that keeps the head above the floor when lying on the back
-    return {g, parts, path:[], phase:0, hip: HIP * scale[1], headY: SHOULDER, lie: (fz + .07) * scale[2]};
+    return {g, parts, path:[], phase:0, hip: HIP * scale[1] * K, headY: SHOULDER, lie: (fz + .07) * scale[2] * K};
   }
   const tagHot = (c, id) => c.g.traverse(m => { if (m.isMesh) { m.userData.hot = id; hotMeshes.push(m); } });
   return {mat, box, textTex, faceMats, sign, plant, makeChar, tagHot, blockers, hotMeshes};
