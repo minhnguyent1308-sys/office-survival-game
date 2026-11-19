@@ -124,5 +124,31 @@ for (let i = 1; i <= 30; i++) for (let e = 0; e < 300; e += 3) {
   if (s.ending === 'review' && s.day !== G.TOTAL_DAYS) note('phán quyết không rơi vào ngày 40', i);
 }
 ok(!Object.keys(bad).length, `vào game ở ${entries} thời điểm: gặp Giếng thần ${met} lần; không mất ngày đặc biệt, ngày mở phòng, mini-game; lịch 40 ngày không lệch ${JSON.stringify(bad).slice(0, 300)}`);
+
+// option C (Lily 19/11): each well day gives wellDay [2, 3] shards; missing some, the well brings the player back the next morning
+{ const E = EV.events[0], SH = E.shards, [lo, hi] = SH.wellDay, sh = s => s.events?.[E.id]?.shards || 0;
+  const r1 = rngOf(5), a = G.tryDay(CARDS, WELL, {rng: r1}), heldDay = a.day, heldCard = a.heldDay.cardId;
+  const got = sh(a) - (a.heldDay.shard ? 1 : 0);
+  ok(got >= lo && got <= hi, `ngày Giếng thần cho ${got} mảnh (trong khoảng ${lo}–${hi})`);
+  ok(G.wellReturns(a, CARDS) === sh(a) < SH.count, 'chưa đủ mảnh thì báo trước: sáng mai giếng kéo về lại');
+  // play the run on: count the well days in a row, then the held day
+  const days = []; let g = 0, game = null;
+  while (g++ < 200 && a.part !== 'over' && game == null) { step(a, r1, x => { if (x.today.seenHere) return; x.today.seenHere = true;
+      days.push({extra: !!x.today.extra, again: x.today.again || 1, day: x.day, shards: sh(x), card: x.today.cardId, special: x.today.specialId}); });
+    if (!a.today.extra && G.eventGameToPlay(a)) game = a.day; }
+  const wells = days.filter(d => d.extra);
+  ok(wells.length >= 1 && wells.every((d, k) => d.again === k + 1 && d.day === heldDay && d.special === WELL), `ở 2005 ${wells.length} ngày liền, đánh số lần 1, 2…, ngày thật vẫn là ngày ${heldDay}`);
+  ok(!a.today.extra && a.day === heldDay && a.today.cardId === heldCard && sh(a) >= SH.count, `đủ ${SH.count} mảnh mới về hẳn 2026: đúng ngày ${heldDay}, lá buổi sáng giữ nguyên`);
+  ok(game === heldDay, `sáng ngày ${heldDay} chơi ghép báo cáo ngay`);
+  // the event ends while shards are missing: the well stops pulling
+  const r2 = rngOf(9), b = G.tryDay(CARDS, WELL, {rng: r2}); b.events[E.id].shards = 1;
+  G.useEvents(EV, '2026-12-02'); ok(!G.wellReturns(b, CARDS), 'hết event (2/12) thì giếng thôi kéo về, dù còn thiếu mảnh'); G.useEvents(EV, '2026-11-20');
+  // many runs: how many 2005 days until every shard is found, the real day after
+  const count = {}; let gameNext = 0, N = 300;
+  for (let i = 1; i <= N; i++) { const r = rngOf(i * 2654435761), x = G.tryDay(CARDS, WELL, {rng: r}), d0 = x.day; let n = 1, k = 0;
+    while (k++ < 200 && x.part !== 'over') { const was = x.today.extra; step(x, r); if (was && x.today.extra && x.part === 'morning' && !x.today.cardDone && x.today.again === n + 1) n++; if (!x.today.extra && x.part === 'morning') break; }
+    count[n] = (count[n] || 0) + 1; if (sh(x) >= SH.count && x.day === d0 && G.eventGameToPlay(x)) gameNext++; }
+  ok(Object.keys(count).every(n => n >= 1 && n <= Math.ceil(SH.count / lo)) && gameNext === N, `${N} ván: số ngày 2005 ${JSON.stringify(count)}, ván nào cũng ghép báo cáo ngay sáng hôm sau`);
+}
 console.log(fail ? `${fail} mục sai` : 'Tất cả đều đúng');
 process.exit(fail ? 1 : 0);
