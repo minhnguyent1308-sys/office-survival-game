@@ -72,18 +72,28 @@ export const eventById = id => EV.events.find(e => e.id === id) || null;
 export const eventOn = id => { const e = eventById(id), t = isoToday(); return !!e && t >= e.from && t <= e.to; };
 export const liveEvents = () => EV.events.filter(e => eventOn(e.id));
 const eventOk = c => !c.event || eventOn(c.event);
-// shards (event.shards): one may turn up each ordinary working morning; enough of them = the event's mini-game, once per run
+// shards (event.shards): one may turn up each ordinary working morning; enough of them = the event's mini-game, once per run.
+// The well day (rules.shard) gives wellDay [min, max] of them, and comes back the next morning until all are found (wellReturns, Lily 19/11).
 const eventState = (s, id) => ((s.events ||= {})[id] ||= {shards: 0});
 function rollShards(s, cards, rng) {
-  const sure = rulesToday(s, cards).shard;                          // the well day: always one (it sits outside the calendar, any morning)
-  if (!sure && !ordinaryDay(s, cards, s.day)) return;
+  const well = rulesToday(s, cards).shard;                          // the well day: it sits outside the calendar, any morning
+  if (!well && !ordinaryDay(s, cards, s.day)) return;
   for (const e of liveEvents()) {
     const sh = e.shards, st = eventState(s, e.id); if (!sh || st.shards >= sh.count) continue;
-    if (!sure && rng() >= sh.chance) continue;
-    st.shards += 1; s.today.shard = e.id;
-    say(s, `${sh.name} ${st.shards}/${sh.count}: ${sh.lines[Math.floor(rng() * sh.lines.length)]}`);
+    if (!well && rng() >= sh.chance) continue;
+    const [lo, hi] = sh.wellDay || [1, 1], n = well ? lo + Math.floor(rng() * (hi - lo + 1)) : 1;
+    for (let k = 0; k < n && st.shards < sh.count; k++) {
+      st.shards += 1; s.today.shard = e.id;
+      say(s, `${sh.name} ${st.shards}/${sh.count}: ${sh.lines[Math.floor(rng() * sh.lines.length)]}`);
+    }
     if (st.shards >= sh.count) say(s, sh.full);
   }
+}
+// today is a well day and its event still misses shards: Tan làm brings the player back to 2005 the next morning (Lily 19/11, option C).
+// The held real day keeps waiting; it comes once every shard is found, or once the event is over.
+export function wellReturns(s, cards) {
+  const c = s.today?.extra && cardById(cards, s.today.specialId), e = c?.rules?.shard && eventById(c.event);
+  return !!(e?.shards && eventOn(e.id) && (s.events?.[e.id]?.shards || 0) < e.shards.count);
 }
 // HUD line, same on every map: "Event Giếng thần · đến hết 1/12 · Mảnh báo cáo 2/5"
 export function eventLines(s) {
@@ -398,14 +408,20 @@ export function tryDay(cards, specialId, {name = '', look = null, day = 11, rng 
 // The event's day sits OUTSIDE the calendar (Lily 19/11): the real day is held (s.heldDay) with all it brought (room opening,
 // the week's special day, KPI note, mini-game, morning card, midday event) and comes back untouched the morning after.
 // So nothing is lost or moved: day numbers, weeks, KPI Friday, day 40 stay as they were. Stats and actions on it count as usual.
-function startExtraDay(s, cards, c, rng) {
+function startExtraDay(s, cards, c, rng, again = 0) {
   s.heldDay = s.today; s.today = freshToday(); s.part = 'morning';
   Object.assign(s.today, {extra: true, canteen: rollCanteen(rng), specialId: c.id, specialRules: c.rules?.actions || {}}); addUnique(s.used, c.id);
+  if (again) s.today.again = again;                                   // the 2nd, 3rd... well day in a row (the page tells it differently)
   rollShards(s, cards, rng);
   if (!c.rules?.skipMorningCard) { const d = drawCard(s, cards, rng); if (d) { s.today.cardId = d.id; addUnique(s.used, d.id); s.history.push({day: s.day, card: d.id, npc: d.npc, heavy: !!d.heavy}); } }
 }
-// after the day outside the calendar: the held day starts, as it was, with this morning's wake-up
-function endExtraDay(s) { s.today = {...s.heldDay, wakeShown: false}; s.heldDay = null; s.part = 'morning'; }
+// after the day outside the calendar: the held day starts, as it was, with this morning's wake-up;
+// or, shards still missing (wellReturns), the well pulls the player back to 2005 for one more day before it
+function endExtraDay(s, cards, rng) {
+  const back = wellReturns(s, cards) && cardById(cards, s.today.specialId), again = (s.today.again || 1) + 1;
+  s.today = {...s.heldDay, wakeShown: false}; s.heldDay = null; s.part = 'morning';
+  if (back) startExtraDay(s, cards, back, rng, again);
+}
 export const isExtraDay = s => !!s.today?.extra;
 export const isLastDay = s => s.day >= TOTAL_DAYS && !s.today?.extra;   // day 40 itself (the verdict), not a well day before it
 export const dayName = s => (s.today?.extra ? 'Ngày ngoài lịch' : `Ngày ${s.day}`);

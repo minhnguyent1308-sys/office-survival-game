@@ -679,13 +679,14 @@ const WELL_GUIDE = {
     ['Buổi chiều làm một việc như mọi ngày: làm task, hỏi senior, ăn trưa, tám chuyện, báo cáo hay giúp chị Mai.', s => !!s.today.action],
     ['17:55 bấm "Tan làm". Bước qua cửa là bạn về lại năm 2026, ngay phòng trọ của mình. Hôm nay không tính vào 40 ngày thực tập: sáng mai vẫn là đúng ngày bạn rơi xuống giếng.', s => s.part === 'evening'],
   ],
+  back: 'Bản báo cáo còn thiếu mảnh, nên sáng mai giếng sẽ kéo bạn về 2005 thêm một ngày nữa. Đủ mảnh thì giếng mới để bạn ở lại 2026.',
   warn: 'Ghi chú bên dưới, chữ nhỏ hơn: "Đừng nhảy xuống giếng lần nữa. Lần trước có người về nhầm năm 1998, giờ vẫn đang làm kế toán ở đó."',
 };
 function wellGuide(body){
   const list = el('div', 'choices');
   WELL_GUIDE.steps.forEach(([text, done], i) => { const row = el('div', 'mission'); const ok = done(S);
     row.innerHTML = `<i class="tick">${ok ? '✓' : i + 1}</i><span></span><small></small>`; row.querySelector('span').textContent = text; if (ok) row.classList.add('done'); list.appendChild(row); });
-  body.append(el('p', null, WELL_GUIDE.intro), list, el('p', 'note', WELL_GUIDE.warn));
+  body.append(el('p', null, WELL_GUIDE.intro), list, ...(G.wellReturns(S, CARDS) ? [el('p', 'note', WELL_GUIDE.back)] : []), el('p', 'note', WELL_GUIDE.warn));
   for (const k of ['sheet-eyebrow', 'sheet-title']) document.getElementById(k).hidden = false;
   sheet.hidden = false; document.getElementById('hint').hidden = true;
 }
@@ -1008,8 +1009,9 @@ function setupMorning(){
 // 08:29 special day (cards.json type special_day): the news, one choice, today's rules in a note; then the normal morning
 function showSpecial(c){
   const eyebrow = `${G.dayName(S)} · 08:29 · ${c.event ? 'Event ' + (G.eventById(c.event)?.name || '') : 'Ngày đặc biệt'}`;
-  const note = [c.note, G.isExtraDay(S) && `Ngày ngoài lịch: không tính vào ${G.TOTAL_DAYS} ngày thực tập. Tan làm hôm nay, sáng mai bạn quay lại đúng ngày ${S.day} như cũ.`].filter(Boolean).map(x => el('p', 'note', x));
-  modal({eyebrow, title:c.title, nodes:[el('p', null, c.intro), ...note, choiceList(c, i => {
+  const note = [c.note, G.isExtraDay(S) && `Ngày ngoài lịch: không tính vào ${G.TOTAL_DAYS} ngày thực tập. ${G.wellReturns(S, CARDS) ? `Báo cáo còn thiếu mảnh: tan làm hôm nay, sáng mai giếng sẽ kéo bạn về 2005 thêm một ngày, ngày ${S.day} chờ đến khi bạn tìm đủ.` : `Tan làm hôm nay, sáng mai bạn quay lại đúng ngày ${S.day} như cũ.`}`].filter(Boolean).map(x => el('p', 'note', x));
+  const intro = S.today.again && G.eventById(c.event)?.shards?.again || c.intro;   // the well again (shards still missing): it says so
+  modal({eyebrow, title:c.title, nodes:[el('p', null, intro), ...note, choiceList(c, i => {
     const res = G.chooseOption(S, c, i); S.today.specialPick = i; if (c.event && !DRAFT) PROFILE.markEvent(c.event, S.runId); afterChange(); dressForToday();
     modal({eyebrow, title:c.title, nodes:[...resultNodes(res), ...note], actions:[{label:'Vào làm', onClick:() => { closeModal(); setupMorning(); }}]});
   })]});

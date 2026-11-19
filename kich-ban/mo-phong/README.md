@@ -60,6 +60,6 @@ Ví tiền và đồ đạc không cộng chỉ số, nên bot không mua sắm.
 Kiểm tra luật mua, đặt, cất đồ và lương thứ Sáu: `node kiem-tra-noi-that.mjs` (25 mục).
 
 ## Giếng thần là ngày ngoài lịch (19/11)
-Kiểm tra từng kiểu đụng độ (ngày 1, ngày mở phòng, ngày mini-game, ngày đặc biệt khác, giấy KPI thứ Hai, sự kiện giữa buổi, ngày 40, buổi chiều, tối, cuối tuần) và thử vào game ở mọi thời điểm của 30 ván: `node kiem-tra-gieng-than.mjs` (108 mục).
+Kiểm tra từng kiểu đụng độ (ngày 1, ngày mở phòng, ngày mini-game, ngày đặc biệt khác, giấy KPI thứ Hai, sự kiện giữa buổi, ngày 40, buổi chiều, tối, cuối tuần) và thử vào game ở mọi thời điểm của 30 ván: `node kiem-tra-gieng-than.mjs` (115 mục, gồm hướng C của Lily 19/11: mỗi ngày 2005 nhặt 2–3 mảnh báo cáo, chưa đủ 5 mảnh thì giếng kéo về thêm ngày ngoài lịch; 300 ván: 83% ở 2005 hai ngày, 17% ba ngày, ván nào cũng ghép báo cáo ngay sáng hôm sau).
 Bot `mo-phong.mjs` không nạp event nên vẫn **40,5%** như trước. Khi bật event và cho Giếng thần đến ở mọi ván (người chơi mới: trước ngày 3), chăm chỉ lên Junior **45,3%** (ngày ngoài lịch là một ngày thưởng có cộng chỉ số, Lily chọn giữ 19/11), dưới trần 55%.
 
