@@ -75,8 +75,8 @@ const eventOk = c => !c.event || eventOn(c.event);
 // shards (event.shards): one may turn up each ordinary working morning; enough of them = the event's mini-game, once per run
 const eventState = (s, id) => ((s.events ||= {})[id] ||= {shards: 0});
 function rollShards(s, cards, rng) {
-  if (!ordinaryDay(s, cards, s.day)) return;
-  const sure = rulesToday(s, cards).shard;                          // the well day: always one
+  const sure = rulesToday(s, cards).shard;                          // the well day: always one (it sits outside the calendar, any morning)
+  if (!sure && !ordinaryDay(s, cards, s.day)) return;
   for (const e of liveEvents()) {
     const sh = e.shards, st = eventState(s, e.id); if (!sh || st.shards >= sh.count) continue;
     if (!sure && rng() >= sh.chance) continue;
@@ -93,7 +93,7 @@ export function eventLines(s) {
 }
 // the mini-game waiting this morning: shards complete, not played yet (it stays playable if the event ended the same week)
 export function eventGameToPlay(s) {
-  if (s.part !== 'morning') return null;
+  if (s.part !== 'morning' || s.today.extra) return null;            // shards completed on the well day: the game waits for the next morning
   for (const e of EV.events) { const sh = e.shards, st = s.events?.[e.id];
     if (sh && st && st.shards >= sh.count && !st.game) { const game = minigameById(sh.game); if (game) return {event: e, game}; } }
   return null;
@@ -170,8 +170,9 @@ export function headsUp(s, cards) {
   const out = [], tips = (s.today.tips ||= []), tell = (id, text) => { if (!tips.includes(id)) { tips.push(id); out.push(text); } };
   for (const p of perksOf(s, 'heads_up')) {
     const w = p.effect.what, line = PK.headsUp[w] || '';
-    if (w === 'minigame' && s.part === 'evening' && isMinigameDay(s.day + 1)) tell(w, line);
-    if (w === 'special_day' && s.part === 'evening' && s.week?.specialDay === s.day + 1) tell(w, line.replace('{title}', cardById(cards, s.week.specialId)?.title || ''));
+    const next = s.today.extra ? s.day : s.day + 1;                  // after the day outside the calendar comes the held day itself
+    if (w === 'minigame' && s.part === 'evening' && isMinigameDay(next)) tell(w, line);
+    if (w === 'special_day' && s.part === 'evening' && s.week?.specialDay === next) tell(w, line.replace('{title}', cardById(cards, s.week.specialId)?.title || ''));
     if (w === 'midday_event' && s.part !== 'evening' && s.today.eventId && !s.today.eventDone) {
       const c = cardById(cards, s.today.eventId); tell(w, line.replace('{title}', c?.title || '').replace('{hint}', PK.eventHints[s.today.eventId] || ''));
     }
@@ -326,14 +327,17 @@ export function rollCanteen(rng = Math.random) {
   return here.length ? here : [SENIORS[Math.floor(rng() * SENIORS.length)]];
 }
 export function startMorning(s, cards, rng = Math.random) {
+  drawDay(s, cards, rng);
+  const c = s.pendingSpecial && s.day > 1 && cardById(cards, s.pendingSpecial);   // an event's day waiting for the next morning (queueEventDay)
+  if (c) { s.pendingSpecial = null; if (eventOk(c) && !(s.played || []).includes(c.id)) startExtraDay(s, cards, c, rng); }
+}
+function drawDay(s, cards, rng) {
   s.today = freshToday(); s.part = 'morning'; s.today.canteen = rollCanteen(rng);
   // 08:29 room opening: runs before the morning card and does not replace it
   const unlock = cards.find(c => c.type === 'unlock' && c.day === s.day && !roomOpen(s, c.unlocks));
   if (unlock) s.today.unlockId = unlock.id;
   if (s.week?.n !== weekOf(s.day)) startWeek(s, cards, rng);
   if (s.week.specialDay === s.day && !eventOk(cardById(cards, s.week.specialId) || {})) s.week.specialDay = null;   // its event ended before the day came
-  if (s.pendingSpecial && ordinaryDay(s, cards, s.day)) {         // an event's day waiting for the first ordinary morning (queueEventDay)
-    const c = cardById(cards, s.pendingSpecial); s.pendingSpecial = null; if (c && eventOk(c)) setSpecialToday(s, c); }
   if (s.week.specialDay === s.day) { s.today.specialId = s.week.specialId; s.today.specialRules = cardById(cards, s.week.specialId)?.rules?.actions || {}; } // 08:29, after a room opening, before the card
   if (s.day === 1) { s.today.cardId = DAY_ONE.id; return; }
   rollShards(s, cards, rng);                                 // live event (su-kien.json): maybe a shard this morning
@@ -386,35 +390,43 @@ function startWeek(s, cards, rng) {
 // day 11 = Thursday of week 2: not a room opening, not a mini-game day. The week's KPI counts as already read so the day opens on the special day.
 export function tryDay(cards, specialId, {name = '', look = null, day = 11, rng = Math.random} = {}) {
   const s = newGame({name, look, rng}); s.day = day; addFlag(s, 'co_so_tay');
-  startWeek(s, cards, rng); Object.assign(s.week, {specialDay: day, specialId, kpiSeen: true}); addUnique(s.used, specialId);
-  startMorning(s, cards, rng);
+  startWeek(s, cards, rng); s.week.kpiSeen = true; startMorning(s, cards, rng);
+  const c = cardById(cards, specialId); if (isSpecialDay(c || {}) && c.event) startExtraDay(s, cards, c, rng);
+  else Object.assign(s.today, {specialId, specialRules: c?.rules?.actions || {}});
   return s;
 }
-function setSpecialToday(s, c) {
-  if (s.week) Object.assign(s.week, {specialDay: s.day, specialId: c.id});
-  s.today.specialId = c.id; s.today.specialRules = c.rules?.actions || {}; addUnique(s.used, c.id);
+// The event's day sits OUTSIDE the calendar (Lily 19/11): the real day is held (s.heldDay) with all it brought (room opening,
+// the week's special day, KPI note, mini-game, morning card, midday event) and comes back untouched the morning after.
+// So nothing is lost or moved: day numbers, weeks, KPI Friday, day 40 stay as they were. Stats and actions on it count as usual.
+function startExtraDay(s, cards, c, rng) {
+  s.heldDay = s.today; s.today = freshToday(); s.part = 'morning';
+  Object.assign(s.today, {extra: true, canteen: rollCanteen(rng), specialId: c.id, specialRules: c.rules?.actions || {}}); addUnique(s.used, c.id);
+  rollShards(s, cards, rng);
+  if (!c.rules?.skipMorningCard) { const d = drawCard(s, cards, rng); if (d) { s.today.cardId = d.id; addUnique(s.used, d.id); s.history.push({day: s.day, card: d.id, npc: d.npc, heavy: !!d.heavy}); } }
 }
+// after the day outside the calendar: the held day starts, as it was, with this morning's wake-up
+function endExtraDay(s) { s.today = {...s.heldDay, wakeShown: false}; s.heldDay = null; s.part = 'morning'; }
+export const isExtraDay = s => !!s.today?.extra;
+export const isLastDay = s => s.day >= TOTAL_DAYS && !s.today?.extra;   // day 40 itself (the verdict), not a well day before it
+export const dayName = s => (s.today?.extra ? 'Ngày ngoài lịch' : `Ngày ${s.day}`);
+export const dayLine = s => (s.today?.extra ? `Ngày ngoài lịch (trước ngày ${s.day})` : `Ngày ${s.day} / ${TOTAL_DAYS}`);   // the HUD's day
 // Event day on first open (su-kien.json firstOpen, Lily 19/11): the player meets the event's special day right away, once per player
-// (the page keeps "once" in the profile). Returns 'now' (this morning is now that day), 'later' (the next ordinary morning) or 'done' (played in this run).
-// now: a working morning whose story has not started (not day 1, a room opening, a mini-game day or day 40): the day's card is drawn again from the event deck.
+// (the page keeps "once" in the profile). It always wins and takes nothing's place: it is a day outside the calendar (startExtraDay).
+// Returns 'now' (this morning is that day), 'later' (the next morning in the office) or 'done' (played in this run).
+// now: any morning in the office but day 1 (chị Mai's tutorial), whatever it holds; later: afternoon, evening, weekend, day 1, a run that ended.
 export function queueEventDay(s, cards, id, rng = Math.random) {
   const c = cardById(cards, id); if (!c || !eventOk(c)) return null;
   if ((s.played || []).includes(id)) return 'done';
-  if (s.today.specialId === id) return 'now';
-  const now = s.part === 'morning' && !s.ending && !s.today.cardDone && !s.today.specialDone && !s.today.minigame && ordinaryDay(s, cards, s.day);
-  if (!now) { s.pendingSpecial = id; return 'later'; }
-  if (s.today.cardId) { s.used = s.used.filter(x => x !== s.today.cardId); if (s.history.at(-1)?.day === s.day) s.history.pop(); s.today.cardId = null; }
-  if (s.today.specialId) s.used = s.used.filter(x => x !== s.today.specialId);   // this week's own special day goes back to the deck
-  setSpecialToday(s, c);
-  if (!s.today.shard) rollShards(s, cards, rng);
-  if (!c.rules?.skipMorningCard) { const d = drawCard(s, cards, rng); if (d) { s.today.cardId = d.id; addUnique(s.used, d.id); s.history.push({day: s.day, card: d.id, npc: d.npc, heavy: !!d.heavy}); } }
+  if (s.today.specialId === id || s.pendingSpecial === id) return s.today.specialId === id ? 'now' : 'later';
+  if (s.part !== 'morning' || s.ending || s.day <= 1) { s.pendingSpecial = id; return 'later'; }
+  startExtraDay(s, cards, c, rng);
   return 'now';
 }
 export const todaysSpecial = (s, cards) => (s.today.specialId && !s.today.specialDone ? cardById(cards, s.today.specialId) : null);
 // the special day's rules apply all day once it is announced (and also before, so a reload cannot dodge them)
 export const rulesToday = (s, cards) => (s.today.specialId ? cardById(cards, s.today.specialId)?.rules || {} : {});
 export const kpiById = id => RH.kpi.pool.find(k => k.id === id) || null;
-export const kpiToAnnounce = s => (s.week?.kpi && !s.week.kpiSeen && s.part === 'morning' ? kpiById(s.week.kpi) : null);
+export const kpiToAnnounce = s => (s.week?.kpi && !s.week.kpiSeen && s.part === 'morning' && !s.today.extra ? kpiById(s.week.kpi) : null);
 export function kpiSeen(s) { if (s.week) s.week.kpiSeen = true; }
 // "Làm lơ" (Lily 15/11): no KPI this week (nothing scored Friday), and one random stat drops by a random 2-5 right away.
 // The stat is drawn from all four, XP included: Làm lơ is the one place XP can be lost (Lily 15/11).
@@ -509,7 +521,7 @@ export function playMinigame(s, result, extras = []) {
   const id = s.today.minigame, game = minigameById(id) || {}, got = gameEffects(s, game, result, extras);
   s.counters.minigames[id] = result; (s.counters.minigameDays ||= {})[s.day] = result; s.today.cardDone = true;
   if (game.lines?.[result]) s.today.notes.push(game.lines[result]);
-  s.part = s.day === TOTAL_DAYS ? 'evening' : 'afternoon';
+  s.part = isLastDay(s) ? 'evening' : 'afternoon';
   return got;
 }
 
@@ -551,7 +563,7 @@ export const TEA = {
   self:      {label: 'Mua một ly cho mình',                  effects: {pin: 2}},
   colleague: {label: 'Mua một ly mang lên cho đồng nghiệp', effects: {qh: 1}},  // Quan hệ chung only, nobody's closeness
 };
-export const teaOpen = s => !s.ending && s.rooms?.includes('trasua') && s.day < TOTAL_DAYS && (s.part === 'afternoon' || (s.part === 'evening' && !s.today.atHome));
+export const teaOpen = s => !s.ending && s.rooms?.includes('trasua') && !isLastDay(s) && (s.part === 'afternoon' || (s.part === 'evening' && !s.today.atHome));
 export function buyTea(s, kind) {
   if (!teaOpen(s) || s.today.tea || !TEA[kind]) return null;
   s.today.tea = kind; (s.counters.tea ||= {})[kind] = (s.counters.tea[kind] || 0) + 1;
@@ -649,10 +661,10 @@ export function storeItem(s, index) { if (!canStore(s, index)) return false; pla
 export function endOfDay(s) {
   if (s.week) for (const k of STATS) s.week.low[k] = Math.min(s.week.low[k], s.stats[k]);   // KPI "giữ Pin từ 30" looks at 17:55
   const d = s.today.delta, net = d.xp + d.ut + d.qh;   // the day strip on the share card: g = a day that gained, r = ended with Pin under 20
-  (s.dayLog ||= {})[s.day] = {g: net > 0 ? 1 : 0, r: s.stats.pin < 20 ? 1 : 0};
+  if (!s.today.extra) (s.dayLog ||= {})[s.day] = {g: net > 0 ? 1 : 0, r: s.stats.pin < 20 ? 1 : 0};
   if (s.stats.pin <= 0) s.ending = 'burnout';
   else if (s.stats.ut < 10) s.ending = 'fired';
-  else if (s.day >= TOTAL_DAYS) s.ending = 'review';   // day 40 evaluation arrives in step 3
+  else if (isLastDay(s)) s.ending = 'review';   // day 40 evaluation arrives in step 3
   if (s.ending) s.part = 'over';
   return s.ending;
 }
@@ -677,6 +689,7 @@ export const isAtHome = s => s.part === 'weekend' || (s.part === 'evening' && !!
 export function goHome(s) { if (s.part === 'evening') s.today.atHome = true; }
 // Friday evening -> weekend screen: Pin +20 first, then sometimes a weekend card.
 export function nextDay(s, cards, rng = Math.random) {
+  if (s.today.extra) { wakeUp(s, cards, rng, endExtraDay); return {weekend: false}; }   // the day outside the calendar is over: the held day starts
   if (weekday(s.day) === 4) {
     const kpi = scoreWeek(s), pay = payday(s, kpi);
     s.part = 'weekend'; s.today = freshToday(); s.today.kpiResult = kpi;
@@ -692,7 +705,7 @@ export function nextDay(s, cards, rng = Math.random) {
 }
 export function endWeekend(s, cards, rng = Math.random) { s.day += 3; wakeUp(s, cards, rng); }
 // waking up: Pin +5, then the morning starts; the gain is kept on today.wake (not in the day's summary) so the page can announce it once
-function wakeUp(s, cards, rng) { const got = applyEffects(s, {pin: giftWake(s) + (s.bonusWake || 0)}); s.bonusWake = 0; startMorning(s, cards, rng); s.today.wake = got; }
+function wakeUp(s, cards, rng, start = startMorning) { const got = applyEffects(s, {pin: giftWake(s) + (s.bonusWake || 0)}); s.bonusWake = 0; start(s, cards, rng); s.today.wake = got; }
 
 /* ---------- Handbook missions ---------- */
 export function recordTalk(s, npc) { if (NPC_IDS.includes(npc)) addUnique(s.counters.talked, npc); }

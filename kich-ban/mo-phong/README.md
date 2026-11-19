@@ -58,3 +58,8 @@ Kết quả 2×2500 ván: chăm chỉ lên Junior 40,6% / 39,7%, y hệt khi t�
 ## Nội thất phòng trọ (17/11)
 Ví tiền và đồ đạc không cộng chỉ số, nên bot không mua sắm. Tin nhắn mở Chợ Trọ của chị Mai đến trên laptop buổi tối (không phải lá buổi sáng), không chiếm chỗ lá nào: 2×2500 ván vẫn là **40,6%** (SEED=0) và **39,7%** (SEED=77), y như trước. (Bản thử đặt nó làm lá buổi sáng ở sảnh làm số này giảm còn 38,8% / 39,0%.)
 Kiểm tra luật mua, đặt, cất đồ và lương thứ Sáu: `node kiem-tra-noi-that.mjs` (25 mục).
+
+## Giếng thần là ngày ngoài lịch (19/11)
+Kiểm tra từng kiểu đụng độ (ngày 1, ngày mở phòng, ngày mini-game, ngày đặc biệt khác, giấy KPI thứ Hai, sự kiện giữa buổi, ngày 40, buổi chiều, tối, cuối tuần) và thử vào game ở mọi thời điểm của 30 ván: `node kiem-tra-gieng-than.mjs` (96 mục).
+Bot `mo-phong.mjs` không nạp event nên vẫn **40,5%** như trước. Khi bật event và cho Giếng thần đến ngay sau ngày 1 ở mọi ván, chăm chỉ lên Junior **47,6%** (ngày ngoài lịch là một ngày thưởng có cộng chỉ số, Lily chọn giữ 19/11), dưới trần 55%.
+

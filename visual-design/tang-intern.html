@@ -677,7 +677,7 @@ const WELL_GUIDE = {
   steps: [
     ['Xong chuyện buổi sáng với người đang chờ bạn (người có dấu ! trên đầu).', s => s.today.cardDone],
     ['Buổi chiều làm một việc như mọi ngày: làm task, hỏi senior, ăn trưa, tám chuyện, báo cáo hay giúp chị Mai.', s => !!s.today.action],
-    ['17:55 bấm "Tan làm". Bước qua cửa là bạn về lại năm 2026, ngay phòng trọ của mình.', s => s.part === 'evening'],
+    ['17:55 bấm "Tan làm". Bước qua cửa là bạn về lại năm 2026, ngay phòng trọ của mình. Hôm nay không tính vào 40 ngày thực tập: sáng mai vẫn là đúng ngày bạn rơi xuống giếng.', s => s.part === 'evening'],
   ],
   warn: 'Ghi chú bên dưới, chữ nhỏ hơn: "Đừng nhảy xuống giếng lần nữa. Lần trước có người về nhầm năm 1998, giờ vẫn đang làm kế toán ở đó."',
 };
@@ -706,7 +706,7 @@ function openSheet(id){
     // ground floor: the milk tea shop, known once a colleague has taken you there (cards with sceneAt "trasua")
     const known = !!S.rooms?.includes('trasua'), open = known && G.teaOpen(S);
     const row = document.createElement('div'); row.className = 'floor' + (open ? ' go' : '');
-    row.innerHTML = `<span class="n">T</span><span>Tầng trệt · Quán trà sữa<br><small>${!known ? 'Chưa ai rủ bạn xuống' : open ? (S.today.tea ? 'Hôm nay bạn mua rồi, vẫn xuống được' : 'Mua cho mình hoặc cho đồng nghiệp') : S.day >= G.TOTAL_DAYS ? 'Hôm nay không phải lúc' : 'Xong chuyện buổi sáng rồi hẵng xuống'}</small></span><span>${open ? '▼' : 'Khóa'}</span>`;
+    row.innerHTML = `<span class="n">T</span><span>Tầng trệt · Quán trà sữa<br><small>${!known ? 'Chưa ai rủ bạn xuống' : open ? (S.today.tea ? 'Hôm nay bạn mua rồi, vẫn xuống được' : 'Mua cho mình hoặc cho đồng nghiệp') : G.isLastDay(S) ? 'Hôm nay không phải lúc' : 'Xong chuyện buổi sáng rồi hẵng xuống'}</small></span><span>${open ? '▼' : 'Khóa'}</span>`;
     list.appendChild(row);
     if (open) sheetAction('Xuống quán trà sữa', () => goShop());
   } else {
@@ -921,7 +921,7 @@ function summonClient(spot){
 const statsEl = document.getElementById('stats'), goalEl = document.getElementById('goal');
 const hbBtn = document.getElementById('open-handbook');
 function renderHUD(){
-  document.getElementById('day-line').textContent = `Ngày ${S.day} / ${G.TOTAL_DAYS} · ${G.weekdayName(S.day)}, ${stageTime || TIME[S.part]}`;
+  document.getElementById('day-line').textContent = `${G.dayLine(S)} · ${G.weekdayName(S.day)}, ${stageTime || TIME[S.part]}`;
   const row = (k, max, extra = '') => { const v = S.stats[k], warn = k === 'pin' && v < 20;
     const on = statsEl.dataset.focus === k ? ' on' : '';                                  // tutorial points at one bar
     return `<span class="${warn ? 'warn' : ''}${on}">${G.STAT_NAME[k]}</span><span class="bar${on}" style="--c:var(--${k})"><i style="width:${v / max * 100}%"></i>${extra}</span><span class="val ${warn ? 'warn' : ''}${on}">${v}</span>`; };
@@ -994,7 +994,7 @@ function setupMorning(){
   const sp = G.todaysSpecial(S, CARDS); if (sp) return showSpecial(sp);
   const k = G.kpiToAnnounce(S); if (k) return showKpi(k);
   const eg = G.eventGameToPlay(S); if (eg) return showEventGame(eg);
-  if (S.day === G.TOTAL_DAYS && !S.today.dossierSeen) return showDossier();
+  if (G.isLastDay(S) && !S.today.dossierSeen) return showDossier();
   if (S.today.minigame) return showMinigame();
   const c = G.todaysCard(S, CARDS);
   if (!c) { S.part = 'afternoon'; afterChange(); return; }
@@ -1007,7 +1007,8 @@ function setupMorning(){
 }
 // 08:29 special day (cards.json type special_day): the news, one choice, today's rules in a note; then the normal morning
 function showSpecial(c){
-  const eyebrow = `Ngày ${S.day} · 08:29 · ${c.event ? 'Event ' + (G.eventById(c.event)?.name || '') : 'Ngày đặc biệt'}`, note = c.note ? [el('p', 'note', c.note)] : [];
+  const eyebrow = `${G.dayName(S)} · 08:29 · ${c.event ? 'Event ' + (G.eventById(c.event)?.name || '') : 'Ngày đặc biệt'}`;
+  const note = [c.note, G.isExtraDay(S) && `Ngày ngoài lịch: không tính vào ${G.TOTAL_DAYS} ngày thực tập. Tan làm hôm nay, sáng mai bạn quay lại đúng ngày ${S.day} như cũ.`].filter(Boolean).map(x => el('p', 'note', x));
   modal({eyebrow, title:c.title, nodes:[el('p', null, c.intro), ...note, choiceList(c, i => {
     const res = G.chooseOption(S, c, i); S.today.specialPick = i; if (c.event && !DRAFT) PROFILE.markEvent(c.event, S.runId); afterChange(); dressForToday();
     modal({eyebrow, title:c.title, nodes:[...resultNodes(res), ...note], actions:[{label:'Vào làm', onClick:() => { closeModal(); setupMorning(); }}]});
@@ -1016,7 +1017,7 @@ function showSpecial(c){
 // Monday of a KPI week (nhip-choi.json): anh Tuấn's sticky note. Nhận: missing it costs nothing. Làm lơ: no KPI this week,
 // and a random 2-5 off Pin, Uy tín or Quan hệ right away (Lily 15/11)
 function showKpi(k){
-  const reward = effectText(k.reward), [lo, hi] = G.KPI_IGNORE_COST, eyebrow = `Ngày ${S.day} · KPI tuần ${S.week.n}`;
+  const reward = effectText(k.reward), [lo, hi] = G.KPI_IGNORE_COST, eyebrow = `${G.dayName(S)} · KPI tuần ${S.week.n}`;
   modal({eyebrow, title:k.title, nodes:[el('p', null, RHYTHM.kpi.intro), el('p', 'quote', `"${k.title}. Hạn: 17:55 thứ Sáu."`),
       el('p', 'note', `Nhận việc · Đạt: ${reward}. Chưa đạt: không sao, tuần sau làm tiếp.`),
       el('p', 'note', `Làm lơ · Tuần này không có KPI, nhưng mất ngay ${lo}–${hi} điểm của một chỉ số ngẫu nhiên (${G.KPI_IGNORE_STATS.map(x => G.STAT_NAME[x]).join(', ')}).`)],
@@ -1091,7 +1092,7 @@ function animateLook(t){
 // 08:29 room opening (MO_CANTEEN, MO_MEETING): a modal announcement, then the normal morning
 function showUnlock(u){
   if (u.stage || u.openScene) return showUnlockScene(u);
-  modal({eyebrow:`Ngày ${S.day} · 08:29 · ${ROOM_NAME[u.unlocks]} mở cửa`, title:u.title, nodes:[el('p', null, u.intro), choiceList(u, i => {
+  modal({eyebrow:`${G.dayName(S)} · 08:29 · ${ROOM_NAME[u.unlocks]} mở cửa`, title:u.title, nodes:[el('p', null, u.intro), choiceList(u, i => {
     const res = G.chooseOption(S, u, i); applyRooms(); afterChange();
     const sc = u.choices[i]?.scene;
     modal({eyebrow:`${ROOM_NAME[u.unlocks]} đã mở`, title:u.title, nodes:resultNodes(res), actions:[{label: sc ? sc.open || 'Xem cảnh' : 'Vào làm', onClick:() => { closeModal(); if (sc) showCanteenScene(sc); else setupMorning(); }}]});
@@ -1126,7 +1127,7 @@ const afternoonPlaces = () => 'Buổi chiều: chọn một việc ở ' + ['bà
 function openCard(id){
   const c = G.todaysCard(S, CARDS);
   talkId = id; sheetAction(null);
-  document.getElementById('sheet-eyebrow').textContent = `Ngày ${S.day} · ${c.npc ? (HOT[id3d(c.npc)]?.title || G.NPC_NAME[c.npc]) : 'Kịch bản hôm nay'}`;
+  document.getElementById('sheet-eyebrow').textContent = `${G.dayName(S)} · ${c.npc ? (HOT[id3d(c.npc)]?.title || G.NPC_NAME[c.npc]) : 'Kịch bản hôm nay'}`;
   document.getElementById('sheet-title').textContent = c.title;
   const body = document.getElementById('sheet-body');
   if (c.sceneAt === 'trasua') { body.replaceChildren(el('p', null, c.intro)); sheetAction(`Xuống quán cùng ${withWhom(c.npc)}`, () => goShop(c));
@@ -1140,9 +1141,9 @@ function openCard(id){
   sheet.hidden = false; document.getElementById('hint').hidden = true;
 }
 function showPhoneCard(c){
-  modal({eyebrow:`Ngày ${S.day} · Điện thoại rung`, title:c.title, nodes:[c.intro, choiceList(c, i => {
+  modal({eyebrow:`${G.dayName(S)} · Điện thoại rung`, title:c.title, nodes:[c.intro, choiceList(c, i => {
     const res = G.chooseOption(S, c, i); afterChange();
-    modal({eyebrow:`Ngày ${S.day}`, title:c.title, nodes:resultNodes(res), actions:[{label:'Đi làm thôi', onClick:closeModal}]});
+    modal({eyebrow:G.dayName(S), title:c.title, nodes:resultNodes(res), actions:[{label:'Đi làm thôi', onClick:closeModal}]});
   })]});
 }
 // milestone morning: today's game from the library (minigames.json), played full screen, graded by the engine
@@ -1151,7 +1152,7 @@ const badgeName = f => REVIEW.badges[f]?.name || f;
 async function showMinigame(){
   const game = G.todaysMinigame(S); if (!game || mgRunning) return;
   mgRunning = true; closeSheet();
-  const eyebrow = `Ngày ${S.day} · Mini-game`;
+  const eyebrow = `${G.dayName(S)} · Mini-game`;
   const res = await runMinigame(G.perkGame(S, game), {eyebrow, hasFlag: f => G.hasFlag(S, f), badgeName});   // anh Tuấn's perk: more time
   mgRunning = false;
   const {grade} = G.gradeFor(S, game, res.score), gradeName = Object.fromEntries(G.minigameGrades())[grade];
@@ -1163,7 +1164,7 @@ async function showMinigame(){
 // live event (su-kien.json): every shard found, so this morning the pieces get put together. Once per run; no perks (they belong to milestone games)
 async function showEventGame({event, game}){
   if (mgRunning) return; mgRunning = true; closeSheet();
-  const eyebrow = `Ngày ${S.day} · Event ${event.name}`;
+  const eyebrow = `${G.dayName(S)} · Event ${event.name}`;
   const res = await runMinigame(game, {eyebrow, hasFlag: f => G.hasFlag(S, f), badgeName});
   mgRunning = false;
   const grade = G.gradeOf(game, res.score), gradeName = Object.fromEntries(G.minigameGrades())[grade];
@@ -1179,7 +1180,7 @@ function showDossier(){
   if (picks.length < REVIEW.dossier.pick) nodes.push(el('p', 'comment', REVIEW.dossier.thin));
   for (const f of picks) { const row = el('div', 'mission'); row.innerHTML = '<i class="tick">★</i><span></span><small></small>';
     row.querySelector('span').append(el('b', null, REVIEW.badges[f].name), el('br'), el('span', 'comment', REVIEW.badges[f].line)); nodes.push(row); }
-  modal({eyebrow:`Ngày ${S.day} · 09:00 · Phòng sếp`, title:'Anh Tuấn lật hồ sơ', nodes,
+  modal({eyebrow:`${G.dayName(S)} · 09:00 · Phòng sếp`, title:'Anh Tuấn lật hồ sơ', nodes,
     actions:[{label: S.today.minigame ? 'Vào phần hỏi đáp' : 'Tiếp', onClick:() => { S.today.dossierSeen = true; save(); closeModal(); setupMorning(); }}]});
 }
 
@@ -1217,7 +1218,7 @@ function showEvening(){
   S.part = 'evening'; renderHUD(); save();
   if (G.endOfDay(S)) { save(); return showFinale(); }
   const d = S.today.delta;
-  modal({eyebrow:`Ngày ${S.day} · 17:55`, title:'Tan làm', nodes:[
+  modal({eyebrow:`${G.dayName(S)} · 17:55`, title:'Tan làm', nodes:[
     ...(S.today.notes.length ? S.today.notes.slice(-3).map(n => el('p', 'comment', n)) : [el('p', 'comment', 'Một ngày bình thường. Đáng ngờ.')]),
     deltaChips(d), S.stats.pin < 20 ? el('p', 'note', 'Pin dưới 20. Về 0 là burnout, nên chiều mai ghé cô Ba nhé.') : el('span')],
     actions:[{label:'Về phòng trọ', onClick:() => { closeModal(); G.goHome(S); goHome(); }}]});
@@ -1346,7 +1347,7 @@ async function runStage(c){
   focusOn(sp); camTarget.copy(camFocus); cam.zoom = focusZoom(); cam.updateProjectionMatrix();
   await wait(700); fadeEl.classList.remove('on'); await wait(450);
   const close = document.getElementById('sheet-close'), body = document.getElementById('sheet-body');   // 4. the story
-  document.getElementById('sheet-eyebrow').textContent = `Ngày ${S.day} · ${st.time} · ${sp.name}`; document.getElementById('sheet-title').textContent = c.title;
+  document.getElementById('sheet-eyebrow').textContent = `${G.dayName(S)} · ${st.time} · ${sp.name}`; document.getElementById('sheet-title').textContent = c.title;
   for (const k of ['sheet-eyebrow', 'sheet-title']) document.getElementById(k).hidden = false;
   body.replaceChildren(el('p', null, c.intro), choiceList(c, i => {
     const res = G.chooseOption(S, c, i); afterChange();
@@ -1551,7 +1552,7 @@ async function runOpening(){
 // a fresh page (not back from the rented room or the shop): the welcome screen first
 async function welcomeScreen(){
   openingMode('welcome');
-  const resume = hadSave ? `Ngày ${S.day} · ${G.weekdayName(S.day)}${S.name ? ' · ' + S.name : ''}` : null;
+  const resume = hadSave ? `${G.dayName(S)} · ${G.weekdayName(S.day)}${S.name ? ' · ' + S.name : ''}` : null;
   if (await Op.welcome(OPENING, resume) === 'new') return runOpening();
   if (!S.name) { S.name = await Op.nameForm(OPENING); save(); }  // saves from before the opening have no name yet
   openingMode(null); resumeRun();

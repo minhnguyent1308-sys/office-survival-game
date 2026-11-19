@@ -637,7 +637,7 @@ function openItem(id){
 /* -- HUD -- */
 const statsEl = document.getElementById('stats'), goalEl = document.getElementById('goal');
 function renderHUD(){
-  const when = S.part === 'weekend' ? `Cuối tuần sau ngày ${S.day}` : `Ngày ${S.day} / ${G.TOTAL_DAYS} · ${G.weekdayName(S.day)}, ${stageTime || (S.part === 'evening' ? '21:30' : '08:29')}`;
+  const when = S.part === 'weekend' ? `Cuối tuần sau ngày ${S.day}` : `${G.dayLine(S)} · ${G.weekdayName(S.day)}, ${stageTime || (S.part === 'evening' ? '21:30' : '08:29')}`;
   document.getElementById('day-line').textContent = when;
   const row = (k, max, extra = '') => { const v = S.stats[k], warn = k === 'pin' && v < 20;
     return `<span class="${warn ? 'warn' : ''}">${G.STAT_NAME[k]}</span><span class="bar" style="--c:var(--${k})"><i style="width:${v / max * 100}%"></i>${extra}</span><span class="val ${warn ? 'warn' : ''}">${v}</span>`; };
@@ -687,7 +687,7 @@ function resultNodes(res){
 
 /* -- the laptop: tonight's message or the weekend card, one modal for both -- */
 function openLaptopCard(){
-  const c = laptopCard(), eyebrow = S.part === 'weekend' ? `Sau ngày ${S.day} · Cuối tuần · Laptop` : `Ngày ${S.day} · Đêm · Laptop`;
+  const c = laptopCard(), eyebrow = S.part === 'weekend' ? `Sau ngày ${S.day} · Cuối tuần · Laptop` : `${G.dayName(S)} · Đêm · Laptop`;
   modal({eyebrow, title:c.title, nodes:[c.intro, choiceList(c, i => {
     const invite = c === G.shopInvite(S), res = invite ? G.answerShopInvite(S, i) : G.chooseOption(S, c, i); afterChange(); lightsFor();
     const shopBtn = invite ? [{label:G.furnitureData().shop.name, onClick:() => { closeModal(); openCatalog('shop'); }}] : [];
@@ -971,7 +971,7 @@ async function runStage(c){
     cam.zoom = 1.45; cam.updateProjectionMatrix();
   });
   await wait(600);
-  const eyebrow = `Ngày ${S.day} · ${st.time} · ${sp.name}`;                      // 4. the story
+  const eyebrow = `${G.dayName(S)} · ${st.time} · ${sp.name}`;                      // 4. the story
   modal({eyebrow, title:c.title, docked:true, nodes:[c.intro, choiceList(c, i => {
     const res = G.chooseOption(S, c, i); afterChange(); lightsFor();
     modal({eyebrow, title:c.title, docked:true, nodes:resultNodes(res), actions:[{label:st.button || 'Tiếp tục', onClick:() => {
