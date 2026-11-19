@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "Event theo ngày thật (Lily 19/11/2026). Mỗi event có from/to (YYYY-MM-DD, tính cả hai đầu, theo giờ máy người chơi: event chạy từ 00:00 ngày from đến hết 23:59 ngày to). Ngoài khoảng đó mọi thứ gắn `event` tự ẩn: lá trong cards.json, mini-game trong minigames.json, thanh HUD. Lá có `event` chỉ ra khi event đang chạy; lá có `deck` chỉ ra vào ngày đặc biệt có rules.deck trùng tên. `shards`: mỗi sáng ngày làm việc thường (không phải ngày 1, ngày mở phòng, ngày mini-game, ngày 40) có `chance` nhặt một mảnh; ngày đặc biệt có rules.shard thì chắc chắn có. Đủ `count` mảnh thì sáng đó chơi mini-game `game` (một lần mỗi ván); kết quả nằm trong `badgeAt` thì nhận huy hiệu `badge` (khai báo trong flagsBadges của cards.json và badges của danh-gia.json, group \"su_kien\"). Thử ngày khác: thêm ?ngay=2026-12-02 vào địa chỉ trang. `firstOpen` (Lily 19/11): id lá ngày đặc biệt mà mỗi người chơi (mỗi trình duyệt) gặp đúng một lần, ngay buổi sáng làm việc thường gần nhất kể từ lúc mở game trong thời gian event; ngày này không rút ngẫu nhiên theo tuần nữa. `soon`: câu báo khi ngày đó phải chờ đến sáng hôm sau. Xem ngay ngày đặc biệt của event: thêm ?thu=gieng_than (ván nháp, không lưu; mini-game: ?thu=ghep_bao_cao).",
+  "note": "Event theo ngày thật (Lily 19/11/2026). Mỗi event có from/to (YYYY-MM-DD, tính cả hai đầu, theo giờ máy người chơi: event chạy từ 00:00 ngày from đến hết 23:59 ngày to). Ngoài khoảng đó mọi thứ gắn `event` tự ẩn: lá trong cards.json, mini-game trong minigames.json, thanh HUD. Lá có `event` chỉ ra khi event đang chạy; lá có `deck` chỉ ra vào ngày đặc biệt có rules.deck trùng tên. `shards`: mỗi sáng ngày làm việc thường (không phải ngày 1, ngày mở phòng, ngày mini-game, ngày 40) có `chance` nhặt một mảnh; ngày đặc biệt có rules.shard thì chắc chắn có. Đủ `count` mảnh thì sáng đó chơi mini-game `game` (một lần mỗi ván); kết quả nằm trong `badgeAt` thì nhận huy hiệu `badge` (khai báo trong flagsBadges của cards.json và badges của danh-gia.json, group \"su_kien\"). Thử ngày khác: thêm ?ngay=2026-12-02 vào địa chỉ trang. `firstOpen` (Lily 19/11): id lá ngày đặc biệt mà mỗi người chơi (mỗi trình duyệt) gặp đúng một lần, ngay buổi sáng gần nhất ở văn phòng (trừ ngày 1) kể từ lúc mở game trong thời gian event; ngày này không rút ngẫu nhiên theo tuần nữa. Đó là \"ngày ngoài lịch\" (Lily 19/11): luôn được ưu tiên, không chiếm chỗ của chuyện nào; ngày thật (mở phòng, ngày đặc biệt của tuần, KPI, mini-game, lá buổi sáng, sự kiện giữa buổi) được giữ nguyên và đến ngay sáng hôm sau, không tính vào 40 ngày. `soon`: câu báo khi ngày đó phải chờ đến sáng hôm sau. Xem ngay ngày đặc biệt của event: thêm ?thu=gieng_than (ván nháp, không lưu; mini-game: ?thu=ghep_bao_cao).",
   "events": [
     {
       "id": "gieng_than",
@@ -9,7 +9,7 @@
       "to": "2026-12-01",
       "hud": "Event Giếng thần · đến hết 1/12",
       "firstOpen": "SD_GIENG_THAN",
-      "soon": "Event Giếng thần: sáng làm việc tới, chị Mai sẽ nhờ bạn xuống kho lưu trữ cũ.",
+      "soon": "Event Giếng thần: sáng mai đến văn phòng, chị Mai sẽ nhờ bạn xuống kho lưu trữ cũ. Ngày đó không tính vào 40 ngày.",
       "shards": {
         "name": "Mảnh báo cáo",
         "count": 5,

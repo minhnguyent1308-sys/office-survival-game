@@ -370,7 +370,7 @@ const statsEl = document.getElementById('stats'), goalEl = document.getElementBy
 let guest = null, regular = null, arrivedForEvent = false;
 const clock = () => arrivedForEvent ? '10:15' : S.part === 'afternoon' ? '15:00' : '17:30'; // came down with someone in the morning / free visit after lunch / after the afternoon's work
 function renderHUD(){
-  document.getElementById('day-line').textContent = `Ngày ${S.day} / ${G.TOTAL_DAYS} · ${G.weekdayName(S.day)}, ${clock()}`;
+  document.getElementById('day-line').textContent = `${G.dayLine(S)} · ${G.weekdayName(S.day)}, ${clock()}`;
   const row = (k, max, extra = '') => { const v = S.stats[k], warn = k === 'pin' && v < 20;
     return `<span class="${warn ? 'warn' : ''}">${G.STAT_NAME[k]}</span><span class="bar" style="--c:var(--${k})"><i style="width:${v / max * 100}%"></i>${extra}</span><span class="val ${warn ? 'warn' : ''}">${v}</span>`; };
   statsEl.innerHTML = row('xp', 150, `<s style="left:${G.JUNIOR_XP / 150 * 100}%"></s>`) + row('pin', 100) + row('ut', 100) + row('qh', 100);
@@ -415,7 +415,7 @@ function openEvent(){
       el('p', 'note', `${G.NPC_NAME[c.npc]} cầm ly đi lên trước. Bạn vẫn ở quán: gọi thêm một ly ở quầy nếu muốn, rồi ra vỉa hè, đi tới lối vào tòa nhà để lên văn phòng.`));
     if (guest) { guest.leaving = true; planPath(guest.c, W - .3, 6.9); }
   })];
-  showSheet('guest', `Ngày ${S.day} · ${G.NPC_NAME[c.npc]} · Quán trà sữa`, c.title, nodes);
+  showSheet('guest', `${G.dayName(S)} · ${G.NPC_NAME[c.npc]} · Quán trà sữa`, c.title, nodes);
   return true;
 }
 function spawnRegular(){
