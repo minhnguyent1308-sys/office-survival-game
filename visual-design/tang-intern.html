@@ -591,6 +591,8 @@ const LINES = {
     '"Chào em, anh đến sớm hơn giờ hẹn hai tiếng. Sếp em rảnh luôn chứ?"',
   ],
 };
+let lookNow = null;          // today's look (rules.look), set by dayLook
+const WELL = [10.05, 2.35];   // Giếng thần well: lobby, back left corner between the plant and the sofa (shown on that day only, see dayLook)
 const HOT = {
   desk:     {at:[4.2,12.5],  tag:'Bàn của bạn', act:'Làm task', eyebrow:'Hoạt động: làm task', title:'Bàn intern', text:'Màn hình hiện 47 email chưa đọc. Tờ note vàng dán trên màn hình ghi: "Em ơi làm giúp chị file này nhé ❤".'},
   copier:   {at:[1.3,11.8],  tag:'Máy photo', act:'Sửa máy photo', eyebrow:'Sự kiện ngẫu nhiên', title:'Máy photo kẹt giấy', text:'Máy báo kẹt giấy lần thứ ba trong ngày. Theo truyền thống của phòng, người sửa luôn là intern.'},
@@ -606,12 +608,14 @@ const HOT = {
   lock_canteen:  {at:[17,7.3],   lock:'canteen', tag:'Chưa mở', act:'Xem biển', eyebrow:'Căng tin · tạm đóng', title:'Biển dán trên cửa căng tin'},
   lock_canteen2: {at:[13.3,12],  lock:'canteen', tag:'Chưa mở', act:'Xem biển', eyebrow:'Căng tin · tạm đóng', title:'Biển dán trên cửa căng tin'},
   lock_meeting:  {at:[27.2,6.7], lock:'meeting', tag:'Chưa mở', act:'Xem biển', eyebrow:'Phòng họp · tạm đóng', title:'Biển dán trên cửa phòng họp'},
+  well:     {at:[11.4,4.0],  look:'gieng_than', tag:'Giếng thần', act:'Xem giếng', eyebrow:'Event Giếng thần · năm 2005', title:'Giếng thần kho hồ sơ', guide:true},
   client:   {at:[0,0],       tag:'Khách hàng', eyebrow:'Nhân vật ngẫu nhiên', title:'Khách hàng', dynamic:true, intro:'"Chào em, anh là khách hàng bên đối tác."'},
 };
-const ANCHOR = {desk:[4.2,2.0,10.7], copier:[1.3,1.6,9.6], elevator:[11.3,2.95,.1], water:[22.7,1.9,8.45], lock_canteen:[17,1.25,8], lock_canteen2:[14,1.25,12], lock_meeting:[27.2,1.25,6]};
+const ANCHOR = {well:[WELL[0],1.7,WELL[1]], desk:[4.2,2.0,10.7], copier:[1.3,1.6,9.6], elevator:[11.3,2.95,.1], water:[22.7,1.9,8.45], lock_canteen:[17,1.25,8], lock_canteen2:[14,1.25,12], lock_meeting:[27.2,1.25,6]};
 const anchorOf = id => { if (ANCHOR[id]) return ANCHOR[id]; const g = (id === 'client' ? client : NPCS[id].c).g; return [g.position.x, (isGossip(id) ? 1.95 : id === questId ? 2.2 : 2.3) + g.position.y, g.position.z]; }; // gossip bubble tail touches the head
 const hotActive = id => { if (id === 'client') return client.g.visible;
   if (HOT[id].lock) return !G.roomOpen(S, HOT[id].lock);
+  if (HOT[id].look) return lookNow === HOT[id].look;                   // a thing that only exists on that day's look (the well)
   return G.roomOpen(S, roomAt(...HOT[id].at)?.id); }; // a closed room's people and things are out of reach
 const hotAt = id => { if (id === 'client') return [client.g.position.x + .5, client.g.position.z + .6];
   const n = NPCS[id]; if (n?.quest) { const p = n.c.g.position; return [p.x + .5, p.z + .6]; }
@@ -667,11 +671,30 @@ const nextLine = Wd.makeLineBag(); // shuffle bag (world.js)
 // a character you clicked (or are talking to) stops what they are doing and turns to you
 const engaged = id => pendingHot === id || (!sheet.hidden && talkId === id);
 const faceP = c => { const p = player.g.position, q = c.g.position; c.g.rotation.y = Math.atan2(p.x - q.x, p.z - q.z); };
+// the well (event Giếng thần, Lily 19/11): a wooden sign on its rim says how to get back to 2026; steps already done today get a tick
+const WELL_GUIDE = {
+  intro: 'Lòng giếng sáng xanh. Trên thành giếng có tấm biển gỗ, nét chữ run run: "CÁCH VỀ LẠI HIỆN TẠI".',
+  steps: [
+    ['Xong chuyện buổi sáng với người đang chờ bạn (người có dấu ! trên đầu).', s => s.today.cardDone],
+    ['Buổi chiều làm một việc như mọi ngày: làm task, hỏi senior, ăn trưa, tám chuyện, báo cáo hay giúp chị Mai.', s => !!s.today.action],
+    ['17:55 bấm "Tan làm". Bước qua cửa là bạn về lại năm 2026, ngay phòng trọ của mình.', s => s.part === 'evening'],
+  ],
+  warn: 'Ghi chú bên dưới, chữ nhỏ hơn: "Đừng nhảy xuống giếng lần nữa. Lần trước có người về nhầm năm 1998, giờ vẫn đang làm kế toán ở đó."',
+};
+function wellGuide(body){
+  const list = el('div', 'choices');
+  WELL_GUIDE.steps.forEach(([text, done], i) => { const row = el('div', 'mission'); const ok = done(S);
+    row.innerHTML = `<i class="tick">${ok ? '✓' : i + 1}</i><span></span><small></small>`; row.querySelector('span').textContent = text; if (ok) row.classList.add('done'); list.appendChild(row); });
+  body.append(el('p', null, WELL_GUIDE.intro), list, el('p', 'note', WELL_GUIDE.warn));
+  for (const k of ['sheet-eyebrow', 'sheet-title']) document.getElementById(k).hidden = false;
+  sheet.hidden = false; document.getElementById('hint').hidden = true;
+}
 function openSheet(id){
   if (gameTalk(id)) return; // today's card takes over the conversation
   talkId = id; sheetAction(null);
   const h = HOT[id]; document.getElementById('sheet-eyebrow').textContent = h.eyebrow; document.getElementById('sheet-title').textContent = h.title;
   const body = document.getElementById('sheet-body'); body.replaceChildren();
+  if (h.guide) return wellGuide(body);
   if (h.elevator){
     const list = document.createElement('div'); list.className = 'floors';
     for (const [n, name, note] of FLOORS){
@@ -1018,7 +1041,7 @@ function dressForToday(){
 // Inspired by the mood only: no names, characters or logos from any existing work. Built once, shown only on that day.
 const LOOKS3D = {gieng_than: {bg:'#2e2748', sky:'#d9c8ff', ground:'#6b3f3a', hemi:1.25, sun:'#ffbf80', sunI:1.9, accent:'#b3322b', build:buildLegend}};
 const DEFAULT_LOOK = {bg:scene.background.clone(), sky:hemi.color.clone(), ground:hemi.groundColor.clone(), hemi:hemi.intensity, sun:sun.color.clone(), sunI:sun.intensity};
-let lookNow = null; const lookProps = {};
+const lookProps = {};
 function dayLook(id){
   const L = LOOKS3D[id] || null; if ((L ? id : null) === lookNow) return; lookNow = L ? id : null;
   const v = L || DEFAULT_LOOK;
@@ -1027,13 +1050,14 @@ function dayLook(id){
   if (L && !lookProps[id]) { lookProps[id] = L.build(); scene.add(lookProps[id]); }
   for (const k of Object.keys(LOOKS3D)) document.body.classList.toggle('look-' + k, k === lookNow);   // page tokens follow (CSS body.look-…)
 }
-const legendShards = [], WELL = [10.05, 2.35];   // lobby, back left corner between the plant and the sofa
+const legendShards = [];
 function buildLegend(){
   const [wx, wz] = WELL, g = new T.Group(), add = (geo, m, x, y, z) => { const o = new T.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; };
   const stone = mat('#8d8a96'), stoneDark = mat('#6c6878'), wood = mat('#6b3b22'), roof = mat('#3b2a3f'), rope = mat('#e9dcb8');
   const glow = (c, i = 1.2) => new T.MeshStandardMaterial({color:c, emissive:c, emissiveIntensity:i, roughness:.4});
   // the well: a ring of stones, a wooden frame with a little roof, blue light rising from inside (lobby, right corner)
-  add(new T.CylinderGeometry(.62, .66, .55, 18, 1, true), stone, wx, .28, wz).material.side = T.DoubleSide;
+  const ring = add(new T.CylinderGeometry(.62, .66, .55, 18, 1, true), new T.MeshStandardMaterial({color:'#8d8a96', roughness:.8, side:T.DoubleSide}), wx, .28, wz);
+  ring.userData.hot = 'well'; hotMeshes.push(ring);                                                   // click the well: how to get back
   add(new T.TorusGeometry(.62, .07, 8, 24), stoneDark, wx, .56, wz).rotation.x = Math.PI / 2;
   add(new T.CircleGeometry(.58, 24), glow('#6fd2ff', 1.6), wx, .45, wz).rotation.x = -Math.PI / 2;
   for (const dx of [-.62, .62]) add(new T.BoxGeometry(.09, 1.25, .09), wood, wx + dx, .62, wz);
