@@ -110,6 +110,7 @@ export function validateEvents(data, cardData, mgData) {
   for (const e of data.events || []) {
     if (!e.id || ids.has(e.id)) problems.push(`event "${e.id}" thiếu id hoặc trùng`); ids.add(e.id);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(e.from || '') || !/^\d{4}-\d{2}-\d{2}$/.test(e.to || '') || e.from > e.to) problems.push(`${e.id}: from/to phải là YYYY-MM-DD và from ≤ to`);
+    if (e.firstOpen && cardData && !cardData.cards.some(c => c.id === e.firstOpen && isSpecialDay(c) && c.event === e.id)) problems.push(`${e.id}: firstOpen "${e.firstOpen}" phải là lá special_day có event "${e.id}"`);
     const sh = e.shards; if (!sh) continue;
     if (!(sh.count > 0) || !(sh.chance >= 0 && sh.chance <= 1) || !(sh.lines || []).length) problems.push(`${e.id}: shards cần count > 0, chance 0–1, lines`);
     if (mgData && !(mgData.games || []).some(g => g.id === sh.game)) problems.push(`${e.id}: mini-game "${sh.game}" không có trong minigames.json`);
@@ -331,6 +332,8 @@ export function startMorning(s, cards, rng = Math.random) {
   if (unlock) s.today.unlockId = unlock.id;
   if (s.week?.n !== weekOf(s.day)) startWeek(s, cards, rng);
   if (s.week.specialDay === s.day && !eventOk(cardById(cards, s.week.specialId) || {})) s.week.specialDay = null;   // its event ended before the day came
+  if (s.pendingSpecial && ordinaryDay(s, cards, s.day)) {         // an event's day waiting for the first ordinary morning (queueEventDay)
+    const c = cardById(cards, s.pendingSpecial); s.pendingSpecial = null; if (c && eventOk(c)) setSpecialToday(s, c); }
   if (s.week.specialDay === s.day) { s.today.specialId = s.week.specialId; s.today.specialRules = cardById(cards, s.week.specialId)?.rules?.actions || {}; } // 08:29, after a room opening, before the card
   if (s.day === 1) { s.today.cardId = DAY_ONE.id; return; }
   rollShards(s, cards, rng);                                 // live event (su-kien.json): maybe a shard this morning
@@ -373,10 +376,9 @@ function startWeek(s, cards, rng) {
   }
   if (RH.specialDays.weeks.includes(n)) {
     const phase = phaseOf(s.day), days = [0, 1, 2, 3, 4].map(w => (n - 1) * 7 + 1 + w).filter(d => d >= s.day && ordinaryDay(s, cards, d));
-    const pool = cards.filter(c => isSpecialDay(c) && !s.used.includes(c.id) && (c.phases || [1, 2, 3]).includes(phase) && requiresOk(s, c.requires) && roomOpen(s, c.room) && eventOk(c)
+    const pool = cards.filter(c => isSpecialDay(c) && !s.used.includes(c.id) && (c.phases || [1, 2, 3]).includes(phase) && requiresOk(s, c.requires) && roomOpen(s, c.room) && !c.event   // an event's day comes only through queueEventDay (once per player)
       && days.some(d => c.weekday == null || weekday(d) === c.weekday));
-    const live = pool.filter(c => c.event);                     // a live event's special day comes first, every time (once per run)
-    const c = live.length ? weighted(live, rng) : rng() < RH.specialDays.chance ? weighted(pool, rng) : null;
+    const c = rng() < RH.specialDays.chance ? weighted(pool, rng) : null;
     if (c) { const fit = days.filter(d => c.weekday == null || weekday(d) === c.weekday); s.week.specialDay = fit[Math.floor(rng() * fit.length)]; s.week.specialId = c.id; addUnique(s.used, c.id); }
   }
 }
@@ -387,6 +389,26 @@ export function tryDay(cards, specialId, {name = '', look = null, day = 11, rng 
   startWeek(s, cards, rng); Object.assign(s.week, {specialDay: day, specialId, kpiSeen: true}); addUnique(s.used, specialId);
   startMorning(s, cards, rng);
   return s;
+}
+function setSpecialToday(s, c) {
+  if (s.week) Object.assign(s.week, {specialDay: s.day, specialId: c.id});
+  s.today.specialId = c.id; s.today.specialRules = c.rules?.actions || {}; addUnique(s.used, c.id);
+}
+// Event day on first open (su-kien.json firstOpen, Lily 19/11): the player meets the event's special day right away, once per player
+// (the page keeps "once" in the profile). Returns 'now' (this morning is now that day), 'later' (the next ordinary morning) or 'done' (played in this run).
+// now: a working morning whose story has not started (not day 1, a room opening, a mini-game day or day 40): the day's card is drawn again from the event deck.
+export function queueEventDay(s, cards, id, rng = Math.random) {
+  const c = cardById(cards, id); if (!c || !eventOk(c)) return null;
+  if ((s.played || []).includes(id)) return 'done';
+  if (s.today.specialId === id) return 'now';
+  const now = s.part === 'morning' && !s.ending && !s.today.cardDone && !s.today.specialDone && !s.today.minigame && ordinaryDay(s, cards, s.day);
+  if (!now) { s.pendingSpecial = id; return 'later'; }
+  if (s.today.cardId) { s.used = s.used.filter(x => x !== s.today.cardId); if (s.history.at(-1)?.day === s.day) s.history.pop(); s.today.cardId = null; }
+  if (s.today.specialId) s.used = s.used.filter(x => x !== s.today.specialId);   // this week's own special day goes back to the deck
+  setSpecialToday(s, c);
+  if (!s.today.shard) rollShards(s, cards, rng);
+  if (!c.rules?.skipMorningCard) { const d = drawCard(s, cards, rng); if (d) { s.today.cardId = d.id; addUnique(s.used, d.id); s.history.push({day: s.day, card: d.id, npc: d.npc, heavy: !!d.heavy}); } }
+  return 'now';
 }
 export const todaysSpecial = (s, cards) => (s.today.specialId && !s.today.specialDone ? cardById(cards, s.today.specialId) : null);
 // the special day's rules apply all day once it is announced (and also before, so a reload cannot dodge them)

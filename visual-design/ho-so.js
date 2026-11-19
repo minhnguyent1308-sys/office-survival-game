@@ -120,6 +120,9 @@ export async function open({badges = [], store = new BrowserProfileStore()} = {}
       if (e === 'share') { p.counters.shares++; send(p, 'share'); }
       store.save(p);
     },
+    // live events met once per player (su-kien.json firstOpen): kept here so a new run does not bring the day back
+    eventDone: id => !!p.events?.[id],
+    markEvent(id, runId) { if (p.events?.[id]) return; (p.events ||= {})[id] = runId || true; store.save(p); },
     // the player's switch in the collection: off = nothing is sent from this browser
     setTracking(on) { p.noTrack = !on; store.save(p); },
     // the feedback box (gop-y.js) for this page; null while do-luong.json has no feedback address
