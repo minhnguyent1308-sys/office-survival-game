@@ -17,6 +17,7 @@ Có 3 kiểu (`kind`):
 | `sort` | Phân loại từng món vào giỏ trước khi hết giờ | `seconds`, `bins` [{id, label, key}], `items` [{from, text, bin}], `shuffle` |
 | `schedule` | Xếp task vào ô giờ trước hạn; sếp hối định kỳ | `seconds`, `startHour`, `slots`, `bonusSlot` {flag, slots, label}, `dropEvery`, `boss` {every, penalty, line, from}, `tasks` [{from, text, size, due, points, boss?, effects?, npc?, arriveAt?}] |
 | `quiz` | Trả lời câu hỏi có đồng hồ | `secondsPerQuestion`, `shuffle`, `questions` [{q, answers [{text, points, needFlag?}]}] |
+| `match` | Đặt từng mảnh vào đúng mục; mảnh giả hay sai mục bị trừ giây | `seconds`, `penalty`, `shuffle`, `slots` [{id, label}], `pieces` [{text, slot}] (slot null = mảnh giả) |
 
 Trường chung của mọi game: `id` (duy nhất), `kind`, `name`, `days`, `weight`, `npc`, `intro` (câu mở đầu), `howto` (1 câu hướng dẫn), `scoreLabel`, `thresholds` {xuat_sac, dat} (điểm tối thiểu), `cost` (mặc định Pin −10), `rewards` {xuat_sac, dat, truot}, `lines` (câu bình luận theo kết quả). Tùy chọn: `requires` (cùng cú pháp lá kịch bản).
 
@@ -30,6 +31,9 @@ Ví dụ game mới "Dọn bàn làm việc" dùng lại kiểu `sort`, có th�
  "rewards": {"xuat_sac": {"xp": 15, "ut": 3}, "dat": {"xp": 8}, "truot": {"ut": -3}},
  "lines": {"xuat_sac": "...", "dat": "...", "truot": "..."}}
 ```
+
+## Game của event
+Game có `event` và `days: []` (ví dụ `ghep_bao_cao`) không bao giờ ra ở ngày mốc: nó chạy khi người chơi gom đủ mảnh của event trong `su-kien.json`.
 
 ## Kiểu chơi hoàn toàn mới: thêm một hàm
 Ví dụ trò "nối cặp" hay "bấm nhanh": thêm một mục vào `KINDS` trong `minigames.js`. Hàm nhận `{body, game, hasFlag, setScore, timer}` và trả về `{score, max, extras?, detail}`. Engine, kho dữ liệu, chấm điểm, phần thưởng và màn kết quả dùng lại nguyên, không phải sửa.

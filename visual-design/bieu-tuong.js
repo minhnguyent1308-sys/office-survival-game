@@ -66,7 +66,11 @@ export const ICON = {
   SD_SEP_TONG: `<path d="M8 46l2-26 12 12 10-18 10 18 12-12 2 26z" fill="${Y}"/><rect x="8" y="46" width="48" height="9" rx="2" fill="${Y}"/><circle cx="18" cy="40" r="3" fill="${R}"/><circle cx="32" cy="40" r="3" fill="${R}"/><circle cx="46" cy="40" r="3" fill="${R}"/>`,
   SD_AO_CAM: `<path d="M22 8q10 10 20 0l16 10-8 12-6-4v30H20V26l-6 4-8-12z" fill="${O}"/><path d="M22 8q10 10 20 0" fill="none"/>`,
   SD_MUA_NGAP: `<path d="M16 34a8 8 0 0 1 2-15 12 12 0 0 1 23-2 9 9 0 0 1 5 17z" fill="${S}"/><path d="M20 40l-3 8M32 40l-3 8M44 40l-3 8" stroke="${B}"/><path d="M4 57q6-7 12 0t12 0 12 0 12 0" stroke="${B}"/>`,
+  SD_GIENG_THAN: `<ellipse cx="32" cy="22" rx="22" ry="7" fill="${B}"/><path d="M10 22v28q22 12 44 0V22" fill="${W}"/><path d="M10 34q22 10 44 0M10 44q22 10 44 0M21 26v30M32 29v29M43 26v30" stroke-width="2"/><ellipse cx="32" cy="22" rx="22" ry="7"/><path d="M28 4l4 8 4-8" stroke="${Y}" stroke-width="3"/>`,
   SD_KIEM_TOAN: `<rect x="14" y="6" width="36" height="52" rx="5" fill="${P}"/><rect x="19" y="11" width="26" height="13" rx="2" fill="${L}"/><circle cx="23" cy="33" r="2.6" fill="${I}"/><circle cx="32" cy="33" r="2.6" fill="${I}"/><circle cx="41" cy="33" r="2.6" fill="${R}"/><circle cx="23" cy="42" r="2.6" fill="${I}"/><circle cx="32" cy="42" r="2.6" fill="${I}"/><circle cx="41" cy="42" r="2.6" fill="${R}"/><circle cx="23" cy="51" r="2.6" fill="${I}"/><circle cx="32" cy="51" r="2.6" fill="${I}"/><circle cx="41" cy="51" r="2.6" fill="${R}"/>`,
+
+  /* ---------- Event Giếng thần (Lily 19/11) ---------- */
+  bao_cao_ngoc: `<rect x="12" y="8" width="34" height="46" rx="3" fill="${C}"/><path d="M19 18h20M19 26h20M19 34h12"/><path d="M46 30l10 10-10 14-10-14z" fill="${B}"/><path d="M36 40h20M46 30v24" stroke-width="1.6"/><path d="M8 50l4 2M10 44l4 1" stroke="${Y}" stroke-width="3"/>`,
 
   /* ---------- Chuyện riêng ---------- */
   E1: `<path d="M24 18v-4h16v4"/><rect x="8" y="18" width="48" height="34" rx="6" fill="${P}"/><path d="M8 28h48" /><path d="M8 24a6 6 0 0 1 6-6h36a6 6 0 0 1 6 6v4H8z" fill="${Y}"/><path d="M32 28v24"/><path d="M12 48a8 8 0 0 1 16 0z" fill="${C}"/><ellipse cx="44" cy="44" rx="8" ry="6" fill="${P}"/><circle cx="44" cy="44" r="3.2" fill="${Y}"/><path d="M22 12q-3-4 0-7M32 12q-3-4 0-7" stroke-width="2"/>`,

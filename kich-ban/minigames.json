@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "Kho mini-game tầng 1. Nguồn: doc Kịch bản MVP tầng 1, tab Nội dung 4 ngày mốc. Mỗi ngày trong `days` là một ngày mốc: sáng hôm đó không rút lá mà rút ngẫu nhiên (theo weight) một game trong `games` có ngày đó trong `days` của game, chưa chơi trong ván. Thêm game cùng kiểu chơi (kind: sort | schedule | quiz) = thêm một object, không sửa code. Kiểu chơi mới cần thêm một hàm vào minigames.js. Hướng dẫn chi tiết: kich-ban/huong-dan-minigame.md.",
+  "note": "Kho mini-game tầng 1. Nguồn: doc Kịch bản MVP tầng 1, tab Nội dung 4 ngày mốc. Mỗi ngày trong `days` là một ngày mốc: sáng hôm đó không rút lá mà rút ngẫu nhiên (theo weight) một game trong `games` có ngày đó trong `days` của game, chưa chơi trong ván. Thêm game cùng kiểu chơi (kind: sort | schedule | quiz) = thêm một object, không sửa code. Kiểu chơi mới cần thêm một hàm vào minigames.js. Hướng dẫn chi tiết: kich-ban/huong-dan-minigame.md. Game có `event` (su-kien.json) không ra ở ngày mốc (days rỗng): chơi khi gom đủ mảnh của event. Kiểu `match`: đặt từng mảnh (`pieces`, slot null = mảnh giả) vào đúng mục (`slots`), sai bị trừ `penalty` giây.",
   "days": [
     12,
     26,
@@ -524,6 +524,94 @@
         "xuat_sac": "Anh Tuấn gập laptop: \"Anh hết câu hỏi rồi.\" Đây là lần đầu anh hết câu hỏi.",
         "dat": "Anh Tuấn gật đầu hai lần. Không phải ba, nhưng cũng không phải một.",
         "truot": "Anh Tuấn: \"Cảm ơn em. Anh sẽ trao đổi với nhân sự.\" Câu này không có dấu chấm than."
+      }
+    },
+    {
+      "id": "ghep_bao_cao",
+      "kind": "match",
+      "name": "Ghép báo cáo",
+      "days": [],
+      "event": "gieng_than",
+      "weight": 0,
+      "npc": "tuan",
+      "intro": "Năm mảnh giấy phát sáng nằm trên bàn bạn, lẫn với hai mảnh giấy thường. Dòng chữ mờ mờ: \"Báo cáo thực tập · 2005\".",
+      "howto": "Bấm một mảnh rồi bấm đúng mục (hoặc kéo thả). Mảnh giả hay sai mục bị trừ 4 giây. Hết giờ thì nộp phần đã ghép.",
+      "seconds": 35,
+      "penalty": 4,
+      "shuffle": true,
+      "slots": [
+        {
+          "id": "tieu_de",
+          "label": "Tiêu đề"
+        },
+        {
+          "id": "muc_tieu",
+          "label": "Mục tiêu"
+        },
+        {
+          "id": "so_lieu",
+          "label": "Số liệu"
+        },
+        {
+          "id": "ket_luan",
+          "label": "Kết luận"
+        },
+        {
+          "id": "chu_ky",
+          "label": "Ký tên"
+        }
+      ],
+      "pieces": [
+        {
+          "text": "BÁO CÁO THỰC TẬP · QUÝ IV/2005 · PHÒNG KINH DOANH",
+          "slot": "tieu_de"
+        },
+        {
+          "text": "Học cách gửi file lớn mà không làm sập hộp thư công ty.",
+          "slot": "muc_tieu"
+        },
+        {
+          "text": "Fax thành công: 41 lần. Kẹt giấy: 39 lần. Đĩa mềm còn đọc được: 2/7.",
+          "slot": "so_lieu"
+        },
+        {
+          "text": "Đề nghị công ty mua thêm đĩa mềm, và thêm kiên nhẫn.",
+          "slot": "ket_luan"
+        },
+        {
+          "text": "Tuấn (thực tập sinh), nét chữ run run.",
+          "slot": "chu_ky"
+        },
+        {
+          "text": "Lời bài karaoke, đoạn điệp khúc, dính ba vết trà sữa.",
+          "slot": null
+        },
+        {
+          "text": "Thực đơn căng tin thứ Sáu: cá kho, canh chua, chè đậu.",
+          "slot": null
+        }
+      ],
+      "scoreLabel": "mảnh đúng chỗ",
+      "thresholds": {
+        "xuat_sac": 5,
+        "dat": 3
+      },
+      "cost": {
+        "pin": -5
+      },
+      "rewards": {
+        "xuat_sac": {
+          "ut": 4
+        },
+        "dat": {
+          "ut": 2
+        },
+        "truot": {}
+      },
+      "lines": {
+        "xuat_sac": "Năm mảnh khớp nhau, tờ báo cáo thôi phát sáng. Anh Tuấn đi ngang, khựng lại: \"Sao em có cái này? Anh tìm nó hai mươi năm rồi.\"",
+        "dat": "Báo cáo hơi lệch mép nhưng đọc được. Anh Tuấn cầm lên, im lặng rất lâu, rồi cất vào ngăn kéo có khóa.",
+        "truot": "Mấy mảnh giấy lệch nhau, ánh sáng tắt dần. Dù sao bạn cũng biết năm 2005 công ty kẹt giấy 39 lần."
       }
     }
   ]

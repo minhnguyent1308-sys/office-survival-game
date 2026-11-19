@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "Buổi đánh giá ngày 40. Nguồn: doc Kịch bản MVP tầng 1 (tab chính: bảng kết cục; tab Nội dung 4 ngày mốc: lật hồ sơ, màn kết). Kết cục xét từ trên xuống, khớp điều kiện đầu tiên thì dừng. Thêm kết cục = thêm một object vào `endings`. Điều kiện `when` dùng cùng cú pháp `requires` của lá (flags, anyFlags, notFlags, stats, closeness) cộng thêm: missionsAll (đủ nhiệm vụ sổ tay), notJunior, anyOf (danh sách điều kiện, chỉ cần một). `gather`: trước phán quyết, những người trong `people` (id kịch bản) vào phòng họp (mọi người trừ cô Ba, Lily chốt 14/11); anh Tuấn và người chơi đứng đầu phòng. Huy hiệu có `group: \"phong_cach\"` (Lily 18/11) là huy hiệu bộ nội thất phòng trọ (noi-that.json styles): nằm ở mục riêng trong Bộ sưu tập, không vào hồ sơ anh Tuấn đọc ngày 40.",
+  "note": "Buổi đánh giá ngày 40. Nguồn: doc Kịch bản MVP tầng 1 (tab chính: bảng kết cục; tab Nội dung 4 ngày mốc: lật hồ sơ, màn kết). Kết cục xét từ trên xuống, khớp điều kiện đầu tiên thì dừng. Thêm kết cục = thêm một object vào `endings`. Điều kiện `when` dùng cùng cú pháp `requires` của lá (flags, anyFlags, notFlags, stats, closeness) cộng thêm: missionsAll (đủ nhiệm vụ sổ tay), notJunior, anyOf (danh sách điều kiện, chỉ cần một). `gather`: trước phán quyết, những người trong `people` (id kịch bản) vào phòng họp (mọi người trừ cô Ba, Lily chốt 14/11); anh Tuấn và người chơi đứng đầu phòng. Huy hiệu có `group: \"phong_cach\"` (Lily 18/11) là huy hiệu bộ nội thất phòng trọ (noi-that.json styles): nằm ở mục riêng trong Bộ sưu tập, không vào hồ sơ anh Tuấn đọc ngày 40. Huy hiệu group \"su_kien\" (Lily 19/11): huy hiệu event theo ngày thật (su-kien.json), nằm ở mục riêng trong Bộ sưu tập, không vào hồ sơ ngày 40.",
   "qhBonus": {
     "qh": 70,
     "effects": {
@@ -106,6 +106,11 @@
       "name": "Góc otaku",
       "group": "phong_cach",
       "line": "Chị Mai: \"LED nhà em sáng tới tận cầu thang. Chị không phàn nàn, chị chỉ ghi lại.\""
+    },
+    "bao_cao_ngoc": {
+      "name": "Báo cáo ngọc",
+      "group": "su_kien",
+      "line": "Anh Tuấn: \"Báo cáo thực tập năm 2005 của anh đây mà, anh làm mất từ hồi đó. Mà sao trong này có tên em?\""
     }
   },
   "endings": [
@@ -312,7 +317,14 @@
       "bo_tro_tieu_chuan": "Mua đủ bộ Trọ tiêu chuẩn ở Chợ Trọ: bàn học, ghế gỗ, thảm, bàn trà, chậu cây.",
       "bo_am_cung": "Mua đủ 5 món của bộ Ấm cúng ở Chợ Trọ.",
       "bo_de_thuong": "Mua đủ 5 món của bộ Dễ thương ở Chợ Trọ.",
-      "bo_wibu": "Mua đủ 5 món của bộ Wibu ở Chợ Trọ."
+      "bo_wibu": "Mua đủ 5 món của bộ Wibu ở Chợ Trọ.",
+      "bao_cao_ngoc": "Chỉ có trong event Giếng thần (19/11 đến hết 1/12/2026): gom đủ 5 Mảnh báo cáo rồi ghép lại.",
+      "SD_GIENG_THAN": "Chỉ có trong event Giếng thần (19/11 đến hết 1/12/2026). Một ngày, chị Mai nhờ bạn xuống kho lưu trữ cũ.",
+      "G_TUAN_2005": "Chuyện lạ ở công ty năm 2005, chỉ gặp vào ngày Giếng thần.",
+      "G_BUZZ": "Chuyện lạ ở công ty năm 2005, chỉ gặp vào ngày Giếng thần.",
+      "G_DIA_MEM": "Chuyện lạ ở công ty năm 2005, chỉ gặp vào ngày Giếng thần.",
+      "G_FAX": "Chuyện lạ ở công ty năm 2005, chỉ gặp vào ngày Giếng thần.",
+      "G_RAN_SAN_MOI": "Chuyện lạ ở công ty năm 2005, chỉ gặp vào ngày Giếng thần."
     }
   },
   "share": {

@@ -69,6 +69,7 @@ body{background:var(--ground);color:var(--ink);font-family:var(--font-body);over
 .where .goal{font-size:12px;font-weight:600;color:var(--accent);max-width:250px;line-height:1.35}
 .where .kpi{font-size:12px;color:var(--ink);max-width:250px;line-height:1.35} /* weekly KPI from anh Tuấn (nhip-choi.json) */
 .where .kpi.done{color:var(--pin);font-weight:600}
+.where .event{font-size:12px;font-weight:600;color:var(--ink);max-width:250px;line-height:1.35} /* live event (su-kien.json): name, end date, shards */
 .where .today{font-size:12px;font-weight:600;color:var(--ink);background:var(--yellow);border-radius:6px;padding:1px 6px;justify-self:start;max-width:250px} /* special day */
 .stats{padding:8px 12px;display:grid;grid-template-columns:auto 92px 30px;gap:5px 8px;align-items:center;font-size:12px}
 .stats .bar{height:8px;border-radius:99px;background:var(--rule);border:1.5px solid var(--ink);overflow:hidden;position:relative}
@@ -144,7 +145,7 @@ body.opening .hud,body.opening #tags,body.opening .hint,body.opening .toast{disp
 <div id="stage"></div>
 <div id="tags"></div>
 <div class="hud tl">
-  <div class="card where"><b id="room-name">Tầng 1 · Hành lang</b><span id="day-line">Ngày 1 / 40 · Thứ Hai, 08:29</span><span id="who-line"></span><span class="today" id="day-note" hidden></span><span class="goal" id="goal"></span><span class="kpi" id="kpi-line" hidden></span></div>
+  <div class="card where"><b id="room-name">Tầng 1 · Hành lang</b><span id="day-line">Ngày 1 / 40 · Thứ Hai, 08:29</span><span id="who-line"></span><span class="today" id="day-note" hidden></span><span class="goal" id="goal"></span><span class="kpi" id="kpi-line" hidden></span><span class="event" id="event-line" hidden></span></div>
   <div class="card stats" id="stats" aria-label="Chỉ số"></div>
 </div>
 <div class="hud tr">
@@ -825,10 +826,11 @@ function updateSeniors(dt){
 }
 
 /* ---------- Game: the 40-day loop. Rules live in engine.js, content in cards.json + handbook.json ---------- */
-const [CARD_DATA, HANDBOOK, MINIGAMES, REVIEW, RHYTHM, PLACEMENTS, OPENING, PERKS] = await Promise.all(['cards.json', 'handbook.json', 'minigames.json', 'danh-gia.json', 'nhip-choi.json', 'placements.json', 'mo-dau.json', 'than-thiet.json'].map(u => fetch(u).then(r => r.json())));
+const [CARD_DATA, HANDBOOK, MINIGAMES, REVIEW, RHYTHM, PLACEMENTS, OPENING, PERKS, EVENTS] = await Promise.all(['cards.json', 'handbook.json', 'minigames.json', 'danh-gia.json', 'nhip-choi.json', 'placements.json', 'mo-dau.json', 'than-thiet.json', 'su-kien.json'].map(u => fetch(u).then(r => r.json())));
 const CARDS = CARD_DATA.cards;
 G.useMinigames(MINIGAMES); G.useRhythm(RHYTHM); G.usePerks(PERKS); Pl.usePlacements(PLACEMENTS);
-{ const bad = [...G.validateCards(CARD_DATA), ...validateMinigames(MINIGAMES), ...G.validateRhythm(RHYTHM, CARD_DATA)]; if (bad.length) console.warn('cards.json / minigames.json / nhip-choi.json:', bad); }
+G.useEvents(EVENTS, new URLSearchParams(location.search).get('ngay'));   // live events on real dates (su-kien.json); ?ngay=2026-12-02 tries another date
+{ const bad = [...G.validateCards(CARD_DATA), ...validateMinigames(MINIGAMES), ...G.validateRhythm(RHYTHM, CARD_DATA), ...G.validateEvents(EVENTS, CARD_DATA, MINIGAMES)]; if (bad.length) console.warn('cards.json / minigames.json / nhip-choi.json / su-kien.json:', bad); }
 // cards.json names people by their story id; the 3D scene uses its own ids for three of them
 const TO_3D = {tuan:'boss', mai:'letan', coba:'chef'}, FROM_3D = {boss:'tuan', letan:'mai', chef:'coba'};
 const id3d = n => TO_3D[n] || n, storyId = id => FROM_3D[id] || id;
@@ -904,6 +906,8 @@ function renderHUD(){
   kEl.hidden = !k || S.part === 'over'; if (k) { kEl.textContent = G.kpiLine(S); kEl.classList.toggle('done', k.done); }
   const note = G.todaysSpecial(S, CARDS) ? null : G.cardById(CARDS, S.today.specialId)?.note, nEl = document.getElementById('day-note');
   nEl.hidden = !note; nEl.textContent = note || '';
+  const ev = standIn || S.part === 'over' ? [] : G.eventLines(S), eEl = document.getElementById('event-line');
+  eEl.hidden = !ev.length; eEl.textContent = ev.join(' · ');
 }
 function goalText(){
   if (S.part === 'morning' && !S.today.cardDone) {
@@ -960,6 +964,7 @@ function setupMorning(){
   const u = G.todaysUnlock(S, CARDS); if (u) return showUnlock(u);
   const sp = G.todaysSpecial(S, CARDS); if (sp) return showSpecial(sp);
   const k = G.kpiToAnnounce(S); if (k) return showKpi(k);
+  const eg = G.eventGameToPlay(S); if (eg) return showEventGame(eg);
   if (S.day === G.TOTAL_DAYS && !S.today.dossierSeen) return showDossier();
   if (S.today.minigame) return showMinigame();
   const c = G.todaysCard(S, CARDS);
@@ -973,7 +978,7 @@ function setupMorning(){
 }
 // 08:29 special day (cards.json type special_day): the news, one choice, today's rules in a note; then the normal morning
 function showSpecial(c){
-  const eyebrow = `Ngày ${S.day} · 08:29 · Ngày đặc biệt`, note = c.note ? [el('p', 'note', c.note)] : [];
+  const eyebrow = `Ngày ${S.day} · 08:29 · ${c.event ? 'Event ' + (G.eventById(c.event)?.name || '') : 'Ngày đặc biệt'}`, note = c.note ? [el('p', 'note', c.note)] : [];
   modal({eyebrow, title:c.title, nodes:[el('p', null, c.intro), ...note, choiceList(c, i => {
     const res = G.chooseOption(S, c, i); S.today.specialPick = i; afterChange(); dressForToday();
     modal({eyebrow, title:c.title, nodes:[...resultNodes(res), ...note], actions:[{label:'Vào làm', onClick:() => { closeModal(); setupMorning(); }}]});
@@ -996,8 +1001,11 @@ function showKpi(k){
                  actions:[{label:'Vào làm', onClick:() => { closeModal(); setupMorning(); }}]});
              }}]});
 }
-// "Thứ Sáu áo cam": colleagues (and you, if you said yes) wear the day's shirt colour; any other day, back to their own
+// "Thứ Sáu áo cam": colleagues (and you, if you said yes) wear the day's shirt colour; any other day, back to their own.
+// rules.look tints the whole floor for the day (Giếng thần: an old photo of 2005)
+const DAY_LOOK = {'2005': 'sepia(.6) saturate(.8) contrast(.95)'};
 function dressForToday(){
+  renderer.domElement.style.filter = DAY_LOOK[G.rulesToday(S, CARDS).look] || '';
   const color = G.rulesToday(S, CARDS).shirt || null, who = [['boss', NPCS.boss.c], ['hang', NPCS.hang.c], ['linh', NPCS.linh.c], ['minh', NPCS.minh.c], ['tung', NPCS.tung.c], ['letan', NPCS.letan.c], ['player', player]];
   for (const [id, c] of who) {
     const own = (id === 'player' ? P.shirt : NPCS[id].look.shirt) || P.shirt, wear = color && (id !== 'player' || S.today.specialPick === 0) ? color : own;
@@ -1075,6 +1083,18 @@ async function showMinigame(){
   modal({eyebrow, title:`${game.name}: ${gradeName}`, nodes:[el('p', null, res.detail), el('p', 'comment', game.lines?.[grade] || ''), deltaChips(got),
       el('p', 'note', S.part === 'evening' ? 'Tiếp theo: phán quyết của anh Tuấn.' : afternoonPlaces() + '.')],
     actions:[{label:'Tiếp tục', onClick:() => { closeModal(); if (S.part === 'evening') showEvening(); else renderHUD(); }}]});
+}
+// live event (su-kien.json): every shard found, so this morning the pieces get put together. Once per run; no perks (they belong to milestone games)
+async function showEventGame({event, game}){
+  if (mgRunning) return; mgRunning = true; closeSheet();
+  const eyebrow = `Ngày ${S.day} · Event ${event.name}`;
+  const res = await runMinigame(game, {eyebrow, hasFlag: f => G.hasFlag(S, f), badgeName});
+  mgRunning = false;
+  const grade = G.gradeOf(game, res.score), gradeName = Object.fromEntries(G.minigameGrades())[grade];
+  const got = G.playEventGame(S, event.id, grade, res.extras || []); afterChange();
+  const won = G.hasFlag(S, event.shards.badge) ? [el('p', 'note', `Huy hiệu mới: ${badgeName(event.shards.badge)}. Xem trong Bộ sưu tập.`)] : [];
+  modal({eyebrow, title:`${game.name}: ${gradeName}`, nodes:[el('p', null, res.detail), el('p', 'comment', game.lines?.[grade] || ''), deltaChips(got), ...won],
+    actions:[{label:'Vào làm', onClick:() => { closeModal(); setupMorning(); }}]});
 }
 // day 40, part 1: anh Tuấn reads three badges from your file (danh-gia.json)
 function showDossier(){

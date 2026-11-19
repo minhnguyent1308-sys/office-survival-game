@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "Dữ liệu lá kịch bản MVP tầng 1. Nguồn: doc Kịch bản MVP tầng 1, tab Kho 45 lá kịch bản. qh cộng vào thanh chung và thân thiết của npc (hoặc qhTarget nếu có; qhTarget null = chỉ thanh chung). L7 hẹn lại chính nó chỉ một lần. Lá type unlock: chạy lúc 08:29 đúng ngày `day`, trước lá buổi sáng, rồi mở phòng `unlocks`. Phòng chưa mở: không rút lá có room đó, ẩn việc buổi chiều ở đó. Lá type unlock có thể gắn `scene` vào một lựa chọn (MO_CANTEEN: kind sitAll = cả phòng ngồi căng tin; kind queue = bạn đứng cạnh cô Ba, 2–3 người xếp hàng trước quầy). Cảnh chạy sau màn kết quả lựa chọn, trước buổi sáng. Lá type unlock có thể có `openScene` (MO_MEETING): buổi sáng bắt đầu ở phòng họp với mọi người trong `people` ngồi sẵn, lời kể và các lựa chọn hiện ngay tại đó; xong thì ai về vị trí của người đó. Lá có `sceneAt` (ví dụ \"trasua\"): người rủ đứng chờ ở `room` như lá thường; nói chuyện xong cả hai chuyển cảnh sang quán, `sceneLine` và lựa chọn hiện ở đó; chọn xong quán mở luôn (thêm vào rooms), bạn ở lại quán và tự đi ra cửa để về. Sự kiện có cảnh (Lily 15/11): lá có `stage` {map: office|home, spot, time, people, mood?}; type \"event\" + when \"midday\" (văn phòng, sau chuyện buổi sáng) hoặc when \"night\" (phòng trọ). Ngày đặc biệt: type \"special_day\", `rules` (npc, skipMorningCard, actions {off|mult|add}, shirt), `weekday` tùy chọn, `note` hiện dưới lựa chọn. Lịch và tỉ lệ ở nhip-choi.json.",
+  "note": "Dữ liệu lá kịch bản MVP tầng 1. Nguồn: doc Kịch bản MVP tầng 1, tab Kho 45 lá kịch bản. qh cộng vào thanh chung và thân thiết của npc (hoặc qhTarget nếu có; qhTarget null = chỉ thanh chung). L7 hẹn lại chính nó chỉ một lần. Lá type unlock: chạy lúc 08:29 đúng ngày `day`, trước lá buổi sáng, rồi mở phòng `unlocks`. Phòng chưa mở: không rút lá có room đó, ẩn việc buổi chiều ở đó. Lá type unlock có thể gắn `scene` vào một lựa chọn (MO_CANTEEN: kind sitAll = cả phòng ngồi căng tin; kind queue = bạn đứng cạnh cô Ba, 2–3 người xếp hàng trước quầy). Cảnh chạy sau màn kết quả lựa chọn, trước buổi sáng. Lá type unlock có thể có `openScene` (MO_MEETING): buổi sáng bắt đầu ở phòng họp với mọi người trong `people` ngồi sẵn, lời kể và các lựa chọn hiện ngay tại đó; xong thì ai về vị trí của người đó. Lá có `sceneAt` (ví dụ \"trasua\"): người rủ đứng chờ ở `room` như lá thường; nói chuyện xong cả hai chuyển cảnh sang quán, `sceneLine` và lựa chọn hiện ở đó; chọn xong quán mở luôn (thêm vào rooms), bạn ở lại quán và tự đi ra cửa để về. Sự kiện có cảnh (Lily 15/11): lá có `stage` {map: office|home, spot, time, people, mood?}; type \"event\" + when \"midday\" (văn phòng, sau chuyện buổi sáng) hoặc when \"night\" (phòng trọ). Ngày đặc biệt: type \"special_day\", `rules` (npc, skipMorningCard, actions {off|mult|add}, shirt), `weekday` tùy chọn, `note` hiện dưới lựa chọn. Lịch và tỉ lệ ở nhip-choi.json. Event theo ngày thật (Lily 19/11/2026, lịch ở su-kien.json): lá có `event` chỉ ra khi event đang chạy; lá có `deck` không vào kho rút thường, chỉ rút vào ngày đặc biệt có rules.deck cùng tên. rules.look \"2005\": cả tầng ngả màu ảnh cũ; rules.shard: sáng đó chắc chắn nhặt một mảnh.",
   "flagsBadges": [
     "chien_binh_cuoi_tuan",
     "seen_tin_nhan_sep",
@@ -23,7 +23,8 @@
     "bo_tro_tieu_chuan",
     "bo_am_cung",
     "bo_de_thuong",
-    "bo_wibu"
+    "bo_wibu",
+    "bao_cao_ngoc"
   ],
   "flagsHidden": [
     "duoc_giao_du_an",
@@ -4690,6 +4691,260 @@
       "weight": 1,
       "heavy": false,
       "repeatable": false
+    },
+    {
+      "id": "SD_GIENG_THAN",
+      "title": "Giếng thần kho hồ sơ",
+      "npc": null,
+      "room": null,
+      "event": "gieng_than",
+      "rules": {
+        "deck": "gieng_than",
+        "shard": true,
+        "look": "2005",
+        "shirt": "#b8a27c",
+        "actions": {
+          "tam_chuyen": {
+            "mult": {
+              "qh": 2,
+              "close": 2
+            }
+          }
+        }
+      },
+      "intro": "08:29, chị Mai đưa bạn chùm chìa khóa: \"Em xuống kho lưu trữ cũ dưới tầng hầm lấy giúp chị hồ sơ năm 2005 nhé.\" Góc kho có một cái giếng gạch cũ, nắp gỗ ghi \"KHÔNG MỞ · PHÒNG HÀNH CHÍNH\". Từ khe nắp hắt lên một thứ ánh sáng xanh.",
+      "choices": [
+        {
+          "label": "Mở nắp ngó xuống xem",
+          "effects": {
+            "xp": 0,
+            "pin": -2,
+            "ut": 0,
+            "qh": 0
+          },
+          "comment": "Bạn trượt chân. Rơi rất lâu, lâu như một buổi họp. Khi leo lên, kho sạch bong, tờ lịch trên tường ghi tháng 11 năm 2005, và cả tầng intern thơm mùi giấy than."
+        },
+        {
+          "label": "Đậy chặt nắp, đi lấy hồ sơ",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 1,
+            "qh": 0
+          },
+          "comment": "Nắp giếng tự bật ra, ánh sáng xanh kéo bạn xuống. Hóa ra quy định \"KHÔNG MỞ\" không áp dụng cho giếng. Khi leo lên, tờ lịch trên tường ghi tháng 11 năm 2005."
+        }
+      ],
+      "note": "Hôm nay bạn ở công ty năm 2005: chuyện buổi sáng toàn chuyện lạ, Tám chuyện được gấp đôi Quan hệ. Tan làm là về lại 2026.",
+      "type": "special_day",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 1,
+      "heavy": false,
+      "repeatable": false
+    },
+    {
+      "id": "G_TUAN_2005",
+      "title": "Anh Tuấn năm 2005",
+      "type": "normal",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 1,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "tuan",
+      "room": "intern",
+      "event": "gieng_than",
+      "deck": "gieng_than",
+      "intro": "Ở bàn của bạn là một cậu thanh niên tóc vuốt keo dựng đứng, áo sơ mi rộng hai cỡ, thẻ đeo ghi \"TUẤN · THỰC TẬP SINH\". Cậu ấy hỏi nhỏ: \"Bạn ơi, gửi file 3MB qua email thế nào? Hộp thư công ty chỉ cho 1MB.\"",
+      "choices": [
+        {
+          "label": "Chỉ anh nén file .rar, chia làm ba phần",
+          "effects": {
+            "xp": 2,
+            "pin": -3,
+            "ut": 0,
+            "qh": 3
+          },
+          "comment": "Anh Tuấn năm 2005 chép cách làm vào sổ, nét chữ run run. Bạn thấy nét chữ này quen quen."
+        },
+        {
+          "label": "Bảo anh in ra rồi gửi fax cho nhanh",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 1,
+            "qh": 1
+          },
+          "comment": "Anh ấy gật gù: \"Hợp lý.\" Hai mươi năm sau, anh vẫn bắt intern in file ra."
+        }
+      ]
+    },
+    {
+      "id": "G_BUZZ",
+      "title": "BUZZ!!!",
+      "type": "normal",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 1,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "linh",
+      "room": "intern",
+      "event": "gieng_than",
+      "deck": "gieng_than",
+      "intro": "Màn hình CRT của bạn rung lên bần bật. Cửa sổ Yahoo Messenger nhảy ra: \"linh_vui_ve: BUZZ!!! tối nay đi hát karaoke đĩa VCD k? phòng mình góp 20 nghìn/người\".",
+      "choices": [
+        {
+          "label": "Gõ \"ok luôn :))\" kèm mặt cười nháy mắt",
+          "effects": {
+            "xp": 0,
+            "pin": -3,
+            "ut": 0,
+            "qh": 4
+          },
+          "comment": "Chị Linh năm 2005 đổi status thành \"đêm nay ai cũng là ca sĩ\". Bạn được thêm vào nhóm bạn bè tên \"Đồng nghiệp ^^\"."
+        },
+        {
+          "label": "Để status \"Busy\", tắt âm BUZZ",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 2,
+            "qh": 0
+          },
+          "comment": "Mười giây sau: BUZZ!!! BUZZ!!! Status \"Busy\" chưa bao giờ ngăn được chị Linh, kể cả năm 2005."
+        }
+      ]
+    },
+    {
+      "id": "G_DIA_MEM",
+      "title": "Đĩa mềm 1.44MB",
+      "type": "normal",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 1,
+      "heavy": true,
+      "repeatable": false,
+      "npc": "hang",
+      "room": "intern",
+      "event": "gieng_than",
+      "deck": "gieng_than",
+      "intro": "Chị Hằng (tóc mái bằng, kẹp tóc hình bướm) đưa bạn một cái đĩa mềm màu xanh: \"Báo cáo quý trong này, em chép ra máy giúp chị. Nhẹ tay, nó dễ dỗi lắm.\" Ổ đĩa kêu lạch cạch như đang suy nghĩ.",
+      "choices": [
+        {
+          "label": "Chờ ổ đĩa đọc xong, sao lưu thêm một bản",
+          "effects": {
+            "xp": 2,
+            "pin": -5,
+            "ut": 3,
+            "qh": 0
+          },
+          "comment": "Mười phút sau file mới mở. Bạn sao thêm một bản ra đĩa khác, chị Hằng nhìn bạn như nhìn một thiên tài."
+        },
+        {
+          "label": "Gõ nhẹ vào thùng máy cho nó đọc nhanh",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 0,
+            "qh": 2
+          },
+          "comment": "Ổ đĩa ngừng kêu. Màn hình hiện \"Disk not formatted\". Chị Hằng cười: \"Không sao, chị có bản in.\" Năm 2005 ai cũng có bản in."
+        }
+      ]
+    },
+    {
+      "id": "G_FAX",
+      "title": "Máy fax kẹt giấy",
+      "type": "normal",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 1,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "mai",
+      "room": "lobby",
+      "event": "gieng_than",
+      "deck": "gieng_than",
+      "intro": "Ở sảnh, chị Mai (tóc uốn xoăn, kẹp tóc to bản) đang vật lộn với máy fax: \"Hợp đồng gấp của khách mà máy kẹt giấy lần thứ ba rồi em ơi.\"",
+      "choices": [
+        {
+          "label": "Mở nắp, rút tờ giấy thật nhẹ",
+          "effects": {
+            "xp": 0,
+            "pin": -3,
+            "ut": 2,
+            "qh": 2
+          },
+          "comment": "Tờ hợp đồng ra nguyên vẹn, chỉ hơi nhăn. Chị Mai nói nhỏ: \"Em làm như đã sống thêm hai mươi năm nữa vậy.\""
+        },
+        {
+          "label": "Gọi điện nhờ khách đọc hợp đồng qua điện thoại",
+          "effects": {
+            "xp": 0,
+            "pin": -5,
+            "ut": 0,
+            "qh": 3
+          },
+          "comment": "Khách đọc ba mươi phút. Chị Mai chép tay từng chữ, bạn giữ ống nghe. Một tình bạn ra đời trong tiếng tút tút."
+        }
+      ]
+    },
+    {
+      "id": "G_RAN_SAN_MOI",
+      "title": "Điện thoại cục gạch",
+      "type": "normal",
+      "phases": [
+        1,
+        2,
+        3
+      ],
+      "weight": 1,
+      "heavy": false,
+      "repeatable": false,
+      "npc": "tung",
+      "room": "intern",
+      "event": "gieng_than",
+      "deck": "gieng_than",
+      "intro": "Anh Tùng (áo len gile, điện thoại đeo bao da ở thắt lưng) đặt lên bàn bạn một chiếc điện thoại cục gạch: \"Kỷ lục trò rắn săn mồi của phòng là 1.250 điểm. Phá được, anh chỉ em một mẹo đi làm.\"",
+      "choices": [
+        {
+          "label": "Chơi thử, ngón cái chạy hết công suất",
+          "effects": {
+            "xp": 0,
+            "pin": -2,
+            "ut": 0,
+            "qh": 3
+          },
+          "comment": "Bạn được 1.180 điểm thì con rắn tự cắn đuôi. Anh Tùng vỗ vai: \"Gần lắm. Mẹo đây: báo cáo xong thì nộp luôn, đừng chờ người ta hỏi.\""
+        },
+        {
+          "label": "Cài cho anh một nhạc chuông đa âm",
+          "effects": {
+            "xp": 0,
+            "pin": 0,
+            "ut": 1,
+            "qh": 2
+          },
+          "comment": "Điện thoại anh Tùng giờ đổ chuông bằng một bài hát chưa ra đời. Cả phòng tò mò, anh Tùng bảo đó là \"nhạc nước ngoài\"."
+        }
+      ]
     }
   ],
   "rooms": {

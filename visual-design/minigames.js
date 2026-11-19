@@ -58,6 +58,18 @@ const CSS = `
 .mg-answer small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
 .mg-answer.picked{background:#fff4d6}
 .mg-answer:disabled{cursor:default}
+/* match */
+.mg-pieces{display:flex;flex-wrap:wrap;gap:8px;min-height:58px}
+.mg-piece{text-align:left;font:500 13px/1.35 var(--font-body);color:var(--ink);background:#fffbea;border:2px solid var(--ink);border-radius:10px;padding:7px 10px;max-width:260px;cursor:grab;touch-action:none;user-select:none;box-shadow:0 2px 0 var(--ink),0 0 10px #ffe58a}
+.mg-piece.sel{outline:3px solid var(--accent)}
+.mg-piece.bad{background:var(--down);animation:mg-pop .35s ease}
+.mg-sheet{display:grid;gap:6px;border:2px solid var(--ink);border-radius:12px;background:#fff;padding:10px}
+.mg-line{display:grid;grid-template-columns:96px 1fr;gap:8px;align-items:stretch}
+.mg-line b{font:700 13px var(--font-body);align-self:center}
+.mg-line .mg-drop{min-height:40px;border:2px dashed var(--lock);border-radius:8px;padding:6px 8px;font-size:13px;line-height:1.35;color:var(--muted);cursor:pointer;text-align:left;background:var(--paper);font-family:var(--font-body)}
+.mg-line .mg-drop.hot,.mg-line .mg-drop.can{border-color:var(--ink);background:#fff4d6}
+.mg-line .mg-drop.ok{border-style:solid;border-color:var(--ink);background:var(--up);color:var(--ink);cursor:default}
+@media (max-width:560px){.mg-line{grid-template-columns:72px 1fr}.mg-piece{max-width:none;flex:1 1 100%}}
 .mg-ghost{position:fixed;z-index:11;pointer-events:none;opacity:.9;transform:translate(-50%,-50%) rotate(-2deg)}
 @media (max-width:560px){.mg{padding:12px}.mg-slot{min-height:84px}.mg-placed{font-size:10px}.mg h2{font-size:21px}.mg-tray{display:grid;grid-template-columns:1fr 1fr}.mg-task{max-width:none;font-size:11px;padding:4px 6px}.mg-task b{font-size:12px}.mg-bin{min-height:88px}}
 @media (prefers-reduced-motion:reduce){.mg-flash,.mg-task.new{animation:none}.mg-time i{transition:none}}
@@ -242,6 +254,38 @@ export const KINDS = {
     }
     return {score, max, detail: `${score}/${max} ${game.scoreLabel || 'điểm'}`};
   },
+
+  // Put each piece into its slot (Ghép báo cáo, event Giếng thần). Pieces with slot null are fakes. A wrong drop costs `penalty` seconds; all slots filled ends early.
+  match: async ({body, game, setScore, timer}) => {
+    const pieces = shuffled(game.pieces.map((p, k) => ({...p, k, done: false})), game.shuffle !== false), real = game.slots.length;
+    let sel = null, score = 0;
+    const tray = el('div', 'mg-pieces'), sheet = el('div', 'mg-sheet'), drops = {};
+    for (const sl of game.slots) {
+      const line = el('div', 'mg-line'), d = el('button', 'mg-drop', '…'); d.dataset.drop = sl.id;
+      d.onclick = () => { if (sel != null) put(sel, sl.id); };
+      line.append(el('b', null, sl.label), d); sheet.appendChild(line); drops[sl.id] = d;
+    }
+    const t = clock(game.seconds, l => timer(l, game.seconds));
+    function put(k, slot) {
+      const p = pieces.find(x => x.k === k); if (!p || p.done || drops[slot].classList.contains('ok')) return;
+      sel = null;
+      if (p.slot === slot) { p.done = true; score++; drops[slot].textContent = p.text; drops[slot].classList.add('ok'); drops[slot].disabled = true; }
+      else { p.bad = true; t.lose(game.penalty || 0); }
+      setScore(`${score}/${real} mảnh`); draw();
+      if (score >= real) t.stop();
+    }
+    function draw() {
+      tray.replaceChildren(...pieces.filter(p => !p.done).map(p => {
+        const b = el('button', 'mg-piece' + (sel === p.k ? ' sel' : '') + (p.bad ? ' bad' : ''), p.text); p.bad = false;
+        draggable(b, {onTap: () => { sel = sel === p.k ? null : p.k; draw(); }, onDrop: d => put(p.k, d.dataset.drop)});
+        return b;
+      }));
+      for (const d of Object.values(drops)) d.classList.toggle('can', sel != null && !d.classList.contains('ok'));
+    }
+    body.append(sheet, el('div', 'mg-left', 'Các mảnh (bấm mảnh rồi bấm mục, hoặc kéo thả):'), tray); draw(); setScore(`0/${real} mảnh`);
+    await t.finished;
+    return {score, max: real, detail: `${score}/${real} ${game.scoreLabel || 'mảnh'}`};
+  },
 };
 
 /* ---------- runner: intro -> 3-2-1 -> play -> returns the raw result; the page grades it ---------- */
@@ -280,6 +324,7 @@ export function validateMinigames(data, grades = data.grades) {
     for (const d of g.days || []) if (!data.days.includes(d)) problems.push(`${g.id}: ngày ${d} không nằm trong danh sách ngày mốc "days"`);
     for (const [gr] of grades) if (!g.rewards?.[gr]) problems.push(`${g.id}: thiếu phần thưởng cho "${gr}"`);
     for (const [gr] of grades.slice(0, -1)) if (g.thresholds?.[gr] == null) problems.push(`${g.id}: thiếu ngưỡng điểm "${gr}"`);
+    if (g.kind === 'match') for (const p of g.pieces || []) if (p.slot != null && !(g.slots || []).some(x => x.id === p.slot)) problems.push(`${g.id}: mảnh "${p.text}" vào mục lạ "${p.slot}"`);
     if (g.kind === 'sort') for (const it of g.items || []) if (!g.bins.some(b => b.id === it.bin)) problems.push(`${g.id}: "${it.text}" vào giỏ lạ "${it.bin}"`);
   }
   for (const d of data.days) if (!(data.games || []).some(g => (g.days || []).includes(d))) problems.push(`ngày ${d}: chưa có mini-game nào được phép xuất hiện`);

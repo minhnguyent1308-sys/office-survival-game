@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "note": "Event theo ngày thật (Lily 19/11/2026). Mỗi event có from/to (YYYY-MM-DD, tính cả hai đầu, theo giờ máy người chơi: event chạy từ 00:00 ngày from đến hết 23:59 ngày to). Ngoài khoảng đó mọi thứ gắn `event` tự ẩn: lá trong cards.json, mini-game trong minigames.json, thanh HUD. Lá có `event` chỉ ra khi event đang chạy; lá có `deck` chỉ ra vào ngày đặc biệt có rules.deck trùng tên. `shards`: mỗi sáng ngày làm việc thường (không phải ngày 1, ngày mở phòng, ngày mini-game, ngày 40) có `chance` nhặt một mảnh; ngày đặc biệt có rules.shard thì chắc chắn có. Đủ `count` mảnh thì sáng đó chơi mini-game `game` (một lần mỗi ván); kết quả nằm trong `badgeAt` thì nhận huy hiệu `badge` (khai báo trong flagsBadges của cards.json và badges của danh-gia.json, group \"su_kien\"). Thử ngày khác: thêm ?ngay=2026-12-02 vào địa chỉ trang.",
+  "events": [
+    {
+      "id": "gieng_than",
+      "name": "Giếng thần kho hồ sơ",
+      "from": "2026-11-19",
+      "to": "2026-12-01",
+      "hud": "Event Giếng thần · đến hết 1/12",
+      "shards": {
+        "name": "Mảnh báo cáo",
+        "count": 5,
+        "chance": 0.35,
+        "game": "ghep_bao_cao",
+        "badge": "bao_cao_ngoc",
+        "badgeAt": ["xuat_sac", "dat"],
+        "lines": [
+          "Kẹp giữa hai tờ hóa đơn trong khay máy in, một mảnh giấy cũ phát sáng như ngọc.",
+          "Dưới chậu cây ở sảnh có một mảnh giấy ố vàng, góc ghi \"Báo cáo thực tập 2005\".",
+          "Trong ngăn kéo bàn bạn, có ai đó đã nhét một mảnh giấy cũ hơn cả cái bàn.",
+          "Gió từ máy lạnh thổi một mảnh giấy lấp lánh bay đúng vào bàn phím của bạn.",
+          "Một mảnh giấy cũ rơi ra từ tập hồ sơ anh Tuấn nhờ bạn photo, sáng lấp lánh.",
+          "Kẹp trong cuốn sổ giao ca của chị Mai, ngay trang có chữ ký run run.",
+          "Mảnh giấy dán dưới đáy cốc trà sữa ai đó bỏ quên trên bàn bạn."
+        ],
+        "full": "Đủ 5 mảnh rồi. Mấy mảnh giấy tự xếp thành hình một bản báo cáo, chỉ còn chờ bạn ghép."
+      }
+    }
+  ]
+}
