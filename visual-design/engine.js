@@ -328,7 +328,7 @@ export function rollCanteen(rng = Math.random) {
 }
 export function startMorning(s, cards, rng = Math.random) {
   drawDay(s, cards, rng);
-  const c = s.pendingSpecial && s.day > 1 && cardById(cards, s.pendingSpecial);   // an event's day waiting for the next morning (queueEventDay)
+  const c = s.pendingSpecial && s.day > 2 && cardById(cards, s.pendingSpecial);   // an event's day waiting for the next morning (queueEventDay); never before day 3 (Lily 19/11: a new player first plays day 1 and day 2)
   if (c) { s.pendingSpecial = null; if (eventOk(c) && !(s.played || []).includes(c.id)) startExtraDay(s, cards, c, rng); }
 }
 function drawDay(s, cards, rng) {
@@ -413,7 +413,8 @@ export const dayLine = s => (s.today?.extra ? `Ngày ngoài lịch (trước ng�
 // Event day on first open (su-kien.json firstOpen, Lily 19/11): the player meets the event's special day right away, once per player
 // (the page keeps "once" in the profile). It always wins and takes nothing's place: it is a day outside the calendar (startExtraDay).
 // Returns 'now' (this morning is that day), 'later' (the next morning in the office) or 'done' (played in this run).
-// now: any morning in the office but day 1 (chị Mai's tutorial), whatever it holds; later: afternoon, evening, weekend, day 1, a run that ended.
+// now: any morning in the office from day 2 on, whatever it holds; later: afternoon, evening, weekend, day 1, a run that ended.
+// Waiting since day 1 (a new run), it lets day 2 pass first: a new player plays day 1 and day 2 as usual, the well comes before day 3 (Lily 19/11).
 export function queueEventDay(s, cards, id, rng = Math.random) {
   const c = cardById(cards, id); if (!c || !eventOk(c)) return null;
   if ((s.played || []).includes(id)) return 'done';
