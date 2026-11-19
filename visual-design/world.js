@@ -3,6 +3,7 @@
 // Pages: import * as Wd from './world.js'; const kit = Wd.makeKit(scene); ... Wd.makeWalkGrid({W, D, blockers: kit.blockers}).
 import * as T from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 
 /* ---------- Design tokens for the 3D world (one palette for every map) ---------- */
 export const P = {
@@ -58,52 +59,87 @@ export function makeKit(scene){
   const plant = (x, z, s=1) => { box(x, z, 0, .6*s, .6*s, .5*s, P.pot, {block:true});
     [[0,.95,0,.38],[.18,1.3,.1,.3],[-.14,1.25,-.12,.27],[0,1.6,0,.22]].forEach(([dx,y,dz,r])=>{
       const m = new T.Mesh(new T.IcosahedronGeometry(r*s,0), mat(P.green)); m.position.set(x+.3*s+dx*s, y*s, z+.3*s+dz*s); m.castShadow = true; scene.add(m); }); };
-  function makeChar({hair=P.hair, shirt=P.shirt, pants=P.pants, tie=null, lanyard=false, style='short', bag=false, chefHat=false,
-                     glasses=null, sunglasses=false, mustache=false, headphones=null, scarf=null, apron=false, clip=null, scale=[1,1,1]}={}){
-    const g = new T.Group(); const parts = {};
-    const add = (geo, c, x, y, z, parent=g) => { const m = new T.Mesh(geo, mat(c)); m.position.set(x,y,z); m.castShadow = true; parent.add(m); return m; };
-    const rb = (w, h, d, r=.05) => new RoundedBoxGeometry(w, h, d, 2, r);
-    const limb = (x, y, w, h, c) => { const p = new T.Group(); p.position.set(x, y, 0); g.add(p); add(rb(w, h, w+.02), c, 0, -h/2, 0, p); return p; };
-    parts.legL = limb(-.12, .68, .19, .66, pants); parts.legR = limb(.12, .68, .19, .66, pants);
-    add(rb(.52, .6, .32, .1), shirt, 0, .97, 0);
-    parts.armL = limb(-.34, 1.22, .13, .52, shirt); parts.armR = limb(.34, 1.22, .13, .52, shirt);
-    if (bag) add(rb(.12, .34, .44, .04), P.leather, .04, -.62, 0, parts.armR);
-    if (lanyard) { add(new T.BoxGeometry(.12, .15, .02), P.blue, 0, .86, .17); add(new T.BoxGeometry(.03, .22, .02), P.red, -.07, 1.06, .165); add(new T.BoxGeometry(.03, .22, .02), P.red, .07, 1.06, .165); }
-    if (tie) add(new T.BoxGeometry(.08, .4, .02), tie, 0, 1.02, .17);
-    if (apron) { add(new T.BoxGeometry(.46, .62, .02), '#f2efe6', 0, .82, .17); add(new T.BoxGeometry(.2, .12, .02), P.red, 0, .78, .185); }
-    if (scarf) { add(rb(.5, .1, .36, .04), scarf, 0, 1.27, 0); add(rb(.1, .3, .04, .02), scarf, .12, 1.1, .18); }
-    const head = new T.Group(); head.position.y = 1.56; g.add(head); parts.head = head;
-    add(rb(.6, .56, .54, .17), P.skin, 0, 0, 0, head);
-    add(new T.SphereGeometry(.042, 10, 10), P.ink, -.12, .01, .275, head);
-    add(new T.SphereGeometry(.042, 10, 10), P.ink, .12, .01, .275, head);
-    add(new T.BoxGeometry(.1, .025, .02), P.ink, 0, -.13, .272, head);
-    if (mustache) add(rb(.24, .06, .04, .02), hair, 0, -.075, .28, head);
-    if (glasses || sunglasses) { const c = sunglasses ? '#111' : glasses;
-      [-.12, .12].forEach(x => add(new T.BoxGeometry(.17, .12, .02), c, x, .02, .285, head));
-      if (!sunglasses) [-.12, .12].forEach(x => add(new T.BoxGeometry(.11, .07, .025), '#e9f6fb', x, .02, .286, head));
-      add(new T.BoxGeometry(.08, .025, .02), c, 0, .04, .285, head); }
-    if (headphones) { add(rb(.7, .06, .08, .02), headphones, 0, .34, 0, head); [-.33, .33].forEach(x => add(rb(.08, .2, .18, .03), headphones, x, .04, 0, head)); }
-    if (chefHat) { add(new T.CylinderGeometry(.28, .26, .32, 18), '#ffffff', 0, .5, 0, head); add(new T.SphereGeometry(.34, 16, 12), '#ffffff', 0, .72, 0, head); }
-    const hairG = new T.Group(); head.add(hairG);
-    parts.setHair = (st) => { hairG.clear();
-      const top = () => add(rb(.64, .22, .58, .09), hair, 0, .24, -.01, hairG);
-      const back = (h=.42) => add(rb(.64, h, .16, .06), hair, 0, .28 - h/2 - .0, -.23, hairG);
-      if (st === 'bald') { [-.31, .31].forEach(x => add(rb(.06, .18, .4, .02), hair, x, .02, -.04, hairG)); back(.2).position.y = .0; return; }
-      if (st === 'curly') { [[-.2,.26,.1],[0,.3,.12],[.2,.26,.1],[-.22,.24,-.14],[.02,.3,-.12],[.22,.24,-.14],[-.28,.1,-.2],[.28,.1,-.2]].forEach(([x,y,z]) => add(new T.SphereGeometry(.15, 10, 8), hair, x, y, z, hairG)); return; }
-      top();
-      if (st === 'spiky') { back(); [[-.18,.03],[0,-.05],[.18,.03],[-.08,.15],[.1,.15]].forEach(([x,z]) => { const c = add(new T.ConeGeometry(.08, .2, 6), hair, x, .43, z, hairG); c.rotation.z = x*.8; }); return; }
-      if (st === 'short') { back(); add(rb(.42, .1, .2, .04), hair, .08, .2, .22, hairG); return; }
-      if (st === 'bun') { back(.36); add(new T.SphereGeometry(.17, 14, 12), hair, 0, .44, -.1, hairG); return; }
-      if (st === 'ponytail') { back(.36); const t = add(rb(.16, .5, .16, .06), hair, 0, -.05, -.36, hairG); t.rotation.x = .25; add(new T.SphereGeometry(.06, 8, 8), P.yellow, 0, .2, -.32, hairG); return; }
-      if (st === 'bob') { back(.5); [-.31, .31].forEach(x => add(rb(.1, .44, .44, .04), hair, x, .02, -.04, hairG)); add(rb(.5, .1, .14, .04), hair, -.05, .18, .22, hairG); return; }
-      // long
-      back(); add(rb(.66, .62, .2, .08), hair, 0, -.12, -.24, hairG);
-      [-.31, .31].forEach(x => add(rb(.12, .5, .4, .05), hair, x, -.04, -.06, hairG));
-    };
-    parts.setHair(style);
-    if (clip) add(new T.SphereGeometry(.07, 10, 8), clip, .3, .2, .1, head);
+  /* Voxel people (Lily 19/11, approved from the preview in nhan-vat-voxel/): flat cubes, big head, big white eyes, short body,
+     stepped hair. Same options and same parts as before, so every page keeps walking, sitting and talking the same way.
+     Boxes of one colour inside one moving part are merged into one mesh: about 15 meshes per person instead of 60. */
+  const HIP = .36, SHOULDER = .86, HEAD_W = .92, HEAD_H = .8, HEAD_D = .82;
+  const shade = (hex, k) => '#' + new T.Color(hex).multiplyScalar(k).getHexString();
+  function makeChar({hair=P.hair, shirt=P.shirt, pants=P.pants, tie=null, lanyard=false, style='short', bag=false, chefHat=false, helmet=null,
+                     glasses=null, sunglasses=false, mustache=false, headphones=null, scarf=null, apron=false, clip=null, blush=false, scale=[1,1,1]}={}){
+    const g = new T.Group(), parts = {}, buckets = new Map();
+    // b(x, y, z, w, h, d): a box centred on x/z, sitting on y, inside `parent`; drawn when that parent is flushed
+    const b = (x, y, z, w, h, d, c, parent=g) => { const geo = new T.BoxGeometry(w, h, d); geo.translate(x, y + h/2, z);
+      let m = buckets.get(parent); if (!m) buckets.set(parent, m = new Map()); if (!m.has(c)) m.set(c, []); m.get(c).push(geo); };
+    // SHIRT stands for the shirt colour and marks those meshes (userData.shirt), so a dress-code day recolours the shirt and nothing else of the same colour
+    const SHIRT = 'shirt:' + shirt;
+    const flush = parent => { for (const [c, geos] of buckets.get(parent) || []) { const isShirt = c === SHIRT;
+        const mesh = new T.Mesh(mergeGeometries(geos), mat(isShirt ? shirt : c)); mesh.castShadow = mesh.receiveShadow = true; mesh.userData.shirt = isShirt; parent.add(mesh); geos.forEach(x => x.dispose()); }
+      buckets.delete(parent); };
+    const pivot = (x, y) => { const p = new T.Group(); p.position.set(x, y, 0); g.add(p); return p; };
+    const shoe = shade(pants, .55), skinDark = '#e3a983';
+
+    // legs (pivot at the hip) with shoes; arms (pivot at the shoulder) with hands
+    parts.legL = pivot(-.13, HIP); parts.legR = pivot(.13, HIP);
+    for (const L of [parts.legL, parts.legR]) { b(0, -HIP, .03, .2, .1, .28, shoe, L); b(0, -.26, 0, .2, .26, .22, pants, L); }
+    parts.armL = pivot(-.39, SHOULDER); parts.armR = pivot(.39, SHOULDER);
+    for (const A of [parts.armL, parts.armR]) { b(0, -.36, 0, .18, .36, .22, SHIRT, A); b(0, -.48, 0, .16, .13, .18, P.skin, A); }
+    if (bag) b(.13, -.66, 0, .1, .3, .4, P.leather, parts.armR);
+    // torso + what is worn on it
+    b(0, HIP, 0, .6, .5, .36, SHIRT);
+    b(0, HIP, 0, .62, .08, .38, pants);                                                    // belt line = top of the trousers
+    if (lanyard) { b(0, .5, .19, .14, .16, .02, P.blue); b(0, .54, .19, .08, .06, .025, P.paper); [-.08, .08].forEach(x => b(x, .66, .185, .04, .2, .02, P.red)); }
+    if (tie) { b(0, .5, .185, .1, .34, .02, tie); b(0, .78, .185, .14, .07, .025, tie); }
+    if (apron) { b(0, .3, .19, .5, .52, .02, '#f2efe6'); b(0, .52, .2, .22, .1, .02, P.red); }
+    if (scarf) { b(0, .8, 0, .66, .1, .42, scarf); b(.14, .58, .2, .1, .24, .04, scarf); }
+
+    // head: one big cube; face on +z
+    const H = new T.Group(); H.position.y = SHOULDER; g.add(H); parts.head = H;
+    const hw = HEAD_W, hh = HEAD_H, hd = HEAD_D, fz = hd/2;
+    b(0, 0, 0, hw, hh, hd, P.skin, H);
+    [-.47, .47].forEach(x => b(x, .3, 0, .06, .16, .14, skinDark, H));                   // ears
+    if (sunglasses) [-1, 1].forEach(s => b(s*.19, .24, fz + .01, .3, .3, .03, '#111111', H));
+    else [-1, 1].forEach(s => { b(s*.19, .28, fz + .005, .22, .28, .02, '#ffffff', H); b(s*.19 - s*.035, .3, fz + .016, .1, .16, .02, P.ink, H); }); // eyes look slightly inward
+    b(0, .2, fz + .04, .1, .12, .08, skinDark, H);                                         // nose
+    b(0, .08, fz + .005, .14, .04, .02, '#8a3b3b', H);                                    // mouth
+    if (blush) [-1, 1].forEach(s => b(s*.31, .14, fz + .005, .12, .06, .02, '#f2a0a6', H));
+    if (mustache) b(0, .12, fz + .02, .32, .07, .04, hair, H);
+    const frame = sunglasses ? '#111111' : glasses;
+    if (frame) { [-1, 1].forEach(s => { const x = s*.19;
+        b(x, .56, fz + .03, .3, .04, .03, frame, H); b(x, .24, fz + .03, .3, .04, .03, frame, H);
+        b(x - .13, .24, fz + .03, .04, .32, .03, frame, H); b(x + .13, .24, fz + .03, .04, .32, .03, frame, H); });
+      b(0, .42, fz + .03, .1, .04, .03, frame, H); }
+    else [-1, 1].forEach(s => b(s*.19, .6, fz + .01, .2, .05, .02, hair, H));            // eyebrows give each face its mood
+    if (clip) b(hw/2 + .08, hh - .22, .18, .08, .14, .2, clip, H);
+    if (headphones) { b(0, hh + .2, 0, hw + .14, .08, .14, headphones, H); [-1, 1].forEach(s => b(s*(hw/2 + .1), .2, 0, .1, .4, .28, headphones, H)); }
+    if (chefHat) { b(0, hh, 0, hw + .02, .18, hd + .02, '#ffffff', H); b(0, hh + .18, 0, .7, .16, .62, '#f4f4f0', H); b(0, hh + .34, 0, 1.0, .24, .9, '#ffffff', H); b(0, hh + .58, 0, .7, .1, .6, '#ffffff', H); }
+    if (helmet) { b(0, hh - .12, -.02, hw + .1, .32, hd + .1, helmet, H); b(0, hh + .2, -.02, hw - .1, .08, hd - .1, helmet, H); b(0, hh - .12, fz + .03, hw + .1, .06, .14, shade(helmet, .8), H); }
+    flush(H);
+
+    // hair: stepped slabs, in its own group so it can change (setHair)
+    const hairG = new T.Group(); H.add(hairG);
+    parts.setHair = (st) => { hairG.clear(); const Hg = hairG; if (st === 'none') return;
+      const top = (h=.18) => b(0, hh, -.01, hw + .06, h, hd + .06, hair, Hg);
+      const back = (h=hh) => b(0, hh - h, -fz - .03, hw + .06, h, .08, hair, Hg);
+      const sides = (h=.4, depth=hd) => [-1, 1].forEach(s => b(s*(hw/2 + .03), hh - h, -.02, .06, h, depth, hair, Hg));
+      const fringe = () => b(0, hh - .1, fz - .02, .9, .1, .08, hair, Hg);
+      if (st === 'bald') { back(.36); [-1, 1].forEach(s => b(s*(hw/2 + .03), .34, -.12, .06, .3, .5, hair, Hg)); }
+      else if (st === 'curly') { top(.14); back(.5); sides(.36, .6);
+        for (let i=-2;i<=2;i++) for (let j=-2;j<=1;j++) if ((i+j)%2===0) b(i*.18, hh + .14, j*.18 + .04, .18, .1, .18, shade(hair, 1.25), Hg); }
+      else { top(); back(st === 'short' || st === 'spiky' ? .5 : hh);
+        if (st === 'short') { sides(.28, .6); b(-.12, hh - .14, fz - .02, .62, .14, .08, hair, Hg); b(.32, hh - .24, fz - .02, .22, .24, .08, hair, Hg); }
+        if (st === 'spiky') { sides(.28, .6); [[-.3,.08],[-.1,-.1],[.12,.06],[.3,-.12],[0,.24]].forEach(([x,z], i) => b(x, hh + .18, z, .2, .12 + (i%2)*.08, .2, hair, Hg)); b(0, hh - .1, fz - .02, .9, .1, .08, hair, Hg); }
+        if (st === 'long') { sides(hh + .22, hd); b(0, -.3, -fz - .03, hw + .06, hh + .3, .08, hair, Hg); b(0, hh - .16, fz - .02, .5, .16, .08, hair, Hg); b(-.34, hh - .26, fz - .02, .24, .26, .08, hair, Hg); }
+        if (st === 'bob') { sides(hh - .08, hd); b(0, hh - .12, fz - .02, hw + .06, .12, .08, hair, Hg); }
+        if (st === 'bun') { sides(.36, .7); b(0, hh + .18, -.12, .34, .28, .34, hair, Hg); b(0, hh + .2, -.12, .38, .06, .38, shade(hair, 1.3), Hg); fringe(); }
+        if (st === 'ponytail') { sides(.36, .7); b(0, .1, -fz - .14, .2, .5, .2, hair, Hg); b(0, .56, -fz - .1, .14, .1, .14, P.yellow, Hg); fringe(); }
+      }
+      flush(Hg); };
+    parts.setHair(helmet ? 'none' : style);                                              // hair stays under the helmet
+    for (const p of [g, parts.legL, parts.legR, parts.armL, parts.armR]) flush(p);
     g.scale.set(...scale);
-    scene.add(g); return {g, parts, path:[], phase:0};
+    scene.add(g);
+    // hip: leg pivot height (sitting puts it on the seat); headY: resting head height; lie: lift that keeps the head above the floor when lying on the back
+    return {g, parts, path:[], phase:0, hip: HIP * scale[1], headY: SHOULDER, lie: (fz + .07) * scale[2]};
   }
   const tagHot = (c, id) => c.g.traverse(m => { if (m.isMesh) { m.userData.hot = id; hotMeshes.push(m); } });
   return {mat, box, textTex, faceMats, sign, plant, makeChar, tagHot, blockers, hotMeshes};
@@ -176,14 +212,14 @@ export function animateWalk(c, moving, dt){
 /* ---------- Colleagues' looks (keyed by story id): one source for tầng Intern and the rented room (visits) ---------- */
 export const NPC_LOOKS = {
   tuan: {shirt:'#d8e4f5', pants:'#2b2f3a', tie:P.red, hair:'#5a5a5a', style:'bald', mustache:true, scale:[1.1,1.02,1.1]},
-  mai: {shirt:'#7a5cc2', hair:'#3a2418', pants:'#2b2f3a', style:'bob', clip:'#ff8fb1'},
-  hang: {shirt:'#f6c9d0', hair:'#5a3322', style:'bun', glasses:P.red, scale:[.95,.93,.95]},
-  linh: {shirt:'#cfe8d6', hair:'#1f1a17', pants:'#4a3b52', style:'ponytail', scarf:P.yellow},
+  mai: {shirt:'#7a5cc2', hair:'#3a2418', pants:'#2b2f3a', style:'bob', clip:'#ff8fb1', blush:true},
+  hang: {shirt:'#f6c9d0', hair:'#5a3322', style:'bun', glasses:P.red, blush:true, scale:[.95,.93,.95]},
+  linh: {shirt:'#cfe8d6', hair:'#1f1a17', pants:'#4a3b52', style:'ponytail', scarf:P.yellow, blush:true},
   minh: {shirt:'#fbe7b0', hair:'#2b1d16', pants:'#2f4a3a', style:'spiky', headphones:'#e8505b', scale:[1,1.08,1]},
   tung: {shirt:'#b9dcf2', hair:'#3b2a1e', pants:'#3a3f55', style:'curly', lanyard:true, glasses:'#222'},
   // people who only appear in staged events (engine.js EXTRA_PEOPLE): same body, own colours (Lily 15/11)
   sep_tong: {shirt:'#2f3542', pants:'#2f3542', tie:'#e3b23c', hair:'#d9d9d9', style:'short', glasses:'#222', scale:[1.08,1.05,1.08]},
-  chu_tro:  {shirt:'#e9a6a6', pants:'#6b4a3a', hair:'#6b6b6b', style:'bun', scale:[1.05,.95,1.05]},
+  chu_tro:  {shirt:'#e9a6a6', pants:'#6b4a3a', hair:'#6b6b6b', style:'bun', blush:true, scale:[1.05,.95,1.05]},
   shipper:  {shirt:'#2fb36b', pants:'#2b2f3a', hair:'#2b1d16', style:'short', bag:true},
   hang_xom: {shirt:'#f2c14e', pants:'#3a4660', hair:'#1f1a17', style:'spiky', headphones:'#3c83ec'},
 };
@@ -198,7 +234,7 @@ export const LOOKS = {
 };
 const pick = (list, id) => list.find(o => o.id === id) || list[0];
 // makeChar options for a look; base = what the page dresses you in (pyjamas at home)
-export const playerLook = (look = {}, base = {}) => ({lanyard:true, ...base, style:pick(LOOKS.hair, look.hair).id, hair:pick(LOOKS.color, look.color).hex, ...pick(LOOKS.extra, look.extra).set});
+export const playerLook = (look = {}, base = {}) => ({lanyard:true, ...base, style:pick(LOOKS.hair, look.hair).id, blush:pick(LOOKS.hair, look.hair).id === 'long', hair:pick(LOOKS.color, look.color).hex, ...pick(LOOKS.extra, look.extra).set});
 
 export const HOME_QUOTES = [
   "Xe buýt đông, nhưng ít ra không ai giao việc trên xe.",

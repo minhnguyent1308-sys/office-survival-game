@@ -401,12 +401,12 @@ const NPCS = { // each person gets one signature look so the player can tell the
   linh:   {at:[5.4, 15.85], rot:Math.PI, look:Wd.NPC_LOOKS.linh},
   minh:   {at:[8.8, 15.85], rot:Math.PI, look:Wd.NPC_LOOKS.minh},
   tung:   {at:[6.2, 11.95], rot:Math.PI, look:Wd.NPC_LOOKS.tung},
-  chef:   {at:[20.0, 8.5],  rot:0,       look:{shirt:'#ffffff', pants:'#4a4a4a', chefHat:true, apron:true, style:'short', scale:[1.08,1,1.08]}},
+  chef:   {at:[20.0, 8.5],  rot:0,       look:{shirt:'#ffffff', pants:'#4a4a4a', chefHat:true, apron:true, style:'short', hair:'#6b6b6b', blush:true, scale:[1.08,1,1.08]}},
   letan:  {at:[15.75, 2.15], rot:0,      look:Wd.NPC_LOOKS.mai},
 };
 for (const [id, n] of Object.entries(NPCS)) {
   n.c = makeChar(n.look); n.c.g.position.set(n.at[0], 0, n.at[1]); n.c.g.rotation.y = n.rot; tagHot(n.c, id);
-  blockers.push({x0:n.at[0]-.3, z0:n.at[1]-.2, x1:n.at[0]+.3, z1:n.at[1]+.2});
+  blockers.push({x0:n.at[0]-.45, z0:n.at[1]-.4, x1:n.at[0]+.45, z1:n.at[1]+.4});   // room for the big voxel head: walking up to someone never pushes into their face
 }
 const client = makeChar({shirt:'#30343f', pants:'#30343f', tie:P.yellow, hair:'#9a9a9a', style:'short', bag:true, sunglasses:true});
 client.g.visible = false; tagHot(client, 'client');
@@ -612,14 +612,14 @@ const HOT = {
   client:   {at:[0,0],       tag:'Khách hàng', eyebrow:'Nhân vật ngẫu nhiên', title:'Khách hàng', dynamic:true, intro:'"Chào em, anh là khách hàng bên đối tác."'},
 };
 const ANCHOR = {well:[WELL[0],1.7,WELL[1]], desk:[4.2,2.0,10.7], copier:[1.3,1.6,9.6], elevator:[11.3,2.95,.1], water:[22.7,1.9,8.45], lock_canteen:[17,1.25,8], lock_canteen2:[14,1.25,12], lock_meeting:[27.2,1.25,6]};
-const anchorOf = id => { if (ANCHOR[id]) return ANCHOR[id]; const g = (id === 'client' ? client : NPCS[id].c).g; return [g.position.x, (isGossip(id) ? 1.95 : id === questId ? 2.2 : 2.3) + g.position.y, g.position.z]; }; // gossip bubble tail touches the head
+const anchorOf = id => { if (ANCHOR[id]) return ANCHOR[id]; const g = (id === 'client' ? client : NPCS[id].c).g; return [g.position.x, (isGossip(id) ? 2.15 : id === questId ? 2.2 : 2.3) + g.position.y, g.position.z]; }; // gossip bubble tail touches the head
 const hotActive = id => { if (id === 'client') return client.g.visible;
   if (HOT[id].lock) return !G.roomOpen(S, HOT[id].lock);
   if (HOT[id].look) return lookNow === HOT[id].look;                   // a thing that only exists on that day's look (the well)
   return G.roomOpen(S, roomAt(...HOT[id].at)?.id); }; // a closed room's people and things are out of reach
-const hotAt = id => { if (id === 'client') return [client.g.position.x + .5, client.g.position.z + .6];
-  const n = NPCS[id]; if (n?.quest) { const p = n.c.g.position; return [p.x + .5, p.z + .6]; }
-  if (n?.wander && n.wander.phase !== 'desk') { const p = n.c.g.position, s = n.wander.seat; return s && n.wander.phase === 'sitting' ? [s[3], s[4]] : [p.x + .5, p.z + .6]; }
+const hotAt = id => { if (id === 'client') return [client.g.position.x + .7, client.g.position.z + .75];
+  const n = NPCS[id]; if (n?.quest) { const p = n.c.g.position; return [p.x + .7, p.z + .75]; }
+  if (n?.wander && n.wander.phase !== 'desk') { const p = n.c.g.position, s = n.wander.seat; return s && n.wander.phase === 'sitting' ? [s[3], s[4]] : [p.x + .7, p.z + .75]; }
   return HOT[id].at; };
 const ICON = Wd.ICON;
 const PEOPLE = new Set(['boss','hang','linh','minh','tung','letan','client']); // no name tags over people
@@ -820,7 +820,8 @@ const GOSSIP = {
 };
 const taken = new Set();
 ['hang','linh','minh','tung'].forEach((id, i) => NPCS[id].wander = {phase:'desk', timer:3 + i*5, seat:null, hold:0});
-function sitPose(c, on, y = -.23){ if (!on) return; c.parts.legL.rotation.x = c.parts.legR.rotation.x = -Math.PI/2; c.parts.armL.rotation.x = c.parts.armR.rotation.x = -.5; c.g.position.y = y; }
+// seat = height of the seat under the hips (canteen stool .45, office and meeting chairs .53)
+function sitPose(c, on, seat = .45){ if (!on) return; c.parts.legL.rotation.x = c.parts.legR.rotation.x = -Math.PI/2; c.parts.armL.rotation.x = c.parts.armR.rotation.x = -.5; c.g.position.y = seat - c.hip; }
 // Afternoon (before the free action): the engine's roll decides who sits in the canteen; they stay until the action is used.
 const canteenPlan = () => S.part === 'afternoon' && !S.today.action && G.roomOpen(S, 'canteen') ? S.today.canteen : null;
 function updateSeniors(dt){
@@ -846,7 +847,7 @@ function updateSeniors(dt){
     animateWalk(c, moving, dt);
     if (w.phase === 'sitting') w.sitAge += dt;
     sitPose(c, w.phase === 'sitting');
-    sitPose(c, w.phase === 'desk' && w.hold <= 0, -.15); // seated at their own office chair
+    sitPose(c, w.phase === 'desk' && w.hold <= 0, .53); // seated at their own office chair
   }
 }
 
@@ -904,7 +905,7 @@ function updateQuests(dt){
     else if (q.phase === 'returning') { moving = stepChar(n.c, dt, 2.4);
       if (!moving) { n.c.g.position.set(n.at[0], 0, n.at[1]); n.c.g.rotation.y = n.rot; delete n.quest; if (n.wander) { n.wander.phase = 'desk'; n.wander.timer = rand(8, 18); } } }
     animateWalk(n.c, moving, dt);
-    if (q.phase === 'seated') sitPose(n.c, true, q.spot?.y ?? -.15);                  // on a meeting-room chair
+    if (q.phase === 'seated') sitPose(n.c, true, q.spot?.y ?? .53);                  // on a meeting-room chair
   }
 }
 function summonClient(spot){
@@ -1033,7 +1034,7 @@ function dressForToday(){
   const color = G.rulesToday(S, CARDS).shirt || null, who = [['boss', NPCS.boss.c], ['hang', NPCS.hang.c], ['linh', NPCS.linh.c], ['minh', NPCS.minh.c], ['tung', NPCS.tung.c], ['letan', NPCS.letan.c], ['player', player]];
   for (const [id, c] of who) {
     const own = (id === 'player' ? P.shirt : NPCS[id].look.shirt) || P.shirt, wear = color && (id !== 'player' || S.today.specialPick === 0) ? color : own;
-    c.g.traverse(m => { if (!m.isMesh || !m.material?.color) return; m.userData.shirt ??= m.material.color.getHexString() === new T.Color(own).getHexString(); if (m.userData.shirt) m.material = mat(wear); });
+    c.g.traverse(m => { if (m.isMesh && m.userData.shirt) m.material = mat(wear); });   // makeChar marks the shirt meshes
   }
 }
 // rules.look "gieng_than" (event Giếng thần, Lily 19/11): the floor of 2005 seen through an old legend. Dusk indigo sky, warm lantern
@@ -1243,7 +1244,7 @@ const focusZoom = () => Math.max(1, Math.min(cam.right / focusHalf[0], cam.top /
 const facing = (x, z, [tx, tz]) => Math.atan2(tx - x, tz - z);
 // shared by the verdict and the canteen opening: walk a group to their spots (or place them at once), then resolve
 // assign: [[3D id, {x, z, rot, sit?, y?}]]; ps: the player's spot {x, z, rot, sit?, teleport?}
-let sceneSit = null; // player sits on a chair/stool during a scene (value = body height offset)
+let sceneSit = null; // player sits on a chair/stool during a scene (value = seat height, see sitPose)
 function sceneGroup(assign, ps, instant){
   return new Promise(resolve => {
     for (const [id, spot] of assign) {
@@ -1261,7 +1262,7 @@ function sceneGroup(assign, ps, instant){
       const all = Object.values(NPCS).every(n => !n.quest || n.quest.phase !== 'going') && !player.path.length;
       if (!all && !late) return setTimeout(done, 200);
       for (const n of Object.values(NPCS)) if (n.quest?.phase === 'going') n.c.path = [];
-      player.path = []; player.g.position.set(ps.x, 0, ps.z); player.g.rotation.y = ps.rot; sceneSit = ps.sit ? (ps.y ?? -.23) : null;
+      player.path = []; player.g.position.set(ps.x, 0, ps.z); player.g.rotation.y = ps.rot; sceneSit = ps.sit ? (ps.y ?? .45) : null;
       setTimeout(resolve, instant ? 50 : 700);
     };
     done();
@@ -1283,7 +1284,7 @@ const SPOTS = {
   elevator:        {name:'Trước thang máy', player:{x:10.7, z:1.8, rot:Math.PI/2}, people:[{x:11.8, z:1.8, rot:-Math.PI/2}], focus:[11.3, 2.4], half:[6.4, 5]},
   copier:          {name:'Máy photo, phòng Intern', player:{x:1.4, z:11.2, rot:Math.PI}, people:[{x:2.5, z:11.4, rot:-Math.PI*.7}], focus:[2.4, 11], half:[6.4, 5]},
   lobby_crowd:     {name:'Sảnh', player:{x:13.2, z:3.6, rot:0}, crowd:true, focus:[13.4, 3.6], half:[7, 5.4]},
-  canteen_tables:  {name:'Căng tin', player:{seat:4, y:-.23}, seats:[6, 7, 8, 3].map(k => ({seat:k, y:-.23})), focus:[21, 12.6], half:[8.2, 6.4], phoneShift:1.2},
+  canteen_tables:  {name:'Căng tin', player:{seat:4, y:.45}, seats:[6, 7, 8, 3].map(k => ({seat:k, y:.45})), focus:[21, 12.6], half:[8.2, 6.4], phoneShift:1.2},
   boss_room:       {name:'Phòng sếp', player:{x:4.9, z:4.3, rot:-Math.PI/2}, people:[{x:3.7, z:4.3, rot:Math.PI/2}], focus:[3.8, 3.4], half:[6.4, 5]},
   canteen_counter: {name:'Quầy cơm cô Ba', player:{x:20, z:10.5, rot:Math.PI}, people:[{keep:true}], focus:[20, 10], half:[6.4, 5]},
   // partner slots (placements.json): only an anchor on the wall, no scene
@@ -1310,9 +1311,9 @@ function stageAssign(sp, people){
 // spots in a ring around a point, walkable and not on top of each other (the faint scene and the fire alarm)
 function ringAround(P, n){
   const spots = [];
-  for (const r of [1.2, 1.8, 2.4]) for (let k = 0; k < 8 && spots.length < n; k++) {
-    const a = k * Math.PI / 4 + .4, x = P.x + Math.cos(a) * r, z = P.z + Math.sin(a) * r;
-    if (free(x, z) && !spots.some(q => Math.hypot(q.x - x, q.z - z) < .8)) spots.push({x, z, rot: Math.atan2(P.x - x, P.z - z)});
+  for (const r of [1.5, 2.2, 2.9, 3.6]) for (let k = 0; k < 16 && spots.length < n; k++) {   // voxel heads are ~.95 wide: keep 1.05 between people so heads never touch
+    const a = k * Math.PI / 8 + .4, x = P.x + Math.cos(a) * r, z = P.z + Math.sin(a) * r;
+    if (free(x, z) && !spots.some(q => Math.hypot(q.x - x, q.z - z) < 1.05)) spots.push({x, z, rot: Math.atan2(P.x - x, P.z - z)});
   }
   return spots;
 }
@@ -1497,7 +1498,7 @@ function makeMirror(host){
   sc.add(new T.HemisphereLight('#ffffff', '#c9b89b', 1.6));
   const key = new T.DirectionalLight('#fff5e3', 1.8); key.position.set(3, 6, 8); sc.add(key);
   const fit = () => { const w = host.clientWidth || 1, h = host.clientHeight || 1; r.setSize(w, h, false); cm.aspect = w / h; cm.updateProjectionMatrix(); };
-  const frame = () => { cm.position.set(0, 1.4, 5.3); cm.lookAt(0, 1.1, 0); };
+  const frame = () => { cm.position.set(0, 1.2, 6.6); cm.lookAt(0, .95, 0); };   // voxel body: whole person in view, the big head clear of the arch, feet not cut on phones
   host.prepend(r.domElement); frame(); fit();
   const ro = new ResizeObserver(fit); ro.observe(host);
   let me = null, dragX = null, hold = 0, raf = 0, t0 = performance.now();
@@ -1520,7 +1521,7 @@ function makeMirror(host){
       try {
         me.g.rotation.y = 0; sc.background = new T.Color('#fff2c4');
         r.setPixelRatio(1); r.setSize(320, 400, false); cm.aspect = .8; cm.updateProjectionMatrix();
-        cm.position.set(0, 1.72, 3.6); cm.lookAt(0, 1.52, 0); r.render(sc, cm);
+        cm.position.set(0, 1.3, 4.1); cm.lookAt(0, 1.15, 0); r.render(sc, cm);   // head and shoulders
         return cv.toDataURL('image/jpeg', .85);
       } catch { return null; }
     },
@@ -1685,13 +1686,13 @@ function tick(now){
   }
   animateWalk(player, moving, dt);
   if (sceneSit != null) sitPose(player, true, sceneSit);
-  if (fainted) player.g.position.y = .22;                                        // lying on the floor, not through it
+  if (fainted) player.g.position.y = player.lie;                                        // lying on the floor, not through it
   updateClient(dt);
   updateSeniors(dt);
   updateQuests(dt);
   for (const [id, n] of Object.entries(NPCS)) if (!n.wander && !n.quest) { if (engaged(id)) faceP(n.c); else n.c.g.rotation.y = n.rot; }
   const br = reduce ? 0 : Math.sin(now/600)*.015;
-  Object.values(NPCS).forEach((n, i) => n.c.parts.head.position.y = 1.56 + (i%2 ? br : -br));
+  Object.values(NPCS).forEach((n, i) => n.c.parts.head.position.y = n.c.headY + (i%2 ? br : -br));
   if (toastT > 0) { toastT -= dt; if (toastT <= 0) toastEl.hidden = true; }
   else if (toastQueue.length) toast(toastQueue.shift());
   // staged midday event (cards.json when "midday"): once the morning is over and nothing is on screen, it starts by itself
