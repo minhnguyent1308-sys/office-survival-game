@@ -249,10 +249,9 @@ box(6.75, 6.5, 1.55, 1.1, .06, .5, P.ink, {round:0, cast:false, hot:'exit', mate
 const PLAYER_BASE = {}; // what you wear here
 let player = makeChar(Wd.playerLook(G.DEFAULT_LOOK, PLAYER_BASE));
 const ENTRY = [5.6, 7.0];
-const owner = makeChar({shirt:TEA.pink, pants:P.pants, hair:'#2b1d16', style:'ponytail', apron:true, clip:P.yellow});
+const owner = makeChar({shirt:TEA.pink, pants:P.pants, hair:'#2b1d16', style:'ponytail', apron:true, clip:P.yellow, blush:true});
 owner.g.position.set(2.8, 0, .95); tagHot(owner, 'counter');
-const shipper = makeChar({shirt:P.green, pants:'#2f4a3a', hair:'#2b1d16', style:'short'});
-{ const helmet = new T.Mesh(new T.SphereGeometry(.36, 16, 12, 0, Math.PI*2, 0, Math.PI/2), mat(P.green)); helmet.position.y = .18; shipper.parts.head.add(helmet); }
+const shipper = makeChar({shirt:P.green, pants:'#2f4a3a', hair:'#2b1d16', style:'short', helmet:P.green});
 shipper.g.position.set(5.0, 0, 7.15); shipper.g.rotation.y = Math.PI; tagHot(shipper, 'shipper');
 
 /* ---------- Hotspots: where the player stands + what they read ---------- */
@@ -284,7 +283,7 @@ const anchorOf = id => { const c = id === 'guest' ? guest?.c : id === 'regular' 
   if (id === 'guest' || id === 'regular') return c?.g.visible ? [c.g.position.x, c.g.position.y + 2.3, c.g.position.z] : [-99, 0, -99];
   return ANCHOR[id]; };
 const hotAt = id => { const c = id === 'guest' ? guest?.c : id === 'regular' ? regular?.c : null;
-  if (id === 'guest' || id === 'regular') return c?.g.visible ? [c.g.position.x + .3, c.g.position.z + .55] : [-99, -99];
+  if (id === 'guest' || id === 'regular') return c?.g.visible ? [c.g.position.x + .7, c.g.position.z + .75] : [-99, -99];
   return HOT[id].at; };
 const ICON = Wd.ICON;
 
@@ -467,7 +466,7 @@ async function backToOffice(){
 
 /* ---------- Arrival: the office's card fades out on the shop ---------- */
 wearLook(G.lookOf(S));
-if (eventCard()) { arrivedForEvent = true; spawnGuest(eventCard().npc); player.g.position.set(2.5, 0, 2.55); player.g.rotation.y = Math.PI; }
+if (eventCard()) { arrivedForEvent = true; spawnGuest(eventCard().npc); player.g.position.set(2.0, 0, 2.55); player.g.rotation.y = Math.PI; }   // 1.5 from the guest: voxel heads side by side
 else { spawnRegular(); player.g.position.set(ENTRY[0], 0, ENTRY[1]); planPath(player, 4.2, 3.0); }
 afterChange();
 if (location.hash) history.replaceState(null, '', location.pathname + location.search);
