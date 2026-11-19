@@ -70,6 +70,8 @@ body{background:var(--ground);color:var(--ink);font-family:var(--font-body);over
 .where .kpi{font-size:12px;color:var(--ink);max-width:250px;line-height:1.35} /* weekly KPI from anh Tuấn (nhip-choi.json) */
 .where .kpi.done{color:var(--pin);font-weight:600}
 .where .event{font-size:12px;font-weight:600;color:var(--ink);max-width:250px;line-height:1.35} /* live event (su-kien.json): name, end date, shards */
+body.look-gieng_than{--accent:#b3322b} /* Giếng thần day: crimson accent, same tokens */
+body.look-gieng_than .where .today{background:#e9dcf7}
 .where .today{font-size:12px;font-weight:600;color:var(--ink);background:var(--yellow);border-radius:6px;padding:1px 6px;justify-self:start;max-width:250px} /* special day */
 .stats{padding:8px 12px;display:grid;grid-template-columns:auto 92px 30px;gap:5px 8px;align-items:center;font-size:12px}
 .stats .bar{height:8px;border-radius:99px;background:var(--rule);border:1.5px solid var(--ink);overflow:hidden;position:relative}
@@ -203,7 +205,7 @@ const cam = new T.OrthographicCamera(-1,1,1,-1,0.1,200);
 const camOffset = new T.Vector3(20, 19, 20);
 const CENTER = new T.Vector3(W/2, 0, 8.5);
 const camTarget = CENTER.clone();
-scene.add(new T.HemisphereLight('#ffffff', '#c9b89b', 1.6));
+const hemi = new T.HemisphereLight('#ffffff', '#c9b89b', 1.6); scene.add(hemi);
 const sun = new T.DirectionalLight('#fff5e3', 2.15);
 sun.position.set(W/2 + 8, 18, D/2 - 6); sun.target.position.set(W/2, 0, D/2); scene.add(sun.target);
 sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0006;
@@ -1002,15 +1004,61 @@ function showKpi(k){
              }}]});
 }
 // "Thứ Sáu áo cam": colleagues (and you, if you said yes) wear the day's shirt colour; any other day, back to their own.
-// rules.look tints the whole floor for the day (Giếng thần: an old photo of 2005)
-const DAY_LOOK = {'2005': 'sepia(.6) saturate(.8) contrast(.95)'};
+// rules.look dresses the whole floor for the day (dayLook below)
 function dressForToday(){
-  renderer.domElement.style.filter = DAY_LOOK[G.rulesToday(S, CARDS).look] || '';
+  dayLook(G.rulesToday(S, CARDS).look);
   const color = G.rulesToday(S, CARDS).shirt || null, who = [['boss', NPCS.boss.c], ['hang', NPCS.hang.c], ['linh', NPCS.linh.c], ['minh', NPCS.minh.c], ['tung', NPCS.tung.c], ['letan', NPCS.letan.c], ['player', player]];
   for (const [id, c] of who) {
     const own = (id === 'player' ? P.shirt : NPCS[id].look.shirt) || P.shirt, wear = color && (id !== 'player' || S.today.specialPick === 0) ? color : own;
     c.g.traverse(m => { if (!m.isMesh || !m.material?.color) return; m.userData.shirt ??= m.material.color.getHexString() === new T.Color(own).getHexString(); if (m.userData.shirt) m.material = mat(wear); });
   }
+}
+// rules.look "gieng_than" (event Giếng thần, Lily 19/11): the floor of 2005 seen through an old legend. Dusk indigo sky, warm lantern
+// light, crimson uniforms (rules.shirt), paper lanterns over the corridor, the stone well in the lobby with glowing shards (decor only, nothing to click) above it.
+// Inspired by the mood only: no names, characters or logos from any existing work. Built once, shown only on that day.
+const LOOKS3D = {gieng_than: {bg:'#2e2748', sky:'#d9c8ff', ground:'#6b3f3a', hemi:1.25, sun:'#ffbf80', sunI:1.9, accent:'#b3322b', build:buildLegend}};
+const DEFAULT_LOOK = {bg:scene.background.clone(), sky:hemi.color.clone(), ground:hemi.groundColor.clone(), hemi:hemi.intensity, sun:sun.color.clone(), sunI:sun.intensity};
+let lookNow = null; const lookProps = {};
+function dayLook(id){
+  const L = LOOKS3D[id] || null; if ((L ? id : null) === lookNow) return; lookNow = L ? id : null;
+  const v = L || DEFAULT_LOOK;
+  scene.background.set(v.bg); hemi.color.set(v.sky); hemi.groundColor.set(v.ground); hemi.intensity = v.hemi; sun.color.set(v.sun); sun.intensity = v.sunI;
+  for (const [k, g] of Object.entries(lookProps)) g.visible = k === lookNow;
+  if (L && !lookProps[id]) { lookProps[id] = L.build(); scene.add(lookProps[id]); }
+  for (const k of Object.keys(LOOKS3D)) document.body.classList.toggle('look-' + k, k === lookNow);   // page tokens follow (CSS body.look-…)
+}
+const legendShards = [], WELL = [10.05, 2.35];   // lobby, back left corner between the plant and the sofa
+function buildLegend(){
+  const [wx, wz] = WELL, g = new T.Group(), add = (geo, m, x, y, z) => { const o = new T.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; };
+  const stone = mat('#8d8a96'), stoneDark = mat('#6c6878'), wood = mat('#6b3b22'), roof = mat('#3b2a3f'), rope = mat('#e9dcb8');
+  const glow = (c, i = 1.2) => new T.MeshStandardMaterial({color:c, emissive:c, emissiveIntensity:i, roughness:.4});
+  // the well: a ring of stones, a wooden frame with a little roof, blue light rising from inside (lobby, right corner)
+  add(new T.CylinderGeometry(.62, .66, .55, 18, 1, true), stone, wx, .28, wz).material.side = T.DoubleSide;
+  add(new T.TorusGeometry(.62, .07, 8, 24), stoneDark, wx, .56, wz).rotation.x = Math.PI / 2;
+  add(new T.CircleGeometry(.58, 24), glow('#6fd2ff', 1.6), wx, .45, wz).rotation.x = -Math.PI / 2;
+  for (const dx of [-.62, .62]) add(new T.BoxGeometry(.09, 1.25, .09), wood, wx + dx, .62, wz);
+  add(new T.BoxGeometry(1.45, .08, .1), wood, wx, 1.2, wz);
+  const r1 = add(new T.BoxGeometry(1.6, .06, .62), roof, wx, 1.36, wz - .2); r1.rotation.x = .55;
+  const r2 = add(new T.BoxGeometry(1.6, .06, .62), roof, wx, 1.36, wz + .2); r2.rotation.x = -.55;
+  add(new T.CylinderGeometry(.11, .11, .1, 10), wood, wx, .95, wz).rotation.z = Math.PI / 2;
+  add(new T.TorusGeometry(.66, .025, 6, 28), rope, wx, .4, wz).rotation.x = Math.PI / 2;               // a sacred rope around the stones
+  for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2;                                          // paper tassels on the rope
+    add(new T.BoxGeometry(.07, .2, .01), mat('#fdfdfb'), wx + Math.cos(a) * .67, .27, wz + Math.sin(a) * .67).rotation.y = -a; }
+  const well = new T.PointLight('#7fd4ff', 2.2, 4.5, 1.6); well.position.set(wx, .9, wz); g.add(well);
+  // five shards of the lost report, floating above the well
+  for (let i = 0; i < 5; i++) { const m = add(new T.OctahedronGeometry(.11), glow('#e58bd8', 1.4), wx, 1.9, wz); m.castShadow = false; legendShards.push({m, a: i / 5 * Math.PI * 2}); }
+  // paper lanterns over the corridor between the rooms
+  for (const x of [2.5, 5.5, 8.5, 13, 16, 19.5, 23, 26]) {
+    add(new T.CylinderGeometry(.008, .008, .5, 4), mat(P.ink), x, 2.85, 7);
+    add(new T.CylinderGeometry(.1, .1, .05, 12), mat(P.ink), x, 2.6, 7);
+    add(new T.SphereGeometry(.22, 14, 10).scale(1, 1.25, 1), glow('#e8473e', .9), x, 2.33, 7);
+    add(new T.CylinderGeometry(.1, .1, .05, 12), mat(P.ink), x, 2.05, 7);
+  }
+  return g;
+}
+function animateLook(t){
+  if (lookNow !== 'gieng_than' || reduce) return;
+  for (const s of legendShards) { const a = s.a + t * .6; s.m.position.x = WELL[0] + Math.cos(a) * .45; s.m.position.z = WELL[1] + Math.sin(a) * .45; s.m.position.y = 1.85 + Math.sin(t * 2 + s.a) * .08; s.m.rotation.y = t * 1.5; }
 }
 // 08:29 room opening (MO_CANTEEN, MO_MEETING): a modal announcement, then the normal morning
 function showUnlock(u){
@@ -1654,6 +1702,7 @@ function tick(now){
     if (cutscene) el.hidden = true;                                                     // verdict scene: no prompts over the meeting
   }
   leaveBtn.hidden = !(S.part === 'evening' && sheet.hidden && modalWrap.hidden && collEl.hidden);
+  animateLook(performance.now() / 1000);
   if (!opening) renderer.render(scene, cam);                                  // an opening screen covers the floor
   requestAnimationFrame(tick);
 }
