@@ -53,6 +53,8 @@ const cases = [
   ['sáng có sự kiện giữa buổi', s => fresh(s) && s.today.eventId, 'now'],
   ['sáng ngày 40', s => fresh(s) && s.day === G.TOTAL_DAYS, 'now'],
   ['ngày 1 (chị Mai hướng dẫn)', s => s.day === 1 && s.part === 'morning', 'later'],
+  ['tối ngày 1 ở phòng trọ', s => s.day === 1 && s.part === 'evening' && G.isAtHome(s), 'later'],
+  ['sáng ngày 2 (mở lại save)', s => fresh(s) && s.day === 2, 'now'],
   ['buổi chiều', s => s.part === 'afternoon' && s.day > 2, 'later'],
   ['tối hôm trước ngày đặc biệt khác', s => s.part === 'evening' && s.week?.specialDay === s.day + 1, 'later'],
   ['tối hôm trước ngày mini-game', s => s.part === 'evening' && G.isMinigameDay(s.day + 1) && s.day + 1 < G.TOTAL_DAYS, 'later'],
@@ -73,7 +75,8 @@ for (const [name, pred, want] of cases) {
   }
   const {seen, well} = playToWell(s, rng);
   ok(well && well.extra, `  ${name}: gặp Giếng thần ${well ? `sau ${well.mornings} buổi sáng, ngày ${well.day} (ngoài lịch)` : 'KHÔNG'}`);
-  if (r === 'later') ok(well && well.mornings === (part === 'morning' ? 2 : 1), `  ${name}: đúng sáng kế tiếp ở văn phòng`);
+  if (r === 'later' && day > 1) ok(well && well.mornings === (part === 'morning' ? 2 : 1), `  ${name}: đúng sáng kế tiếp ở văn phòng`);
+  if (r === 'later' && day === 1) ok(well && well.day === 3 && well.mornings === (part === 'morning' ? 3 : 2), `  ${name}: chơi xong ngày 1 và ngày 2 rồi mới gặp, trước ngày 3`);
   for (let g = 0; g < 10 && s.part !== 'over' && !(s.part === 'morning' && !s.today.extra); g++) step(s, rng);   // the well day ends
   // the held day comes back whole: same day number, same room opening / special / mini-game / midday event / morning card
   if (r === 'now') { const back = s.today;
@@ -92,6 +95,9 @@ for (const [name, pred, want] of cases) {
   for (let g = 0; g < 5 && s.part === 'morning'; g++) step(s, rng); ok(s.part === 'afternoon', 'ngày Giếng thần trước ngày 40 vẫn có buổi chiều');
   for (let g = 0; g < 10 && G.isExtraDay(s); g++) step(s, rng); ok(s.day === G.TOTAL_DAYS && !s.ending && G.isLastDay(s), 'sau đó mới tới ngày 40 thật');
   for (let g = 0; g < 20 && s.part !== 'over'; g++) step(s, rng); ok(s.ending === 'review' || s.ending === 'burnout' || s.ending === 'fired', 'ngày 40 thật kết thúc ván như cũ: ' + s.ending); }
+{ const f = find(s => s.day === 1 && s.part === 'morning'); const {s, rng} = f; G.queueEventDay(s, CARDS, WELL, rng);
+  for (let g = 0; g < 10 && s.day < 2; g++) step(s, rng);
+  ok(s.day === 2 && !G.isExtraDay(s) && G.queueEventDay(s, CARDS, WELL, rng) === 'later' && !G.isExtraDay(s), 'ván mới: sáng ngày 2 mở lại trang vẫn là ngày 2 thường, giếng chờ đến trước ngày 3'); }
 { const s = G.tryDay(CARDS, WELL); ok(s.today.extra && G.todaysSpecial(s, CARDS)?.id === WELL && s.day === 11, 'ván nháp ?thu=gieng_than mở đúng ngày Giếng thần'); }
 { G.useEvents(EV, '2026-12-02'); const f = find(s => fresh(s) && s.day === 9);
   ok(G.queueEventDay(f.s, CARDS, WELL, f.rng) === null && !f.s.today.extra, 'hết event (2/12): không có Giếng thần'); G.useEvents(EV, '2026-11-20'); }
