@@ -1553,7 +1553,7 @@ async function runOpening(){
 async function welcomeScreen(){
   openingMode('welcome');
   const resume = hadSave ? `${G.dayName(S)} · ${G.weekdayName(S.day)}${S.name ? ' · ' + S.name : ''}` : null;
-  if (await Op.welcome(OPENING, resume) === 'new') return runOpening();
+  if (await Op.welcome(OPENING, resume) === 'new') { if (hadSave) PROFILE.forgetEvents(); return runOpening(); }   // "Ván mới" twice = delete the run: its events come back
   if (!S.name) { S.name = await Op.nameForm(OPENING); save(); }  // saves from before the opening have no name yet
   openingMode(null); resumeRun();
 }
@@ -1619,7 +1619,7 @@ hbBtn.onclick = () => {
   }
   let armed = false;
   modal({eyebrow:'Xong cả 10 mới được lên Junior', title:'Sổ tay nhân viên mới', nodes:[list], actions:[
-    {label:'Chơi lại từ đầu', ghost:true, onClick:e => { if (armed) return restart(); armed = true; e.target.textContent = 'Bấm lần nữa để xóa ván này'; }},
+    {label:'Chơi lại từ đầu', ghost:true, onClick:e => { if (armed) { PROFILE.forgetEvents(); return restart(); } armed = true; e.target.textContent = 'Bấm lần nữa để xóa ván này'; }},
     {label:'Đóng', onClick:closeModal}]});
 };
 document.getElementById('open-friends').onclick = () => {
