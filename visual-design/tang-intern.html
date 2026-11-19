@@ -612,7 +612,7 @@ const HOT = {
   client:   {at:[0,0],       tag:'Khách hàng', eyebrow:'Nhân vật ngẫu nhiên', title:'Khách hàng', dynamic:true, intro:'"Chào em, anh là khách hàng bên đối tác."'},
 };
 const ANCHOR = {well:[WELL[0],1.7,WELL[1]], desk:[4.2,2.0,10.7], copier:[1.3,1.6,9.6], elevator:[11.3,2.95,.1], water:[22.7,1.9,8.45], lock_canteen:[17,1.25,8], lock_canteen2:[14,1.25,12], lock_meeting:[27.2,1.25,6]};
-const anchorOf = id => { if (ANCHOR[id]) return ANCHOR[id]; const g = (id === 'client' ? client : NPCS[id].c).g; return [g.position.x, (isGossip(id) ? 2.15 : id === questId ? 2.2 : 2.3) + g.position.y, g.position.z]; }; // gossip bubble tail touches the head
+const anchorOf = id => { if (ANCHOR[id]) return ANCHOR[id]; const g = (id === 'client' ? client : NPCS[id].c).g; return [g.position.x, (isGossip(id) ? Wd.TAG_Y - .15 : Wd.TAG_Y) + g.position.y, g.position.z]; }; // gossip bubble tail touches the head
 const hotActive = id => { if (id === 'client') return client.g.visible;
   if (HOT[id].lock) return !G.roomOpen(S, HOT[id].lock);
   if (HOT[id].look) return lookNow === HOT[id].look;                   // a thing that only exists on that day's look (the well)
@@ -1498,7 +1498,7 @@ function makeMirror(host){
   sc.add(new T.HemisphereLight('#ffffff', '#c9b89b', 1.6));
   const key = new T.DirectionalLight('#fff5e3', 1.8); key.position.set(3, 6, 8); sc.add(key);
   const fit = () => { const w = host.clientWidth || 1, h = host.clientHeight || 1; r.setSize(w, h, false); cm.aspect = w / h; cm.updateProjectionMatrix(); };
-  const frame = () => { cm.position.set(0, 1.2, 6.6); cm.lookAt(0, .95, 0); };   // voxel body: whole person in view, the big head clear of the arch, feet not cut on phones
+  const frame = () => { const k = Wd.BODY_SCALE; cm.position.set(0, 1.2 * k, 6.6 * k); cm.lookAt(0, .95 * k, 0); };   // voxel body: whole person in view, the big head clear of the arch, feet not cut on phones
   host.prepend(r.domElement); frame(); fit();
   const ro = new ResizeObserver(fit); ro.observe(host);
   let me = null, dragX = null, hold = 0, raf = 0, t0 = performance.now();
@@ -1521,7 +1521,7 @@ function makeMirror(host){
       try {
         me.g.rotation.y = 0; sc.background = new T.Color('#fff2c4');
         r.setPixelRatio(1); r.setSize(320, 400, false); cm.aspect = .8; cm.updateProjectionMatrix();
-        cm.position.set(0, 1.3, 4.1); cm.lookAt(0, 1.15, 0); r.render(sc, cm);   // head and shoulders
+        const k = Wd.BODY_SCALE; cm.position.set(0, 1.3 * k, 4.1 * k); cm.lookAt(0, 1.15 * k, 0); r.render(sc, cm);   // head and shoulders
         return cv.toDataURL('image/jpeg', .85);
       } catch { return null; }
     },
@@ -1700,7 +1700,7 @@ function tick(now){
   if (ev) { evIdle += dt; if (evIdle > 1.2) { evIdle = 0; runStage(ev); } } else evIdle = 0;
   updateSlots();
   updateCoach();
-  if (meBubble > 0) { meBubble -= dt; meBubbleEl.hidden = !place(meBubbleEl, pos.x, 2.25 + pos.y, pos.z); } else meBubbleEl.hidden = true;
+  if (meBubble > 0) { meBubble -= dt; meBubbleEl.hidden = !place(meBubbleEl, pos.x, Wd.TAG_Y + pos.y, pos.z); } else meBubbleEl.hidden = true;
   // HUD room name
   const room = roomAt(pos.x, pos.z), rn = room ? room.name : 'Hành lang';
   if (rn !== lastRoom) { lastRoom = rn; document.getElementById('room-name').textContent = 'Tầng 1 · ' + rn; if (room) { G.recordRoom(S, room.id); afterChange(); } }
