@@ -267,9 +267,9 @@ gate('canteen', 16, 7.92, 18, 8.08, 4); gate('canteen', 13.92, 11, 14.08, 13, 0)
 
 /* ---------- Boss room ---------- */
 sign(6.95, 2, 2.3, .1, 2, .4, 'TRƯỞNG PHÒNG', P.dark, '#fff', 0, 60, 640, 120);
-box(1.5, 1.8, 0, 2.6, 1.1, .92, P.woodDark, {block:true});
-box(1.6, 1.95, .92, .9, .6, .05, P.gold);
-box(3.4, 2.1, .92, .22, .22, .26, P.gold, {round:.05});
+box(1.5, 1.8, 0, 2.6, 1.1, .62, P.woodDark, {block:true});   // 30 cm lower than a work desk so anh Tuấn's face shows (Lily 20/11)
+box(1.6, 1.95, .62, .9, .6, .05, P.gold);
+box(3.4, 2.1, .62, .22, .22, .26, P.gold, {round:.05});
 box(2.2, .55, 0, 1.2, .8, .55, P.leather, {block:true});
 box(2.2, .4, .55, 1.2, .25, 1.15, P.leather);
 box(0, 3.4, 0, .9, 1.8, .45, P.leather, {block:true});
@@ -285,10 +285,10 @@ const doorX = [doorL.position.x, doorR.position.x];
 sign(10.95, .08, 2.4, .7, .03, .16, '▲ 1', P.dark, P.yellow, 4, 90, 256, 64);
 box(12.75, .04, 1.05, .14, .04, .26, P.dark, {round:0});
 sign(13.3, .02, 1.5, 4.5, .04, .9, 'TẬP ĐOÀN DEADLINE', P.ink, P.yellow, 4, 92, 1024, 180);
-box(14.0, 2.8, 0, 3.5, .8, 1.05, P.paper, {block:true, hot:'letan'});   // reception desk
-box(13.95, 2.75, 1.05, 3.6, .9, .07, P.wood);
-box(16.7, 3.1, 1.12, .2, .2, .12, P.gold, {round:.05});                // bell
-box(14.3, 2.95, 1.12, .5, .35, .04, P.paper, {round:0});                // guest book
+box(14.0, 2.8, 0, 3.5, .8, .75, P.paper, {block:true, hot:'letan'});   // reception desk, low enough to see chị Mai's face (Lily 20/11)
+box(13.95, 2.75, .75, 3.6, .9, .07, P.wood);
+box(16.7, 3.1, .82, .2, .2, .12, P.gold, {round:.05});                // bell
+box(14.3, 2.95, .82, .5, .35, .04, P.paper, {round:0});                // guest book
 box(9.1, 4.1, 0, .9, 1.8, .45, P.blue, {block:true});                    // sofa against the left wall
 box(9.1, 4.1, .45, .3, 1.8, .45, P.blue);
 plant(9.4, .3); plant(17.3, .3, .8);
@@ -335,9 +335,9 @@ desk(7.8, 14.4, 1); box(7.9, 14.5, .92, .3, .3, .3, P.dark, {round:.04});
 plant(11.1, 8.4, .8); plant(11.1, 17.1, .8);
 
 /* ---------- Canteen ---------- */
-box(18.4, 8.95, 0, 3.2, .8, .95, P.paper, {block:true, hot:'chef'});   // counter, chef stands behind it
-box(18.35, 8.9, .95, 3.3, .9, .06, P.metal);
-[[18.6,P.red],[19.6,P.yellow],[20.6,P.green]].forEach(([x,c]) => box(x, 9.1, 1.01, .9, .6, .12, c, {round:.03}));
+box(18.4, 8.95, 0, 3.2, .8, .65, P.paper, {block:true, hot:'chef'});   // counter, chef stands behind it, low enough to see cô Ba's face (Lily 20/11)
+box(18.35, 8.9, .65, 3.3, .9, .06, P.metal);
+[[18.6,P.red],[19.6,P.yellow],[20.6,P.green]].forEach(([x,c]) => box(x, 9.1, .71, .9, .6, .12, c, {round:.03}));
 box(18.5, 8.06, 1.1, .08, .06, 1.3, P.dark, {round:0}); box(21.4, 8.06, 1.1, .08, .06, 1.3, P.dark, {round:0});
 sign(18.4, 8.08, 1.6, 3.2, .05, .7, 'CƠM VĂN PHÒNG 35K', P.yellow, P.ink, 4, 66, 1024, 220);
 // two round tables, three stools each; stools double as seats for gossip
