@@ -13,6 +13,7 @@ export const emptyProfile = () => ({
   badges: [], played: [], best: {},   // best closeness ever per person
   runs: [],            // last 20 finished runs
   ever: {},            // facts the gifts look at: lowPin (5 days with Pin < 20 in one run), burnout
+  // home: the rented room of the last floor-1 run that reached Junior (added when first reached; older profiles have none)
   counters: {runsStarted: 0, runsFinished: 0, secondRuns: 0, shares: 0, lastDay: 0},
 });
 
@@ -38,6 +39,7 @@ export function finish(p, s, endingId) {
   sync(p, s, {badges: []});
   p.endings[endingId] = (p.endings[endingId] || 0) + 1; mark(p, 'e', endingId, s.runId);
   if (endingId === 'burnout') p.ever.burnout = true;
+  if (endingId === 'junior' && s.home) p.home = JSON.parse(JSON.stringify(s.home));   // the room the Junior floor starts from (engine.js startJuniorHome, Lily 22/11)
   p.counters.runsFinished++;
   p.runs.push({id: s.runId, day: s.day, ending: endingId, stats: {...s.stats}, meals: s.counters?.actions?.an_trua_co_ba || 0, gift: s.gift || null});
   if (p.runs.length > 20) p.runs.shift();

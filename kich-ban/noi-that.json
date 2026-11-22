@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "Nội thất phòng trọ (Lily chốt 17/11). Chỉ dùng ở phòng trọ; không món nào cộng chỉ số (perk = ngoại hình, câu thoại, chỗ mèo nằm). Tiền: quà mẹ 200 lúc bắt đầu ván mới, phụ cấp 350 mỗi tối thứ Sáu (ngày 5, 12, 19, 26, 33), thưởng KPI 50 mỗi tuần đạt; save cũ bắt đầu với 0 và phòng trống. Giá tính bằng nghìn đồng: người chăm chỉ (2.150) mua được bất kỳ 10 món. Thêm món mới = thêm một object vào `items` + một hàm dựng cùng tên `model` trong visual-design/noi-that.js. `size` = [rộng x, sâu z] tính bằng ô khi chưa xoay; mặt trước quay về +z (phía camera). `slot`: tên chỗ cố định trong `rooms.<id>.slots` (đồ không đặt tự do), hoặc null = người chơi tự đặt. `max`: số lần mua được (mặc định 1). Phòng là dữ liệu (`rooms`): sau này thêm phòng to hơn (sự kiện chuyển nhà) = thêm một phòng; đồ đã đặt lưu riêng theo phòng trong save: home = {room, owned: {id: số lượng}, placed: {<roomId>: [{id, x, z, rot}]}}. Thùng đồ (Lily 17/11, đổi 21h40): là một món bán trong shop, 40 nghìn, ghim đầu danh sách (`pinned`). Chưa mua thùng: món mới mua đặt ngay vào phòng, chỉ dời chỗ được, không cất được. Có thùng: món đã mua mà chưa đặt trong phòng hiện tại thì nằm trong thùng (= owned trừ placed), không cần lưu riêng; cất vào hay mang ra bao nhiêu lần cũng được, không mất tiền. Bàn học cũng cất được, khi đó laptop về lại sàn. Chuyển nhà sau này: phòng mới bắt đầu với mọi món trong thùng. Đợt 2 (chưa làm): thú cưng trong shop (mèo khác màu, dùng chung hành vi mèo Deadline, đặt tên khi mua); số thú tối đa là spec của từng phòng (`maxPets`, phòng hiện tại 2 tính cả mèo Deadline hay không thì chốt ở đợt 2). Cửa hàng (Lily 17/11): màn catalog tên `shop.name`, dòng hướng dẫn `shop.tagline`, hàng icon theo `shop.categories`; mỗi món có `category`. Thêm nhóm mới = thêm một object vào categories + một icon trong noi-that-xem-truoc.html (sau này là phong-tro.html). `desc`: mô tả hiện ở màn Chợ Trọ khi bấm vào món; `perk`: dòng tác dụng ngắn ngay dưới. Gắn vào game (Lily duyệt 17/11): `box` = id món thùng đồ; `lines` (không bắt buộc) = câu thoại khi bấm vào món đã đặt trong phòng; kệ sách thêm một câu về số huy hiệu. Lá `unlock.card` đã chép sang cards.json (sửa lá thì sửa ở cards.json). Phong cách (Lily 18/11, concept ở visual-design/phong-cach/): `styles` = các bộ đồ; mỗi món thuộc nhiều nhất một bộ. Mua đủ mọi món của bộ (mua, không cần đặt) thì được cờ `badge` một lần, là huy hiệu nhóm \"phong_cach\" trong danh-gia.json (hiện ở mục Phong cách phòng trọ của Bộ sưu tập, anh Tuấn không đọc ở buổi đánh giá). Thêm bộ = thêm một object vào styles + cờ vào flagsBadges của cards.json + huy hiệu, gợi ý ở danh-gia.json + biểu tượng ở bieu-tuong.js. `wall: true` = đồ treo tường: chỉ đặt sát tường (xoay 0 = tường trong, xoay 1 = tường trái), không vướng đồ dưới sàn, không chắn lối đi; chỉ vướng đồ treo tường khác, cửa sổ, cửa ra vào và nhà vệ sinh.",
+  "note": "Nội thất phòng trọ (Lily chốt 17/11). Chỉ dùng ở phòng trọ; không món nào cộng chỉ số (perk = ngoại hình, câu thoại, chỗ mèo nằm). Tiền: quà mẹ 200 lúc bắt đầu ván mới, phụ cấp 350 mỗi tối thứ Sáu (ngày 5, 12, 19, 26, 33), thưởng KPI 50 mỗi tuần đạt; save cũ bắt đầu với 0 và phòng trống. Giá tính bằng nghìn đồng: người chăm chỉ (2.150) mua được bất kỳ 10 món. Thêm món mới = thêm một object vào `items` + một hàm dựng cùng tên `model` trong visual-design/noi-that.js. `size` = [rộng x, sâu z] tính bằng ô khi chưa xoay; mặt trước quay về +z (phía camera). `slot`: tên chỗ cố định trong `rooms.<id>.slots` (đồ không đặt tự do), hoặc null = người chơi tự đặt. `max`: số lần mua được (mặc định 1). Phòng là dữ liệu (`rooms`): sau này thêm phòng to hơn (sự kiện chuyển nhà) = thêm một phòng; đồ đã đặt lưu riêng theo phòng trong save: home = {room, owned: {id: số lượng}, placed: {<roomId>: [{id, x, z, rot}]}}. Thùng đồ (Lily 17/11, đổi 21h40): là một món bán trong shop, 40 nghìn, ghim đầu danh sách (`pinned`). Chưa mua thùng: món mới mua đặt ngay vào phòng, chỉ dời chỗ được, không cất được. Có thùng: món đã mua mà chưa đặt trong phòng hiện tại thì nằm trong thùng (= owned trừ placed), không cần lưu riêng; cất vào hay mang ra bao nhiêu lần cũng được, không mất tiền. Bàn học cũng cất được, khi đó laptop về lại sàn. Chuyển nhà sau này: phòng mới bắt đầu với mọi món trong thùng. Đợt 2 (chưa làm): thú cưng trong shop (mèo khác màu, dùng chung hành vi mèo Deadline, đặt tên khi mua); số thú tối đa là spec của từng phòng (`maxPets`, phòng hiện tại 2 tính cả mèo Deadline hay không thì chốt ở đợt 2). Cửa hàng (Lily 17/11): màn catalog tên `shop.name`, dòng hướng dẫn `shop.tagline`, hàng icon theo `shop.categories`; mỗi món có `category`. Thêm nhóm mới = thêm một object vào categories + một icon trong noi-that-xem-truoc.html (sau này là phong-tro.html). `desc`: mô tả hiện ở màn Chợ Trọ khi bấm vào món; `perk`: dòng tác dụng ngắn ngay dưới. Gắn vào game (Lily duyệt 17/11): `box` = id món thùng đồ; `lines` (không bắt buộc) = câu thoại khi bấm vào món đã đặt trong phòng; kệ sách thêm một câu về số huy hiệu. Lá `unlock.card` đã chép sang cards.json (sửa lá thì sửa ở cards.json). Phong cách (Lily 18/11, concept ở visual-design/phong-cach/): `styles` = các bộ đồ; mỗi món thuộc nhiều nhất một bộ. Mua đủ mọi món của bộ (mua, không cần đặt) thì được cờ `badge` một lần, là huy hiệu nhóm \"phong_cach\" trong danh-gia.json (hiện ở mục Phong cách phòng trọ của Bộ sưu tập, anh Tuấn không đọc ở buổi đánh giá). Thêm bộ = thêm một object vào styles + cờ vào flagsBadges của cards.json + huy hiệu, gợi ý ở danh-gia.json + biểu tượng ở bieu-tuong.js. `wall: true` = đồ treo tường: chỉ đặt sát tường (xoay 0 = tường trong, xoay 1 = tường trái), không vướng đồ dưới sàn, không chắn lối đi; chỉ vướng đồ treo tường khác, cửa sổ, cửa ra vào và nhà vệ sinh. Tầng Junior (Lily 22/11): vào tầng Junior thì ván Junior mang theo căn phòng (đồ, đồ đã đặt, tiền còn lại) của ván tầng 1 gần nhất đạt kết cục Junior (hồ sơ giữ, ho-so.js finish), cộng thưởng lên chức `money.junior.start`; không có thì chỉ giường, laptop và tiền thưởng. Lương Junior `money.junior.weekly` mỗi tối thứ Sáu, không có ngày cuối, thưởng KPI `money.junior.kpiBonus`. Chợ Trọ mở ngay từ ngày 1 của tầng Junior. Món có `floor: \"junior\"` hiện ở Chợ Trọ tầng 1 với nút \"Mở ở tầng Junior\", chỉ mua được ở tầng Junior. `surface` (\"wall\" | \"floor\") = giấy dán tường hoặc sàn: `colors` [tường trái, tường sau] hoặc [ván/ô A, B], `pattern` (tường: tron, soc, cham; sàn: van_go, gach, tham); mua là dán ngay cho phòng đang ở, món cũ vẫn giữ để đổi lại bằng nút Dùng trong Chợ Trọ, không vào thùng. `room` = món chuyển nhà: mua là chuyển ngay sang phòng đó, mọi đồ đã có nằm chờ trong thùng (chưa có thùng thì tự bày ra). Cân bằng: chuyển phòng rộng + 1 tường + 1 sàn + bộ đắt nhất (Trọ tiêu chuẩn 790) = 2.840; thưởng 500 + lương 400 x 6 tuần = 2.900 ở tối thứ Sáu ngày 40 kể cả không đạt KPI nào, và chưa đủ ở ngày 33 kể cả đạt mọi KPI (kiem-tra-noi-that.mjs kiểm). Phòng cần tối thiểu 9 x 7 ô vì nhà vệ sinh, cửa, bếp và giường đứng cố định ở góc trong; phòng to hơn thì ban công dời theo mép phải.",
   "money": {
     "start": 200,
     "weekly": 350,
@@ -12,7 +12,12 @@
       33
     ],
     "kpiBonus": 50,
-    "unit": "nghìn"
+    "unit": "nghìn",
+    "junior": {
+      "start": 500,
+      "weekly": 400,
+      "kpiBonus": 80
+    }
   },
   "box": "thung_do",
   "rooms": {
@@ -43,6 +48,29 @@
         "giuong",
         "laptop_san"
       ]
+    },
+    "tro_rong": {
+      "name": "Phòng trọ rộng",
+      "size": [
+        12,
+        9
+      ],
+      "door": [
+        5.6,
+        0.95
+      ],
+      "slots": {
+        "ban_hoc": {
+          "x": 3.0,
+          "z": 0,
+          "rot": 0
+        },
+        "tren_giuong": {
+          "x": 1.3,
+          "z": 3.15,
+          "rot": 0
+        }
+      }
     }
   },
   "items": [
@@ -539,6 +567,148 @@
         "Mèo vẫy tay vẫn vẫy. Lương vẫn chưa về.",
         "Mèo Deadline nhìn mèo vẫy tay rất lâu. Chắc là ghen."
       ]
+    },
+    {
+      "id": "phong_tro_rong",
+      "name": "Phòng trọ rộng (chuyển nhà)",
+      "price": 1500,
+      "model": "chiaKhoa",
+      "size": [
+        0.4,
+        0.4
+      ],
+      "slot": null,
+      "category": "nha",
+      "floor": "junior",
+      "room": "tro_rong",
+      "desc": "Căn góc cuối dãy, rộng gần gấp đôi, ban công đón nắng chiều. Chủ trọ đưa chìa khóa: \"Junior rồi thì ở cho đàng hoàng em ạ.\"",
+      "perk": "Chuyển sang phòng 12 × 9 ô (phòng cũ 9 × 7). Đồ đã mua theo bạn sang, nằm chờ trong thùng."
+    },
+    {
+      "id": "tuong_soc_kem",
+      "name": "Giấy dán tường sọc kem",
+      "price": 250,
+      "model": "gocPhong",
+      "size": [
+        0.9,
+        0.9
+      ],
+      "slot": null,
+      "category": "nha",
+      "floor": "junior",
+      "surface": "wall",
+      "colors": [
+        "#e8d6b4",
+        "#f6ead2"
+      ],
+      "pattern": "soc",
+      "desc": "Sọc dọc nhỏ màu kem sữa. Nhìn lâu thấy trần nhà cao thêm năm phân.",
+      "perk": "Đổi màu hai bức tường của phòng đang ở. Mua rồi thì đổi qua lại lúc nào cũng được."
+    },
+    {
+      "id": "tuong_hong_cham",
+      "name": "Giấy dán tường hồng chấm bi",
+      "price": 250,
+      "model": "gocPhong",
+      "size": [
+        0.9,
+        0.9
+      ],
+      "slot": null,
+      "category": "nha",
+      "floor": "junior",
+      "surface": "wall",
+      "colors": [
+        "#f2c2ce",
+        "#fbdbe3"
+      ],
+      "pattern": "cham",
+      "desc": "Hồng phấn chấm bi trắng. Đồng nghiệp ghé chơi sẽ hỏi: \"Phòng em hay phòng cháu em?\"",
+      "perk": "Đổi màu hai bức tường của phòng đang ở. Mua rồi thì đổi qua lại lúc nào cũng được."
+    },
+    {
+      "id": "tuong_xanh_reu",
+      "name": "Sơn xanh rêu",
+      "price": 250,
+      "model": "gocPhong",
+      "size": [
+        0.9,
+        0.9
+      ],
+      "slot": null,
+      "category": "nha",
+      "floor": "junior",
+      "surface": "wall",
+      "colors": [
+        "#a5bf9a",
+        "#bcd3b1"
+      ],
+      "pattern": "tron",
+      "desc": "Một lớp sơn xanh rêu mịn. Chủ trọ đồng ý, với điều kiện trả phòng thì sơn lại.",
+      "perk": "Đổi màu hai bức tường của phòng đang ở. Mua rồi thì đổi qua lại lúc nào cũng được."
+    },
+    {
+      "id": "san_go_oc_cho",
+      "name": "Sàn gỗ óc chó",
+      "price": 300,
+      "model": "gocPhong",
+      "size": [
+        0.9,
+        0.9
+      ],
+      "slot": null,
+      "category": "nha",
+      "floor": "junior",
+      "surface": "floor",
+      "colors": [
+        "#9b6a45",
+        "#8a5b39"
+      ],
+      "pattern": "van_go",
+      "desc": "Ván gỗ màu sẫm, bước lên nghe chắc chân. Cuối cùng cũng có một thứ trong đời bạn mang chữ \"cao cấp\".",
+      "perk": "Đổi sàn của phòng đang ở (nhà vệ sinh giữ nguyên). Mua rồi thì đổi qua lại lúc nào cũng được."
+    },
+    {
+      "id": "san_gach_bong",
+      "name": "Sàn gạch bông",
+      "price": 300,
+      "model": "gocPhong",
+      "size": [
+        0.9,
+        0.9
+      ],
+      "slot": null,
+      "category": "nha",
+      "floor": "junior",
+      "surface": "floor",
+      "colors": [
+        "#f1ece0",
+        "#6f98ad"
+      ],
+      "pattern": "gach",
+      "desc": "Gạch bông hoa văn kiểu nhà bà ngoại. Mèo thích nằm vì mát.",
+      "perk": "Đổi sàn của phòng đang ở (nhà vệ sinh giữ nguyên). Mua rồi thì đổi qua lại lúc nào cũng được."
+    },
+    {
+      "id": "san_tham_xam",
+      "name": "Thảm trải sàn xám",
+      "price": 300,
+      "model": "gocPhong",
+      "size": [
+        0.9,
+        0.9
+      ],
+      "slot": null,
+      "category": "nha",
+      "floor": "junior",
+      "surface": "floor",
+      "colors": [
+        "#bebdc7",
+        "#b2b1bb"
+      ],
+      "pattern": "tham",
+      "desc": "Thảm trải kín sàn, êm như phòng sếp tổng. Làm rơi bút không còn nghe tiếng.",
+      "perk": "Đổi sàn của phòng đang ở (nhà vệ sinh giữ nguyên). Mua rồi thì đổi qua lại lúc nào cũng được."
     }
   ],
   "shop": {
@@ -564,6 +734,10 @@
       {
         "id": "trang_tri",
         "name": "Trang trí"
+      },
+      {
+        "id": "nha",
+        "name": "Nhà cửa"
       }
     ]
   },

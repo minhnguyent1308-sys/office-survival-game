@@ -223,12 +223,41 @@ export const MODELS = {
     ball(.17, .69, .25, .03, '#ffd166'); box(.13, .23, .66, .08, .02, .015, '#ff5d8f', {round: 0, cast: false});
     [-.03, .03].forEach(a => ball(.17 + a, .79, .245, .012, P.ink));
   },
+  // Tầng Junior (Lily 22/11): the bigger room is sold as its key, on a tag with the room number
+  chiaKhoa(g, mat){ const {box, cyl} = kitFor(g, mat);
+    box(.04, .04, 0, .32, .32, .04, P.trim, {round: .02});                           // little dish it lies in
+    cyl(.14, .08, .16, .07, .07, .02, P.gold); cyl(.14, .08, .16, .035, .035, .03, P.trim);  // key ring end
+    box(.13, .2, .06, .04, .14, .02, P.gold, {round: .005}); box(.17, .3, .06, .04, .03, .02, P.gold, {round: .005}); // blade + tooth
+    box(.2, .06, .06, .12, .1, .015, P.red, {round: .01});                             // tag
+  },
+  // wallpaper / flooring (surface items): a corner of a room with the two walls or the floor in the item's colours
+  gocPhong(g, mat, {item} = {}){ const {box} = kitFor(g, mat), wall = item?.surface === 'wall', floor = item?.surface === 'floor';
+    const tex = (w, h, side = 0) => new T.MeshStandardMaterial({map: surfaceTexture(item, w, h, 32, side), roughness: .9});
+    box(0, 0, 0, .9, .9, .06, P.plankB, {round: 0, material: floor ? tex(.9, .9) : mat(P.plankB)});
+    box(0, 0, .06, .05, .9, .8, P.wallL, {round: 0, material: wall ? tex(.9, .8) : mat(P.wallL)});
+    box(.05, 0, .06, .85, .05, .8, P.wallB, {round: 0, material: wall ? tex(.9, .8, 1) : mat(P.wallB)});
+  },
 };
+// Wallpaper and flooring as a texture, w x h in room units (Lily 22/11). Colours and pattern come from noi-that.json; on a wall the
+// first colour is the left wall, so the back wall passes side = 1. k = pixels per unit (nearest filter keeps the blocky look).
+export function surfaceTexture(item, w, h, k = 16, side = 0){
+  const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w*k)); c.height = Math.max(1, Math.round(h*k)); const x = c.getContext('2d');
+  const [a, b] = item.colors, base = item.surface === 'wall' ? item.colors[side] : a;
+  x.fillStyle = base; x.fillRect(0, 0, c.width, c.height);
+  const u = Math.max(1, Math.round(k/4));
+  if (item.pattern === 'soc') { x.fillStyle = shade(base, -.07); for (let i = 0; i < c.width; i += u*2) x.fillRect(i, 0, Math.max(1, u >> 1), c.height); }
+  if (item.pattern === 'cham') { x.fillStyle = '#ffffff'; for (let i = 0; i < c.width; i += u*2) for (let j = (i/(u*2)) % 2 ? u : 0; j < c.height; j += u*2) x.fillRect(i, j, Math.max(1, u >> 1), Math.max(1, u >> 1)); }
+  if (item.pattern === 'van_go') for (let j = 0; j < c.height; j += u) for (let i = 0; i < c.width; i += u*4) { x.fillStyle = ((i/(u*4) + j/u) % 2) ? b : a; x.fillRect(i + ((j/u) % 2) * u*2, j, u*4, u); }
+  if (item.pattern === 'gach') for (let i = 0; i < c.width; i += u*2) for (let j = 0; j < c.height; j += u*2) { x.fillStyle = ((i + j)/(u*2)) % 2 ? b : a; x.fillRect(i, j, u*2, u*2); }
+  if (item.pattern === 'tham') for (let i = 0; i < c.width; i++) for (let j = 0; j < c.height; j++) if ((i*7 + j*13) % 5 === 0) { x.fillStyle = b; x.fillRect(i, j, 1, 1); }
+  const t = new T.CanvasTexture(c); t.magFilter = T.NearestFilter; t.colorSpace = T.SRGBColorSpace; return t;
+}
+const shade = (hex, k) => '#' + [1, 3, 5].map(i => Math.max(0, Math.min(255, Math.round(parseInt(hex.slice(i, i + 2), 16) * (1 + k)))).toString(16).padStart(2, '0')).join('');
 
 // Builds one item from its json entry and places it: x, z = floor corner after rotation, rot = quarter turns (1 = front faces +x).
 // Returns {g, rect} where rect is the footprint on the floor (for blockers and hotspots later).
 export function placeItem(scene, mat, item, {x = 0, z = 0, rot = 0} = {}, opts = {}){
-  const inner = new T.Group(); MODELS[item.model](inner, mat, opts);
+  const inner = new T.Group(); MODELS[item.model](inner, mat, {...opts, item});
   const [w, d] = item.size, turned = rot % 2 === 1, W = turned ? d : w, D = turned ? w : d;
   inner.position.set(-w/2, 0, -d/2);
   const g = new T.Group(); g.add(inner); g.rotation.y = rot * Math.PI/2; g.position.set(x + W/2, 0, z + D/2);

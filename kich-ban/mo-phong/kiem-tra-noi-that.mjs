@@ -58,6 +58,36 @@ ok(JSON.stringify(G.styleProgress(s, wibu)) === '[5,5]' && G.styleOf('led_rgb')?
 ok(!G.completeStyles(s) && s.flags.filter(f => f === 'bo_wibu').length === 1, 'huy hiệu bộ chỉ nhận một lần');
 ok(NT.styles.every(st => RV.badges[st.badge]?.group === 'phong_cach' && RV.collection.hints[st.badge]), 'mỗi bộ có huy hiệu nhóm phong_cach và gợi ý');
 s.flags.push(...Object.keys(RV.badges).filter(f => !RV.badges[f].group)); ok(!G.dossier(s, RV).some(f => RV.badges[f].group), 'anh Tuấn không đọc huy hiệu phòng trọ ở buổi đánh giá');
+// Tầng Junior (Lily 22/11): bonus, Junior pay every Friday, wall/floor and a bigger room in Chợ Trọ
+s = G.newGame({rng: () => .5}); G.ensureHome(s); s.home.wallet = 9999; G.answerShopInvite(Object.assign(s, {counters: {...s.counters, actions: {giup_chi_mai: 2}}}), 0);
+ok(G.canBuy(s, 'tuong_soc_kem').locked && G.canBuy(s, 'tuong_soc_kem').why === 'Mở ở tầng Junior' && !G.buyItem(s, 'phong_tro_rong'), 'tầng 1: món Junior hiện nhưng khóa');
+G.buyItem(s, 'thung_do'); G.putItem(s, 'thung_do', 2, 3, 0); G.buyItem(s, 'ban_hoc'); G.putItem(s, 'ban_hoc', 0, 0, 0); s.home.wallet = 120;
+const intern = JSON.parse(JSON.stringify(s.home));
+let j = G.newGame({rng: () => .5}); G.startJuniorHome(j, intern);
+ok(G.floorOf(j) === 'junior' && j.home.wallet === 120 + NT.money.junior.start && G.isPlaced(j, 'ban_hoc') && G.shopOpen(j), 'vào Junior: giữ phòng, tiền còn lại + thưởng, Chợ Trọ mở ngay');
+const fresh = G.newGame({rng: () => .5}); G.startJuniorHome(fresh);
+ok(fresh.home.wallet === NT.money.junior.start && fresh.home.room === 'tro_nho' && !G.placedHere(fresh).length, 'không có phòng mang theo: chỉ tiền thưởng, phòng trống');
+const payAt = day => { const x = G.newGame({rng: () => .5}); G.startJuniorHome(x); x.home.wallet = 0; x.day = day; x.part = 'evening';
+  const w = G.nextDay(x, CD.cards, () => .99); return w.pay; };
+ok(payAt(5)?.weekly === 400 && payAt(40)?.weekly === 400 && payAt(47)?.weekly === 400 && !payAt(4), 'lương Junior 400 mọi tối thứ Sáu, cả ngày 40 và sau đó');
+ok(G.canBuy(j, 'tuong_soc_kem').ok && !G.canBuy(j, 'chau_cay_nho').locked, 'tầng Junior mua được món Junior');
+j.home.wallet = 9999; let rb = G.buyItem(j, 'tuong_soc_kem'); G.buyItem(j, 'tuong_xanh_reu');
+ok(G.surfaceOn(j, 'wall')?.id === 'tuong_xanh_reu' && !G.unplaced(j).some(u => u.item.surface) && !rb.mustPlace, 'giấy dán tường dán ngay, món cũ không vào thùng');
+ok(G.useSurface(j, 'tuong_soc_kem') && G.surfaceOn(j, 'wall')?.id === 'tuong_soc_kem' && G.placedHere(j).filter(p => G.itemById(p.id).surface === 'wall').length === 1, 'đổi lại tường cũ, mỗi phòng một loại');
+ok(!G.useSurface(j, 'tuong_hong_cham'), 'chưa mua thì không dùng được');
+G.buyItem(j, 'san_gach_bong'); ok(G.surfaceOn(j, 'floor')?.id === 'san_gach_bong' && G.surfaceOn(j, 'wall')?.id === 'tuong_soc_kem', 'sàn và tường tách riêng');
+const ownedBefore = G.unplaced(j).length; rb = G.buyItem(j, 'phong_tro_rong');
+ok(rb.moved && j.home.room === 'tro_rong' && G.homeRoom(j).size.join() === '12,9' && !G.surfaceOn(j, 'wall') && G.unplaced(j).some(u => u.item.id === 'ban_hoc') && G.unplaced(j).length > ownedBefore, 'chuyển phòng rộng: đồ chờ trong thùng, tường sàn về mặc định');
+ok(!G.canBuy(j, 'phong_tro_rong').ok && !G.unplaced(j).some(u => u.item.room), 'phòng chỉ mua một lần, không nằm trong thùng');
+// balance (Lily 22/11): bigger room + one wall + one floor + the dearest style is just affordable on Friday of day 40, never by day 33
+const price = id => G.itemById(id).price, M = NT.money.junior, junior = NT.items.filter(i => i.floor === 'junior');
+const cheapest = k => Math.min(...junior.filter(i => i.surface === k).map(i => i.price));
+const goal = junior.find(i => i.room).price + cheapest('wall') + cheapest('floor') + Math.max(...NT.styles.map(st => st.items.reduce((a, id) => a + price(id), 0)));
+const by = (day, kpis) => M.start + Math.floor((day - 5) / 7 + 1) * M.weekly + kpis * M.kpiBonus;   // KPI from week 2
+ok(by(40, 0) >= goal && by(33, 4) < goal, `vừa đủ: mục tiêu ${goal}, ngày 40 không KPI ${by(40, 0)}, ngày 33 đủ KPI ${by(33, 4)}`);
+// the profile keeps the room of a run that reached Junior
+const Ho = await import('../../visual-design/ho-so.js'); const prof = Ho.emptyProfile(); s.runId = 'r1'; Ho.finish(prof, s, 'junior');
+ok(prof.home?.owned?.ban_hoc === 1 && prof.home !== s.home, 'hồ sơ giữ phòng của ván đạt Junior');
 // no furniture data = no pay (other pages)
 console.log(fail ? `${fail} lỗi` : 'Tất cả đều qua');
 process.exit(fail ? 1 : 0);

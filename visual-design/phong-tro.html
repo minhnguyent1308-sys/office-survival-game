@@ -161,8 +161,16 @@ import * as Pl from './placements.js'; // partner slots (affiliate): declared, e
 import * as NTm from './noi-that.js';  // furniture models (data in noi-that.json, Lily 17/11)
 
 const P = Wd.P; // one palette for every map (home tokens included)
-const W = 9, D = 7; // room size in tiles (x, z)
-const BAL = {x0:W, z0:3.4, x1:W + 1.6, z1:6.6}, WX = BAL.x1; // small balcony off the right side; the walk grid covers it too
+// the run and the furniture data come first: the room's size decides how the room is built (tầng Junior can move to a bigger room, Lily 22/11)
+const FURNITURE = await fetch('noi-that.json').then(r => r.json());
+G.useFurniture(FURNITURE); // wallet, Friday pay, Chợ Trọ, what stands in the room (noi-that.json)
+const store = new G.BrowserSaveStore();
+const fromHash = () => { try { const m = location.hash.match(/s=([^&]+)/); return m ? JSON.parse(decodeURIComponent(m[1])) : null; } catch { return null; } }; // fallback when storage is blocked
+let S = (await store.load()) || fromHash();
+const ROOM = (S && G.homeRoom(S)) || Object.values(FURNITURE.rooms)[0];
+const [W, D] = ROOM.size; // room size in tiles (x, z): 9 x 7 at first; bathroom, door, kitchen and bed keep their corner, the balcony follows the right edge
+const BAL = {x0:W, z0:D - 3.6, x1:W + 1.6, z1:D - .4}, WX = BAL.x1; // small balcony off the right side; the walk grid covers it too
+const ZOOM = Math.max(WX / 10.6, D / 7); // 1 = the first room; a bigger room pulls the camera back
 const WC = {x0:0, z0:0, x1:2.5, z1:2.5};
 const ROOMS = [
   {id:'wc',   name:'Nhà vệ sinh', ...WC},
@@ -190,25 +198,36 @@ const hemi = new T.HemisphereLight('#fff8ef', '#c9b89b', 1.5); scene.add(hemi);
 const sun = new T.DirectionalLight('#ffe9cf', 1.9);
 sun.position.set(W/2 + 6, 14, D/2 - 4); sun.target.position.set(W/2, 0, D/2); scene.add(sun.target);
 sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); sun.shadow.bias = -0.0006;
-Object.assign(sun.shadow.camera, {left:-9, right:9, top:9, bottom:-9, near:1, far:50}); scene.add(sun);
+Object.assign(sun.shadow.camera, {left:-9*ZOOM, right:9*ZOOM, top:9*ZOOM, bottom:-9*ZOOM, near:1, far:50}); scene.add(sun);
 
 /* ---------- Builders: shared with tầng Intern (world.js) ---------- */
 const {mat, box, textTex, faceMats, sign, plant, makeChar, blockers, hotMeshes} = Wd.makeKit(scene);
 const cyl = (x, y, z, rt, rb, h, c, seg=18) => { const m = new T.Mesh(new T.CylinderGeometry(rt, rb, h, seg), mat(c)); m.position.set(x, y, z); m.castShadow = m.receiveShadow = true; scene.add(m); return m; };
 
-/* ---------- Floor: wooden planks, small tiles in the bathroom ---------- */
-{
-  const K = 2, c = document.createElement('canvas'); c.width = W*K; c.height = D*K; const x = c.getContext('2d');
-  for (let i=0;i<W*K;i++) for (let j=0;j<D*K;j++){
-    const inWC = roomAt((i+.5)/K, (j+.5)/K).id === 'wc';
-    x.fillStyle = inWC ? [P.tileA, P.tileB][(i+j)%2] : [P.plankA, P.plankB][((i>>1) + (j>>1))%2]; x.fillRect(i,j,1,1);
-  }
+/* ---------- Floor: wooden planks, small tiles in the bathroom; a flooring bought in Chợ Trọ replaces the planks (Lily 22/11) ---------- */
+function floorTexture(fl){
+  const K = fl ? 16 : 2, c = document.createElement('canvas'); c.width = W*K; c.height = D*K; const x = c.getContext('2d');
+  if (fl) x.drawImage(NTm.surfaceTexture(fl, W, D, K).image, 0, 0);
+  else for (let i=0;i<W*K;i++) for (let j=0;j<D*K;j++){ x.fillStyle = [P.plankA, P.plankB][((i>>1) + (j>>1))%2]; x.fillRect(i,j,1,1); }
+  for (let i=0;i<WC.x1*K;i++) for (let j=0;j<WC.z1*K;j++){ x.fillStyle = [P.tileA, P.tileB][((i*2/K|0) + (j*2/K|0))%2]; x.fillRect(i,j,1,1); }   // the bathroom keeps its tiles
   const t = new T.CanvasTexture(c); t.magFilter = T.NearestFilter; t.colorSpace = T.SRGBColorSpace;
-  box(0, 0, -.2, W, D, .2, P.plankB, {round:0, cast:false, faces:[mat('#d8b07c'),mat(P.plankB),new T.MeshStandardMaterial({map:t, roughness:.9}),mat(P.plankB),mat('#e2c09a'),mat(P.plankB)]});
+  return new T.MeshStandardMaterial({map:t, roughness:.9});
 }
-/* ---------- Walls: cutaway, only the two far walls (same as tầng Intern) ---------- */
-box(-.25, -.25, 0, .25, D + .25, 3, P.wallL, {round:0, block:true});
-box(0, -.25, 0, W, .25, 3, P.wallB, {round:0, block:true});
+const FLOOR = box(0, 0, -.2, W, D, .2, P.plankB, {round:0, cast:false, faces:[mat('#d8b07c'),mat(P.plankB),floorTexture(null),mat(P.plankB),mat('#e2c09a'),mat(P.plankB)]});
+/* ---------- Walls: cutaway, only the two far walls (same as tầng Intern); wallpaper from Chợ Trọ covers their inner faces ---------- */
+const WALL_L = box(-.25, -.25, 0, .25, D + .25, 3, P.wallL, {round:0, block:true});
+const WALL_B = box(0, -.25, 0, W, .25, 3, P.wallB, {round:0, block:true});
+const surfaceKey = {wall:'', floor:''};
+function applySurfaces(){
+  const wl = G.surfaceOn(S, 'wall'), fl = G.surfaceOn(S, 'floor');
+  if (surfaceKey.floor !== (fl?.id || '')) { surfaceKey.floor = fl?.id || ''; FLOOR.material[2] = floorTexture(fl); }
+  if (surfaceKey.wall !== (wl?.id || '')) { surfaceKey.wall = wl?.id || '';
+    // BoxGeometry faces: +x, -x, +y, -y, +z, -z. The left wall shows its +x face, the back wall its +z face.
+    const face = (len, side, plain) => wl ? new T.MeshStandardMaterial({map:NTm.surfaceTexture(wl, len, 3, 16, side), roughness:.9}) : mat(plain);
+    WALL_L.material = [face(D + .25, 0, P.wallL), ...Array(5).fill(mat(P.wallL))];
+    WALL_B.material = [mat(P.wallB), mat(P.wallB), mat(P.wallB), mat(P.wallB), face(W, 1, P.wallB), mat(P.wallB)];
+  }
+}
 box(-.25, -.25, 3, .25, D + .25, .08, P.trim, {round:0});
 box(0, -.25, 3, W, .25, .08, P.trim, {round:0});
 box(0, 0, 0, .04, D, .14, P.woodDark, {round:0, cast:false});
@@ -320,7 +339,7 @@ const DESK = 'ban_hoc';                   // the one item with a fixed slot: the
 const NO_FURN = [{x0:0, z0:0, x1:2.6, z1:2.6}, {x0:4.95, z0:0, x1:6.25, z1:1.75}];   // the bathroom, and the way in from the door
 // wall items (wall: true in noi-that.json, Lily 18/11) hang on the back wall (rot 0, z = 0) or the left wall (rot 1, x = 0), over nothing on the floor.
 // What is already on a wall, as spans along it: a wall item may hang over a span only if its lowest point clears the span's top (the bathroom never).
-const WALL_SPANS = {back:[{a:0, b:2.6, top:99}, {a:2.92, b:4.68, top:2.42}, {a:5.05, b:6.15, top:2.25}, {a:6.33, b:W, top:1.97}],   // bathroom, window, door, kitchen shelf
+const WALL_SPANS = {back:[{a:0, b:2.6, top:99}, {a:2.92, b:4.68, top:2.42}, {a:5.05, b:6.15, top:2.25}, {a:6.33, b:8.95, top:1.97}],   // bathroom, window, door, kitchen shelf + fridge
                     left:[{a:0, b:2.6, top:99}, {a:3.0, b:4.55, top:.95}]};                                                       // bathroom, bed headboard
 const onBackWall = (item, rect) => Math.abs((rect.x1 - rect.x0) - item.size[0]) < 1e-6;   // a wall item is wider than deep: unturned = along the back wall
 const LOWEST = {};
@@ -369,8 +388,9 @@ function drawFurniture(){
   for (let i = hotMeshes.length; i--;) if (hotMeshes[i].userData.furn) hotMeshes.splice(i, 1);
   for (const id of Object.keys(HOT)) if (id.startsWith('item:')) dropHot(id);
   const badges = (CARD_DATA.flagsBadges || []).filter(f => G.hasFlag(S, f)).length;
+  applySurfaces();
   furn = G.placedHere(S).map((p, index) => {
-    const item = G.itemById(p.id); if (!item) return null;
+    const item = G.itemById(p.id); if (!item || item.surface) return null;   // wallpaper and flooring are drawn on the walls and floor
     const {g, rect} = NTm.placeItem(FURN, mat, item, p, {badges});
     g.userData.idx = index; g.visible = placing?.index !== index;   // the one being moved shows as the ghost instead
     const f = {index, item, g, rect, twinkle:g.children[0].userData.twinkle}, h = itemHot(f);
@@ -580,21 +600,17 @@ const toastEl = document.getElementById('toast'); let toastT = 0;
 const toast = msg => { toastEl.textContent = msg; toastEl.hidden = false; toastT = 3.5; };
 
 /* ---------- Game: the evening at home. Rules live in engine.js, content in cards.json ---------- */
-const [CARD_DATA, HANDBOOK, MINIGAMES, RHYTHM, PLACEMENTS, OPENING, REVIEW, PERKS, FURNITURE, EVENTS] = await Promise.all(['cards.json', 'handbook.json', 'minigames.json', 'nhip-choi.json', 'placements.json', 'mo-dau.json', 'danh-gia.json', 'than-thiet.json', 'noi-that.json', 'su-kien.json'].map(u => fetch(u).then(r => r.json())));
+const [CARD_DATA, HANDBOOK, MINIGAMES, RHYTHM, PLACEMENTS, OPENING, REVIEW, PERKS, EVENTS] = await Promise.all(['cards.json', 'handbook.json', 'minigames.json', 'nhip-choi.json', 'placements.json', 'mo-dau.json', 'danh-gia.json', 'than-thiet.json', 'su-kien.json'].map(u => fetch(u).then(r => r.json())));
 const CARDS = CARD_DATA.cards;
 G.useMinigames(MINIGAMES); // the next morning may be a mini-game day (nextDay/endWeekend draw it)
 G.usePerks(PERKS);        // closeness perks (than-thiet.json): the evening cards and the next wake-up use them too
 G.useEvents(EVENTS, new URLSearchParams(location.search).get('ngay'));   // live events (su-kien.json): the next morning may bring a shard
 G.useRhythm(RHYTHM);       // tonight's odds, and the next morning's special day / KPI / midday event (nhip-choi.json)
 Pl.usePlacements(PLACEMENTS);
-G.useFurniture(FURNITURE); // wallet, Friday pay, Chợ Trọ, what stands in the room (noi-that.json)
 { const bad = G.validateCards(CARD_DATA); if (bad.length) console.warn('cards.json:', bad); }
 { const bad = G.validateFurniture(FURNITURE, CARD_DATA, Object.keys(NTm.MODELS)); if (bad.length) console.warn('noi-that.json:', bad); }
-// one save for the whole game: the office page wrote it just before "Về phòng trọ"
-const store = new G.BrowserSaveStore();
+// one save for the whole game: the office page wrote it just before "Về phòng trọ" (S is read at the top: the room's size needs it)
 const PROFILE = await Ho.open({badges: CARD_DATA.flagsBadges});
-const fromHash = () => { try { const m = location.hash.match(/s=([^&]+)/); return m ? JSON.parse(decodeURIComponent(m[1])) : null; } catch { return null; } }; // fallback when storage is blocked
-let S = (await store.load()) || fromHash();
 const save = () => store.save(S);
 // leave for the office page behind the scene-change card; the run travels in storage, and in the URL as a fallback
 const OFFICE = 'index.html';
@@ -769,6 +785,7 @@ const SHOP_ICONS = {
   cay:       '<path d="M12 21v-9"/><path d="M12 12c-4 0-6-3-6-7 4 0 6 3 6 7zM12 14c3 0 5-2 5-6-3 0-5 2-5 6z"/><path d="M8 21h8"/>',
   den:       '<path d="M8 3h8l3 7H5z"/><path d="M12 10v9M8 21h8"/>',
   trang_tri: '<path d="M12 3l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.3 6.8 19.1l1-5.8L3.5 9.2l5.9-.8z"/>',
+  nha:       '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/>',
 };   // a new category in noi-that.json = one more icon here (otherwise it shows the star)
 const shopIcon = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${SHOP_ICONS[k] || SHOP_ICONS.trang_tri}</svg>`;
 const fold = t => t.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();   // search without accents
@@ -798,7 +815,7 @@ function renderShop(){
     .filter(it => (shop.cat === 'all' || it.category === shop.cat) && (!q || fold(it.name).includes(q)) && (inShop || (box && waiting[it.id])));
   $('cat-grid').innerHTML = list.length ? list.map(it => {
     const c = G.canBuy(S, it.id), have = G.ownedCount(S, it.id);
-    const under = inShop ? (c.sold ? 'Đã có' : `${money(it.price)} nghìn`) : (waiting[it.id] > 1 ? `× ${waiting[it.id]}` : 'Trong thùng');
+    const under = inShop ? (c.sold ? (it.surface && G.surfaceOn(S, it.surface)?.id === it.id ? 'Đang dùng' : 'Đã có') : c.locked ? 'Tầng Junior' : `${money(it.price)} nghìn`) : (waiting[it.id] > 1 ? `× ${waiting[it.id]}` : 'Trong thùng');
     return `<button class="tile${shop.sel === it.id ? ' sel' : ''}${inShop && c.sold ? ' sold' : ''}${inShop && !c.ok && !c.sold ? ' poor' : ''}" data-id="${it.id}" aria-label="${it.name}, ${under}">
       ${it.pinned && inShop && !have ? '<span class="pin">Nên mua</span>' : ''}<span class="pic"><img src="${THUMB[it.id]}" alt=""></span><span class="price">${under}</span></button>`; }).join('')
     : `<p class="empty">${inShop ? 'Không tìm thấy món nào.' : !box ? `Bạn chưa có thùng đồ. Mua ở ${F.shop.name}, ${G.itemById(F.box).price} nghìn, rồi đồ chưa dùng tới cứ cất vào đây.` : 'Thùng đang trống.'}</p>`;
@@ -810,12 +827,16 @@ function renderShop(){
   d.querySelector('.perk').textContent = it.perk + (max > 1 ? ` Đang có ${have}/${max}.` : '') + (it.slot ? ' Đặt ở chỗ cố định.' : '');
   const st = G.styleOf(it.id), [sn, sall] = st ? G.styleProgress(S, st) : [0, 0];   // room style (Lily 18/11): progress toward its badge
   d.querySelector('.set').textContent = !st ? '' : G.hasFlag(S, st.badge) ? `Bộ ${st.name}: đủ bộ, đã có huy hiệu.` : `Bộ ${st.name}: đã có ${sn}/${sall}. Mua đủ bộ để nhận huy hiệu.`;
-  const btn = el('button', 'btn', !inShop ? 'Mang ra' : c.ok ? `Mua · ${money(it.price)} nghìn` : c.why); btn.disabled = inShop && !c.ok; d.appendChild(btn);
-  btn.onclick = () => inShop ? buy(it) : startPlace(it);
+  // a wallpaper or flooring you own: switch back to it here (it never goes in the box)
+  const on = it.surface && G.surfaceOn(S, it.surface)?.id === it.id, swap = inShop && it.surface && c.sold && !on;
+  const btn = el('button', 'btn', !inShop ? 'Mang ra' : swap ? 'Dùng cho phòng này' : on ? 'Đang dùng' : c.ok ? `Mua · ${money(it.price)} nghìn` : c.why); btn.disabled = inShop && !c.ok && !swap; d.appendChild(btn);
+  btn.onclick = () => swap ? (G.useSurface(S, it.id), afterChange(), drawFurniture(), renderShop()) : inShop ? buy(it) : startPlace(it);
 }
-function buy(it){
+async function buy(it){
   const r = G.buyItem(S, it.id); if (!r) return renderShop();
+  if (r.moved) { await save(); location.reload(); return; }   // a bigger room (tầng Junior): the page builds the new room, things wait in the box
   afterChange();
+  if (it.surface) { drawFurniture(); toast(`${it.name}: xong rồi, nhìn phòng mới hẳn`); return renderShop(); }
   const got = r.badge ? `Đủ bộ ${r.badge.style.name}! Huy hiệu mới: ${REVIEW.badges[r.badge.flag]?.name || r.badge.style.name}` : '';   // a whole room style (Lily 18/11)
   if (it.slot || r.mustPlace) { startPlace(it, {must:true}); if (got) toast(got); return; }    // the desk goes to its slot; without a box things go straight into the room
   toast(`${it.name} đã vào thùng đồ` + (got ? ` · ${got}` : '')); renderShop();
@@ -946,7 +967,7 @@ function placeKey(e, k){
 const SPOTS = {
   door:    {name:'Cửa phòng',   player:{x:5.6, z:2.05, rot:Math.PI}, people:[{x:5.6, z:1.0, rot:0}]},
   bed:     {name:'Bên giường',  player:{x:2.75, z:3.9, rot:-Math.PI/2}},
-  balcony: {name:'Ban công',    player:{x:9.45, z:5.5, rot:Math.atan2(.85, -1.1)}, people:[{x:10.3, z:4.4, rot:Math.atan2(-.85, 1.1)}]},   // side by side across the screen, not one behind the other
+  balcony: {name:'Ban công',    player:{x:W + .45, z:BAL.z0 + 2.1, rot:Math.atan2(.85, -1.1)}, people:[{x:W + 1.3, z:BAL.z0 + 1.0, rot:Math.atan2(-.85, 1.1)}]},   // side by side across the screen, not one behind the other
   kitchen: {name:'Góc bếp',     player:{x:7.2, z:1.55, rot:Math.PI}, cat:[7.95, 1.5]},
   laptop:  {name:'Laptop', anchor:ANCHOR.laptop},     // partner slot only (placements.json)
 };
@@ -1006,7 +1027,7 @@ setTimeout(async () => { fadeEl.classList.remove('on'); await wait(500); fading 
 let followK = 0;
 function resize(){
   const w = innerWidth, h = innerHeight, a = w/h; renderer.setSize(w, h, false);
-  const f = a >= 1 ? Math.max(8.2 / a, 5.9) : 6.7 / a; followK = a >= 1 ? 0 : .45;
+  const f = (a >= 1 ? Math.max(8.2 / a, 5.9) : 6.7 / a) * ZOOM; followK = a >= 1 ? 0 : .45;   // ZOOM: a bigger room (tầng Junior)
   const sh = f * (a >= 1 ? .2 : .14); // frustum raised = map drawn lower, clear of the two HUD panels top-left
   Object.assign(cam, {left:-f*a, right:f*a, top:f+sh, bottom:-f+sh}); cam.updateProjectionMatrix();
 }
@@ -1038,7 +1059,7 @@ function tick(now){
   if (toastT > 0) { toastT -= dt; if (toastT <= 0) toastEl.hidden = true; }
   if (meBubble > 0) meBubbleEl.hidden = !place(meBubbleEl, pos.x, Wd.TAG_Y, pos.z); else meBubbleEl.hidden = true;
   updateSlots();
-  const room = roomAt(pos.x, pos.z), rn = room && room.id !== 'home' ? 'Phòng trọ · ' + room.name : 'Phòng trọ';
+  const room = roomAt(pos.x, pos.z), rn = room && room.id !== 'home' ? ROOM.name + ' · ' + room.name : ROOM.name;   // ROOM.name: "Phòng trọ", or "Phòng trọ rộng" after moving
   if (rn !== lastRoom) { lastRoom = rn; document.getElementById('room-name').textContent = rn; }
   if (camFocus) v3.copy(camFocus); else v3.set(CENTER.x + (pos.x - CENTER.x)*followK, 0, CENTER.z + (pos.z - CENTER.z)*followK);
   camTarget.lerp(v3, reduce ? 1 : Math.min(1, dt*3));

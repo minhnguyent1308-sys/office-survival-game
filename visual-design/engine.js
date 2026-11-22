@@ -608,23 +608,39 @@ export const placedHere = s => (ensureHome(s) ? s.home.placed[s.home.room] : [])
 export const isPlaced = (s, id) => placedHere(s).some(p => p.id === id);
 export const ownedCount = (s, id) => ensureHome(s)?.owned[id] || 0;
 export const hasBox = s => !!NT?.box && ownedCount(s, NT.box) > 0;
+// Not furniture (Lily 22/11, tầng Junior): `surface` = wallpaper or flooring, switched in Chợ Trọ, never in the box; `room` = moving to a bigger room.
+const isThing = it => !it.surface && !it.room;
 // owned but not standing in this room: with a box they wait in it; without one they are waiting to be placed (the page places them)
 export function unplaced(s) {
   if (!ensureHome(s)) return [];
   const here = placedHere(s), out = [];
-  for (const it of NT.items) { const n = ownedCount(s, it.id) - here.filter(p => p.id === it.id).length; if (n > 0) out.push({item: it, n}); }
+  for (const it of NT.items.filter(isThing)) { const n = ownedCount(s, it.id) - here.filter(p => p.id === it.id).length; if (n > 0) out.push({item: it, n}); }
   return out;
+}
+/* ---------- Tầng (Lily 22/11): the Junior floor pays more and opens more of Chợ Trọ. s.floor is left out on floor 1 ---------- */
+export const floorOf = s => s?.floor || 'intern';
+// a floor's money: floor 1 = money in noi-that.json; Junior = money.junior (start = the promotion bonus, paid every Friday, no last day)
+const moneyOf = s => (floorOf(s) === 'junior' ? NT.money.junior : NT.money);
+const isPayday = s => { const m = moneyOf(s); return m.paydays ? m.paydays.includes(s.day) : weekday(s.day) === 4; };
+// A Junior run's room (Lily 22/11): the room of the last floor-1 run that reached Junior (the profile keeps it), plus the promotion bonus.
+// No room carried over = the small room with the bed and laptop only. Called once, when the Junior run is made.
+export function startJuniorHome(s, carried = null) {
+  if (!NT) return null;
+  s.floor = 'junior';
+  s.home = carried ? JSON.parse(JSON.stringify(carried)) : {wallet: 0};
+  s.home.wallet = (s.home.wallet || 0) + NT.money.junior.start; s.home.paid = [];
+  return ensureHome(s);
 }
 // Friday night (paydays in noi-that.json): weekly allowance, plus a bonus when the week's KPI was met. Once per day, kept in home.paid.
 function payday(s, kpi) {
-  const h = ensureHome(s); if (!h || !NT.money.paydays.includes(s.day) || h.paid.includes(s.day)) return null;
-  const pay = {weekly: NT.money.weekly, kpi: kpi?.ok ? NT.money.kpiBonus : 0};
+  const h = ensureHome(s); if (!h || !isPayday(s) || h.paid.includes(s.day)) return null;
+  const m = moneyOf(s), pay = {weekly: m.weekly, kpi: kpi?.ok ? m.kpiBonus : 0};
   h.wallet += pay.weekly + pay.kpi; h.paid.push(s.day);
   return pay;
 }
 // Chợ Trọ opens with chị Mai's message (noi-that.json unlock.card): it arrives on the laptop the first evening after you helped her twice.
 // It is not a morning card and takes no card slot, so the balance stays as it was (Lily 17/11). From then on the laptop shows "Chợ Trọ".
-export const shopOpen = s => !!NT && hasFlag(s, NT.unlock.flag);
+export const shopOpen = s => !!NT && (floorOf(s) !== 'intern' || hasFlag(s, NT.unlock.flag));   // on the Junior floor it is open from day 1
 export const shopInvite = s => (NT && !shopOpen(s) && requiresOk(s, NT.unlock.card.requires) ? NT.unlock.card : null);
 export function answerShopInvite(s, index) {
   const c = shopInvite(s), ch = c?.choices[index]; if (!ch) return null;
@@ -635,15 +651,27 @@ export function canBuy(s, id) {
   const it = itemById(id), h = ensureHome(s);
   if (!it || !h) return {ok: false, why: 'Không có món này'};
   if (!shopOpen(s)) return {ok: false, why: 'Chợ Trọ chưa mở'};
+  if (it.floor && it.floor !== floorOf(s)) return {ok: false, locked: true, why: 'Mở ở tầng Junior'};   // shown, not sold, until that floor
   if ((h.owned[id] || 0) >= (it.max || 1)) return {ok: false, sold: true, why: 'Đã có'};
   if (it.price > h.wallet) return {ok: false, why: `Thiếu ${it.price - h.wallet} nghìn`};
   return {ok: true};
 }
 // buying never places: the page then places it (no box, or the box itself) or it waits in the box. Returns {item, mustPlace}.
+// A room is moved into at once: everything owned waits for the new room (in the box, or placed by the page without one).
+// A wallpaper or floor is put on at once: the one it replaces stays owned, to switch back in Chợ Trọ.
 export function buyItem(s, id) {
   if (!canBuy(s, id).ok) return null;
   const it = itemById(id), h = s.home; h.wallet -= it.price; h.owned[id] = (h.owned[id] || 0) + 1;
-  return {item: it, mustPlace: mustPlace(s, id), badge: completeStyles(s)};
+  if (it.room) { h.room = it.room; ensureHome(s); return {item: it, moved: true, badge: completeStyles(s)}; }
+  if (it.surface) useSurface(s, id);
+  return {item: it, mustPlace: !it.surface && mustPlace(s, id), badge: completeStyles(s)};
+}
+export const surfaceOn = (s, kind) => itemById(placedHere(s).find(p => itemById(p.id)?.surface === kind)?.id);   // null = the landlord's paint / planks
+export function useSurface(s, id) {
+  const it = itemById(id); if (!it?.surface || !ownedCount(s, id)) return false;
+  const here = placedHere(s), i = here.findIndex(p => itemById(p.id)?.surface === it.surface);
+  if (i >= 0) here.splice(i, 1);
+  here.push({id, x: 0, z: 0, rot: 0}); return true;
 }
 // Room styles (noi-that.json styles, Lily 18/11): own every item of a style (bought, placed or not) and its badge flag is yours, once.
 export const styleOf = id => NT?.styles?.find(st => st.items.includes(id)) || null;
@@ -830,7 +858,13 @@ export function validateFurniture(data, cardData = null, models = null) {
     for (const id of st.items || []) { if (!ids.has(id)) problems.push(`bộ ${st.id}: món "${id}" không có`); if (inStyle.has(id)) problems.push(`món ${id} nằm ở hai bộ`); inStyle.add(id); }
     if (cardData && !(cardData.flagsBadges || []).includes(st.badge)) problems.push(`bộ ${st.id}: cờ "${st.badge}" chưa có trong flagsBadges của cards.json`);
   }
-  for (const k of ['start', 'weekly', 'kpiBonus']) if (!(data.money?.[k] >= 0)) problems.push(`money.${k} thiếu`);
+  for (const k of ['start', 'weekly', 'kpiBonus']) { if (!(data.money?.[k] >= 0)) problems.push(`money.${k} thiếu`); if (!(data.money?.junior?.[k] >= 0)) problems.push(`money.junior.${k} thiếu`); }
+  for (const it of data.items || []) {
+    if (it.room && !data.rooms?.[it.room]) problems.push(`${it.id}: phòng "${it.room}" không có trong rooms`);
+    if (it.surface && (!['wall', 'floor'].includes(it.surface) || (it.colors || []).length !== 2)) problems.push(`${it.id}: surface cần "wall" hoặc "floor" và colors [2 màu]`);
+    if (it.floor && it.floor !== 'junior') problems.push(`${it.id}: floor "${it.floor}" lạ (chỉ có "junior")`);
+  }
+  for (const [id, r] of Object.entries(data.rooms || {})) if (!Array.isArray(r.size) || r.size[0] < 9 || r.size[1] < 7) problems.push(`phòng ${id}: size tối thiểu [9, 7] (bếp, cửa, nhà vệ sinh cố định)`);
   const inv = data.unlock?.card;
   if (!data.unlock?.flag || !inv?.intro || !(inv.choices || []).length) problems.push('unlock cần flag và card (intro, choices)');
   if (cardData) { const flags = [...(cardData.flagsBadges || []), ...(cardData.flagsHidden || [])];
